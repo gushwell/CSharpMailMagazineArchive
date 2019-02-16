@@ -8,7 +8,7 @@
 ---------|--------|----------------|---------------------------
 C#入門編  | 01CSharpEntry| No001 - No019|	データ、変数、演算、制御構造など基礎的な部分を説明しています。
 オブジェクト指向編	| 02CSharpOop| No020 - No047|	クラス, メソッド、プロパティ、アクセス修飾子、継承、ポリモーフィズムなど
-文法・落穂ひろい編	| 03CSharpGleaner| No048 - No062	| | No047までに説明できなかった、文法の説明をしています。readonly, const, ref, out, インデクサ, base, implicit, explicitなどなど
+文法・落穂ひろい編	| 03CSharpGleaner| No048 - No062	| No047までに説明できなかった、文法の説明をしています。readonly, const, ref, out, インデクサ, base, implicit, explicitなどなど
 続オブジェクト指向編 | 04CSharpOop2| No063 - No072 |	interface, delegate, event, Boxingの説明
 .NET Framework 基礎編 | 05CSharpBCL| No073 - No085 |		StringBuilder, ArrayList, HashTable, Array, Enum, Math クラスなど,
 C#2.0文法編	| 06CSharp20 | No086 - No102	 |	Generic, 匿名メソッド, イテレータ, nullable, static-class, Property accessor accessibilityなどC#2.0で新たに導入された文法の解説です。
