@@ -1,0 +1,134 @@
+
+┏━┳━━━━━━━━━━━━━━━━━━━━━━━━━┳━┳━┳━┓
+┃☆┃ C#プログラミングレッスン                         ┃＿┃□┃×┃
+┣━┻━━━━━━━━━━━━━━━━━━━━━━━━━┻━┻━┻━┫
+┃例外処理 (1) try-catch                                     No.045 ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+■──────────────────────────────────
+■ 例外とは
+
+例外とは、プログラムの実行時に発生するエラーのことです。C#が用意してい
+る例外処理を上手く使えば、エラー処理をすっきりと記述することができるよ
+うになります。
+.NETでは、標準的な例外（0除算、IOエラー、配列のインデックスオーバーな
+ど）があらかじめ定義されており、これらのエラーに対処するには、例外処理
+が必須になります。
+
+■──────────────────────────────────
+■ try-catch
+
+例外処理の最も基本的な書き方を以下に示します。
+
+try {
+    // 何らかの処理
+    // このなかで、例外が発生する可能性あり
+} catch {
+   // 例外が発生した時に処理したいコード
+}
+
+このコードでは、try ブロック内で、何らかの例外が発生すると、処理が中断
+され、catch ブロックに処理が遷移します。
+例外が発生しなかった場合には、catch ブロックは実行されません。
+
+以下のコードで確認してみてください。
+
+using System;
+
+namespace Gushwell.No045 {
+    class Program {
+        static void Main(string[] args) {
+            try {
+                int n = 10;
+                string s = Console.ReadLine();
+                int m = int.Parse(s);
+                int ans = n / m;
+                Console.WriteLine(ans);
+            } catch {
+                Console.WriteLine("エラーが発生");
+            }
+            Console.ReadLine();
+        }
+    }
+}
+
+プログラムを実行し、キーボードから 0 を入れると、
+ "エラーが発生"
+の文字列が表示されるのを確認できると思います。
+
+■──────────────────────────────────
+■ 例外の種類を指定する
+
+さて、先ほどのプログラムで、キーボードから 0 を入力したときと、数値文字
+列以外を入力した時の２つの場合に、例外が発生します。
+試しに、プログラムを実行し、キーボードから a という文字を入力してみて
+ください。
+同様に、
+ "エラーが発生"
+と表示されると思います。
+
+でも、これだと、どんなエラーが発生したのか分かりません。例外には名前が
+付いていますので、その例外を指定することで、例外の種類毎に処理を振り分
+けることが可能です。
+そのコードを以下に示します。
+
+   static void Main(string[] args) {
+       try {
+           int n = 10;
+           string s = Console.ReadLine();
+           int m = int.Parse(s);
+           int ans = n / m;
+           Console.WriteLine(ans);
+       } catch (System.DivideByZeroException) {
+           Console.WriteLine("ゼロで除算しました");
+       } catch (System.FormatException){
+           Console.WriteLine("数値を入力してください");
+       }
+       Console.ReadLine();
+   }
+
+System.DivideByZeroException や System.FormatExceptionが例外の名前で
+す。
+
+■──────────────────────────────────
+■ 例外オブジェクトにアクセスする
+
+実はこれら例外もクラスとして定義されています。そのため、プログラムから
+例外オブジェクトにアクセスすることも可能です。
+
+以下のコードをみください
+
+   static void Main(string[] args) {
+       try {
+           int[] nums = new int[3];
+           nums[3] = 1;
+       } catch (System.IndexOutOfRangeException e) {
+           Console.WriteLine(e.Message);
+           Console.WriteLine(e.ToString());
+       }
+       Console.ReadLine();
+   }
+
+このプログラムでは、発生した例外オブジェクトのMessageプロパティと
+ToString()メソッドを利用しています。
+
+実行結果は、以下のようになります。
+
+------------------------------------------------------------
+インデックスが配列の境界外です。
+System.IndexOutOfRangeException: インデックスが配列の境界外です。
+   場所 Gushwell.No045.Program.Main(String[] args) 場所 C:\Documents and
+Settings\... 略 ...\Program.cs:行 8
+------------------------------------------------------------
+
+┌─┬─────────────────────────┬─┬─┬─┐
+│☆│ C#プログラミングレッスン  (ぼぼ週刊）            │＿│□│×│
+├─┴─────────────────────────┴─┴─┴─┤
+│ Published by Gushwell  (Microsoft MVP for Visual C#)             │
+│ Copyright (C) 2004-2005 Gushwell All rights reserved.            │
+│-------------------- Gushwell's Page ---------------------------- │
+│ 窓際プログラマーの独り言  ：http://blog.livedoor.jp/gushwell/    │
+│ 窓際プログラマーの読書三昧：http://gushwell.jugem.jp/            │
+│             よろしかったらアクセスしてみてください！             │
+└─────────────────────────────────┘
+

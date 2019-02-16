@@ -1,0 +1,114 @@
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━━━ No.370 ━□
+
+「C#5.0編」-- 非同期処理のおさらい (2)
+                                                           by Gushwell
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+前回は、ThreadとThreadPoolを使った非同期処理について説明しましたが、
+今回は、BackgroundWorkerクラスと、Taskクラスについてみていきましょう。
+
+
+■□───────────────────────────────────
+■□ BackgroundWorkerクラス
+
+UIをフリーズさせないためのこういった処理を書く場合は、BackgroundWorkerク
+ラスをつかうというやり方もあります。
+BackgroundWorkerクラスをつかうと、それぞれの処理を明示的にメソッド単位に
+分割できるので僕は比較的よく利用しています。
+Visual Studioのコード補完機能を使えば、イベントハンドラの登録も簡単ですの
+で、コードの見た目よりもすごく簡単に非同期処理を書くことができます。
+
+なによりも、いやらしい Invokeメソッドを書かなくて済むのが最大のメリットだ
+と思います。
+処理の進捗を示す、ProgressBarコンポーネントとの相性もばっちりです。
+
+詳しくは、以下のURLを見てください。
+
+ BackgroundWorkerのサンプルコード(2) 
+ http://gushwell.ldblog.jp/archives/51868069.html
+
+ WPFサンプル:ProgressBar (BackgroundWorker使用) 
+ http://gushwell.ldblog.jp/archives/52273762.html
+
+
+■□───────────────────────────────────
+■□ Taskクラス
+
+次に .NET Framework 4.0から導入されたTaskクラスです。
+簡単な例を以下に示します。
+
+  private void button1_Click(object sender, EventArgs e) {
+      Task task = new Task(DoSomething);
+      task.Start();
+  }
+
+  private void DoSomething() {
+      Thread.Sleep(4000);
+      label1.Invoke(new Action(() => {
+          label1.Text = "Finish";
+      }));
+  }
+
+コード上は、前回のThreadのサンプルコードのThreadがTaskに変わっただけです。
+
+なお、button1_Clickの中は、以下の１行で書くことも可能です。
+
+ Task task = Task.Factory.StartNew(DoSomething);
+
+この例だけだと、Threadクラスとの違いがわかりにくいですね。Taskクラスには、
+ContinueWith メソッドがあり、複数の処理をつなげて、ひとつの非同期処理にす
+るといったことが簡単に書けるようになっています。
+その簡単なコードを示します。
+
+ using System;
+ using System.Threading.Tasks;
+
+ namespace TaskTest {
+     class Program {
+         static void Main(string[] args) {
+             var task = Task.Factory.StartNew(() => {
+                 Task.Delay(2000).Wait();
+                 Console.WriteLine("A");
+             }).ContinueWith((t) => {
+                 Task.Delay(2000).Wait();
+                 Console.WriteLine("B");
+             });
+             Console.WriteLine("OK");
+             Console.ReadLine();
+         }
+     }
+ }
+
+StartNewのブロックと、ContinueWithのブロックが、連続した処理としてMainメ
+ソッドとは非同期に処理されます。
+そのため、このプログラムを実行すると、
+
+ OK
+ A
+ B
+
+の順にコンソールに表示されます。
+.NET Frameworkが提供している Taskクラスを利用した非同期メソッドを組み合わ
+ せて使うときなどにこのContinueWithが役立ちます。
+
+
+--------
+次回は、C#5.0から導入された asyncキーワードとawaitキーワードによる非同期
+処理について説明します。
+
+
+─────────────────────────────────────
+『C#プログラミングレッスン』  (ほぼ週刊）
+☆皆さまからの感想をお待ちしています。http://gushwell.ifdef.jp/mail.html
+─────────────────────────────────────
+Published by Gushwell.
+Copyright (C) 2013 Gushwell All rights reserved.
+Microsoft MVP for Visual C#(Apr 2005 - Mar 2014)
+
+■Gushwell's Page
+facebook Page                     : http://www.facebook.com/CSharpLesson
+Gushwell's C# Dev Notes           : http://gushwell.ldblog.jp/
+Gushwell's C# Programming Page    : http://gushwell.ifdef.jp/
+気ままな読書ノート                : http://gwbooks.hatenablog.com/
+Twitterアカウント                 : @gushwell
+─────────────────────────────────────

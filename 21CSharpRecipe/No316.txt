@@ -1,0 +1,110 @@
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━━━ No.316 ━□
+
+「レシピ編」-- ファイル・ディレクトリの操作 (1)
+                                                           by Gushwell  
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+みなさん、あけましておめでとうございます。
+今年も頑張って、この「C#プログラミングレッスン」を発行していこうと思います
+ので、みなさんよろしくお願いします。
+
+さて、「レシピ編」はもうしばらく続きそうです。
+今回からファイル操作のコードをお見せします。
+
+今日のコード
+
+1.ファイルのサイズを得るには
+2.ファイルの存在を確認するには
+3.ファイルを複写するには
+4.ファイルを移動するには
+5.ファイルを削除するには
+6.ファイルを更新日時を得るには
+
+今日のコードは、すべてFileInfoクラスを利用したコードです。簡単なコードで
+ファイル操作が行えるのがご理解いただけると思います。
+
+
+■□───────────────────────────────────
+■□ ファイルのサイズを得るには
+
+FileInfoクラスを使うと、簡単にファイルのサイズを得ることができます。
+
+FileInfo fi = new FileInfo("sample.txt");
+long size = fi.Length;
+Console.WriteLine(size);
+
+ファイル "sample.txt" は、カレントフォルダーにあるものとします。
+
+
+■□───────────────────────────────────
+■□ ファイルの存在を確認するには
+
+FileInfo.Existsプロパティを使うことで、ファイルの存在を確認できます。
+
+FileInfo fi = new FileInfo("sample.txt");
+bool exists = fi.Exists;
+Console.WriteLine(exists);
+
+
+■□───────────────────────────────────
+■□ ファイルを複写するには
+
+ファイルを複写するには、FileInfoクラスのCopyToメソッドを使います。
+
+FileInfo fi = new FileInfo("sample.txt");
+FileInfo dup = fi.CopyTo("sample.dup", true);
+
+CopyToの第２引数は、既存のファイルを上書きできるようにする場合は trueを指定
+します。それ以外の場合は falseです。
+戻り値は、複写先ファイルのFileInfoオブジェクトなりますので、このオブジェク
+トを使い、引き続き複写先のファイルの操作が可能になっています。
+
+■□───────────────────────────────────
+■□ ファイルを移動するには
+
+FileInfo fi = new FileInfo("sample.txt");
+string destfname = @"c:\temp\sample.txt";
+fi.MoveTo(destfname);
+
+MoveToメソッドを使うと、指定したファイルを新しい場所に移動できます。
+なお、異なるドライブ間の移動もサポートしています。
+destnameには、別の新しいファイル名を指定することもできます。
+
+移動先が同一ディレクトリで、destfname に別の名前を指定した場合には、
+ファイル名のリネームとなります。
+
+■□───────────────────────────────────
+■□ ファイルを削除するには
+
+FileInfo fi = new FileInfo("sample.txt");
+fi.Delete();
+
+Deleteメソッドは、指定したファイルを削除します。ファイルが存在しない場合は、
+このメソッドは何も実行しません。
+
+
+■□───────────────────────────────────
+■□ ファイルを更新日時を得るには
+
+指定したファイルに最後に書き込みが行われた時刻を取得するコードを示します。
+
+FileInfo fi = new FileInfo("sample.txt");
+DateTime lastWriteTime = fi.LastWriteTime;
+Console.WriteLine(lastWriteTime);
+
+この LastWriteTime に値をセットすると、最後に書き込みが行われた時刻を変更
+することもできます。
+
+─────────────────────────────────────
+『C#プログラミングレッスン』  (ほぼ週刊）                                 
+☆皆さまからの感想をお待ちしています。http://gushwell.ifdef.jp/mail.html  
+─────────────────────────────────────
+Published by Gushwell.                                                    
+ Copyright (C) 2011 Gushwell All rights reserved.                        
+ Microsoft MVP for Visual C#(Apr 2005 - Mar 2012)                        
+
+■Gushwell's Page                                                         
+Gushwell's C# Dev Notes           : http://gushwell.ldblog.jp/            
+Gushwell's C# Programming Page    : http://gushwell.ifdef.jp/             
+Gushwellの読書ノート              : http://gushwell.jugem.jp/             
+─────────────────────────────────────

@@ -1,0 +1,106 @@
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━━━ No.362 ━□
+
+「HTTPクライアント編」-- WebClientでのWebページの取得
+                                                           by Gushwell  
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+皆さん、お久しぶりです。
+さて、今週からC#プログラミングレッスン再開です。
+「HTTPクライアント編」では主にWebClientクラスを用いたHTTPクライアントプログ
+ラミングについて解説していこうと思います。
+HTTP通信の詳しい話は省略して、どうやってコードを書くのかに焦点を当てていく
+つもりです。
+
+それとご報告ですが、4月1日に、Microsoft MVP for C#を再受賞することができま
+した。今年で、9年連続の受賞となります。このメルマガの発行がMicrosoft MVPの
+受賞のきっかけになったわけですから、メルマガ「C#プログラミングレッスン」も
+９年近く続いていることになります。これも購読者の方々の暖かい励ましのおかげ
+と感謝しています。
+これだけ続けてるとさすがに書くネタも尽きてきたのですが、１０年連続のMVP受賞
+を目指して、この「C#プログラミングレッスン」も続けていけたらと考えています。
+当メルマガに対する感想などありましたら、是非、ここ 
+  < http://gushwell.ifdef.jp/mail.html > 
+からメッセージをお寄せいただければ幸いです。
+
+それでは、本題に入りましょう。
+
+■□───────────────────────────────────
+■□ OpenReadメソッドでWebページを取得する
+
+C#のプログラムからWebページを取得する方法にはいくつかの方法が存在しますが、
+もっとも手軽なのが、WebClientクラスを使った方法です。
+WebClientクラスには、いろいろな機能がありますが、第一回目の今回は、Webペー
+ジ（HTML）をstring型として取得する方法について説明します。
+ここでは、WebClientクラスのOpenReadメソッドを使った方法を示します。
+
+
+using System;
+using System.Text;
+using System.Net;
+using System.IO;
+
+namespace WebClientGetPage {
+    class Program {
+        static void Main(string[] args) {
+            WebClient wc = new WebClient();
+            using (Stream stream = wc.OpenRead(@"http://gushwell.ifdef.jp/")) 
+            using (StreamReader sr = new StreamReader(stream, Encoding.UTF8)) {
+                string html = sr.ReadToEnd();
+                Console.WriteLine(html);
+            }
+        }
+    }
+}
+
+OpenReadメソッドでは、取得したいページのURL文字列を引数に指定して呼び出しま
+す。呼び出しに成功すると、そのページをストリームとして読み取るためのStream
+オブジェクトが返ります。
+Streamオブジェクトを取得できれば、あとは通常のStreamに対する読み込みをする
+だけです。
+この例では、僕のWebサイトのトップページのhtmlを取得していますが、このページ
+は、UTF-8でエンコーディングされているため、Encoding.UTF8 を指定して、
+StreamReaderオブジェクトを得ています。
+ReadToEndメソッドで一気にページを読み込み、それをコンソールに出力しています。
+
+■□───────────────────────────────────
+■□ DownloadDataメソッドでWebページを取得する
+
+DownloadDataメソッドを使うと、さらに簡単にWebページを取得できます。
+
+using System;
+using System.Text;
+using System.Net;
+using System.IO;
+
+namespace WebClientGetPage {
+    class Program {
+        static void Main(string[] args) {
+            WebClient wc = new WebClient();
+            byte[] bytes = wc.DownloadData(@"http://gushwell.ifdef.jp/");
+            string html = Encoding.UTF8.GetString(bytes);
+            Console.WriteLine(html);
+        }
+    }
+}
+
+DownloadDataメソッドは、ページ全体を取得し、その結果をbyte配列として返して
+くれます。
+そのため、このbyte配列データを文字列に変換することで、Webページのhtmlを得る
+ことができます。
+
+
+─────────────────────────────────────
+『C#プログラミングレッスン』  (ほぼ週刊）                                 
+☆皆さまからの感想をお待ちしています。http://gushwell.ifdef.jp/mail.html  
+─────────────────────────────────────
+Published by Gushwell.                                                    
+Copyright (C) 2013 Gushwell All rights reserved.                          
+Microsoft MVP for Visual C#(Apr 2005 - Mar 2014)                          
+
+■Gushwell's Page                                                         
+facebook Page                     : http://www.facebook.com/CSharpLesson  
+Gushwell's C# Dev Notes           : http://gushwell.ldblog.jp/            
+Gushwell's C# Programming Page    : http://gushwell.ifdef.jp/             
+Gushwellの読書ノート              : http://gushwell.jugem.jp/             
+Twitterアカウント                 : @gushwell                             
+─────────────────────────────────────

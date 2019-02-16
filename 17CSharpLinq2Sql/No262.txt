@@ -1,0 +1,135 @@
+
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━━━ No.262 ━□
+  
+ 「LINQ to SQL編」-- 遅延読み込み
+                                                             by Gushwell  
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+
+■□───────────────────────────────────
+■□ 遅延読み込みの前に
+
+前々回示した以下のコードで再度考えてみましょう。
+
+ using (var db = new NorthwindDataContext()) {
+     db.Log = Console.Out;
+     var query = from p in db.Products
+                 where p.Category.CategoryName == "Condiments"
+                 select new {
+                     p.ProductID,
+                     p.ProductName,
+                     p.Category.CategoryName
+                 };                                
+     foreach (var p in query) {
+         Console.WriteLine("{0} | {1} | {2}", 
+                 p.ProductID, p.ProductName, p.CategoryName);
+     }
+ }
+
+
+このコードを見て、Ordersにアクセスしたときに、Categoryテーブルのデータも無
+条件にメモリに読み込まれる効率の悪いコードになってしまっているのではないか、
+と心配になった方もいるかも知れません。
+通常のC#プログラミングの感覚からすると、
+
+  p.Category.CategoryName
+
+と書けるということは、関連オブジェクトであるCategoruも同時に読みこまれそう
+ですが、そんなことはありません。
+もちろんSQL文の中では、Categoryテーブルにアクセスされますが、メモリの中に、
+Categoryテーブルの中身が読みこまれることはありません。
+
+ここまではよろしいですね。では本題の「遅延読み込み」の説明に入ります。
+
+
+
+■□───────────────────────────────────
+■□ リレーションシップの遅延読み込み
+
+LINQ to SQL には遅延読み込みと呼ばれる機能が実装されています。「No.258 遅
+延実行」で説明した "遅延実行" とは別のものですので、注意してください。
+
+
+以下のコードを見てください。
+
+ using (var db = new NorthwindDataContext()) {
+     //db.Log = Console.Out;
+     var query = from ord in db.Orders
+                 where ord.ShipVia == 3
+                 select ord;
+     foreach (Order order in query) {
+         if (order.ShipCountry == "Poland")
+             ProcessCustomer(order,order.Customer);
+     }
+ }
+
+
+※ ProcessCustomer メソッドの実装は省略します。
+
+foreachの中で、orderオブジェクトのCustomerプロパティを参照しています。
+このOrderクラスのCustomerプロパティの値はどこで設定されるのでしょうか？
+
+query変数に設定されたクエリが実行されると、要求したオブジェクトだけが実際
+に取得されます。上の例では、Orderオブジェクトだけが取得されます。
+
+関連オブジェクトが自動で同時に取得されることはありません。つまり、if 文が
+実行されたときには、まだ、Customerプロパティの値は不定です。
+
+ProcessCustomerメソッドを呼び出したとき（つまり、関連オブジェクトである
+Customerプロパティにアクセスしようとしたとき）に、初めてCustomerのデータ
+が取得されます。
+
+これを「遅延読み込み」と言います。
+
+※ 遅延実行と遅延読み込みは別の概念です。
+
+"Poland"へ出荷するのは稀であるため、Orderオブジェクトに関連したデータをす
+べて取得してしまうよりも、効率的に処理することができます。
+
+では、以下のコードはどうでしょうか。
+
+ using (var db = new NorthwindDataContext()) {
+     db.Log = Console.Out;
+     var query = from product in db.Products
+                 where product.UnitPrice < 10
+                 select product;
+     var p = query.First();
+     Console.WriteLine(p.Category.CategoryName);
+ }
+
+このコードでは、First()で即時実行されますが、
+WriteLine()まで、該当するCategoryNameがCategoryテーブルから読み込まれるこ
+とはありません。
+実際に必要になったときに、必要になった分だけを取得するということを LINQ
+to SQLがやってくれます。
+
+
+なお、「読み込み済みか、そうでないか」を判断することはできません。
+
+  if (p.Category == null)
+
+というコードで、「まだ読み込んでいないか」を判断することはできません。
+もし、まだ、Categoryが読み込まれていない時に、このif文が実行されたとしても、
+if文が実行された時点で、Category が読みこまれてしまいますので、こういった
+判定は意味をなしません。
+
+
+
+─────────────────────────────────────
+『C#プログラミングレッスン』  (ぼぼ週刊）                                 
+ ☆皆さまからの感想をお待ちしています。http://gushwell.ifdef.jp/mail.html 
+─────────────────────────────────────
+ Published by Gushwell.                                                   
+   Copyright (C) 2004-2010 Gushwell All rights reserved.                  
+   Microsoft MVP for Visual C#(Apr 2005 - Mar 2011)                       
+                                                                          
+ ■Gushwell's Page                                                        
+ 窓際プログラマ─の独り言        : http://gushwell.ldblog.jp/             
+ Gushwell's C# Programming Page  : http://gushwell.ifdef.jp/              
+ Gushwell's F# Programming Diary : http://techbank.jp/gushwell/           
+ Gushwellの読書ノート            : http://gushwell.jugem.jp/              
+                                                                          
+ ■コミュニティtechbank.jp (http://techbank.jp/)                          
+ Gushwellが参加している技術系コミュニティです。                           
+ 有志メンバーによるBlogでの技術情報発信も行っています。                   
+─────────────────────────────────────

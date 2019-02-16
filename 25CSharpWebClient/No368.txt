@@ -1,0 +1,168 @@
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━━━ No.368 ━□
+
+「HTTPクライアント編」-- はてなブックマークへの登録
+                                                           by Gushwell  
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+これまでは HTTP GET によるWeb APIの呼び出し例を見てきましたが、当連載の最後
+としてPOSTを使った例をお見せします。
+どんな題材が良いのか、いろいろと調べましたが、なかなか良い題材が見つからず
+に困りました。SkyDriveへのファイルのアップロードにしようかと思ったのですが、
+素のWebClientでのアクセスのための良い情報が見つからなかったため、はてなブッ
+クマークへの新規登録を行うプログラムとしました。
+
+
+■□───────────────────────────────────
+■□ はてなサービスの認証
+
+はてなサービスのAPIを利用するためには、まず認証を行わなくてはなりません。
+はてなサービスのAPIを利用するために認証については、
+http://developer.hatena.ne.jp/ja/documents/auth
+をご覧ください。
+
+はてなサービスの認証には、OAuth認証とWSSE認証が用意されています。今回は、
+WSSE認証を行うこととします。
+
+はてなのページから引用させてもらいます。
+  ----
+  WSSE認証はHTTPのX-WSSEヘッダを用いて認証用文字列を送信する認証手段です。
+  WSSE認証用文字列にはユーザー名とパスワードが含まれます。このとき、パス
+  ワードはSHA1アルゴリズムによって暗号化されたダイジェストとして送信され
+  るため、HTTP基本認証などに比べてセキュアな認証が可能です。
+  ----
+
+具体的には、最後に示すコードを読んでください。コメントを付加しているので、
+このメールマガジンの読者の方ならば、何をやっているかは理解できると思いま
+す。
+
+なお、ブックマークの登録においては、このX-WSSEヘッダは、POST時のヘッダー
+に指定することになります。
+
+
+■□───────────────────────────────────
+■□ はてなブックマークへのリクエスト送信
+
+簡単に書けば、以下のようなXMLをUTF8でエンコードして指定のURLへPOSTするこ
+とで、ブックマークを登録することができます。
+
+<entry xmlns="http://purl.org/atom/ns#">
+  <title>dummy</title>
+  <link rel="related" type="text/html" href="http://www.example.com/" />
+  <summary type="text/plain">サンプルコメントです</summary>
+</entry>
+
+POSTのリクエストURLは、"http://b.hatena.ne.jp/atom/post" です。
+
+はてなブックマークへの新規登録についての詳細は、
+http://developer.hatena.ne.jp/ja/documents/bookmark/apis/atom
+をご覧ください。
+
+
+■□───────────────────────────────────
+■□ サンプルコード
+
+以下C#のコードを示します。当メールマガジンとしては、ちょっと長めのコード
+ですが、コメントをつけていますので、頑張って読んでください。
+
+using System;
+using System.Net;
+using System.Security.Cryptography;
+using System.Text;
+
+namespace HatenaBookmark {
+    class Program {
+        static void Main(string[] args) {
+            string username = "Gushwell";     // はてなのユーザID
+            string password = "XXXXXXXXXX";   // はてなのパスワード
+            string wsseHeader = MakeWsseHeader(username, password);
+
+            WebClient wc = new WebClient();
+            wc.Headers.Add("X-WSSE", wsseHeader);
+            wc.Headers.Add("Content-type", "application/x.atom+xml, application/xml, text/xml, */*; charset=UTF-8");
+
+            string bookMarkTitle = "C#でパズルを解こう！";
+            string bookMarkSummary = "C#で様々なパズルを解くプログラムを紹介しています。";
+            string bookmarkUrl = "http://gushwell.ifdef.jp/etude/puzzleindex.html";
+            string xml = MakeRequestXml(bookMarkTitle, bookMarkSummary, bookmarkUrl);
+            byte[] data = Encoding.UTF8.GetBytes(xml);
+
+            var res = wc.UploadData("http://b.hatena.ne.jp/atom/post", data);
+            Console.WriteLine(Encoding.UTF8.GetString(res));
+            Console.ReadLine();
+        }
+
+        // WSSE認証用のヘッダ作成
+        private static string MakeWsseHeader(string username, string password) {
+            // nonce 文字列の生成 
+            string nonce = MakeNonce(40);
+
+            // Created 文字列の生成
+            string created = MakeCreatedTime();
+
+            // PasswordDigest の生成d
+            string digest = MakeDigest(password, nonce, created);
+
+            // username, nonce, created digest から WEEH ヘッダーを生成
+            string format = "UsernameToken Username=\"{0}\", PasswordDigest=\"{1}\", Nonce=\"{2}\", Created=\"{3}\"";
+            string wsseHeader = string.Format(format, username, digest, nonce, created);
+            return wsseHeader;
+        }
+
+        // Nonce, Created, パスワード(はてなアカウントのパスワード)を文字
+        // 列連結し SHA1アルゴリズムでダイジェスト化して生成された文字列を、
+        //  Base64エンコードした文字列
+        private static string MakeDigest(string password, string nonce, string created) {
+            byte[] passwordB = Encoding.UTF8.GetBytes(password);
+            using (SHA1Managed sha1 = new SHA1Managed()) {
+                byte[] bytes = System.Text.Encoding.ASCII.GetBytes(nonce + created + password);
+                byte[] digest = sha1.ComputeHash(bytes);
+                return Convert.ToBase64String(digest);
+            }
+        }
+
+        // Nonceが作成された日時をISO-8601表記で記述したもの
+        private static string MakeCreatedTime() {
+            return DateTime.Now.ToString("s");
+        }
+
+        // HTTPリクエスト毎に生成するセキュリティ・トークン
+        private static string MakeNonce(int length) {
+            byte[] nonce = new byte[length];
+            Random rnd = new Random();
+            rnd.NextBytes(nonce);
+            return Convert.ToBase64String(nonce);
+        }
+
+        // ブックマークを新規登録する際のリクエスト用XMLを作成
+        private static string MakeRequestXml(string bookMarkTitle, string bookMarkSummary, string bookmarkUrl) {
+            string format = "<entry xmlns=\"http://purl.org/atom/ns#\">" +
+                        "<title>{0}</title>" +
+                        "<link rel=\"related\" type=\"text/html\" href=\"{1}\" />" +
+                        "<summary type=\"text/plain\">{2}</summary>" +
+                        "</entry>";
+            return string.Format(format, bookMarkTitle, bookmarkUrl, bookMarkSummary);
+        }
+    }
+}
+
+
+「HTTPクライアント編」の No363「WebClientでファイルをダウンロード」の最後
+に、新しいクラス HtpClientクラス についても説明する予定です、と書きました
+が、HtpClientクラスは、次の連載である 「C#5.0編」で取り上げることとします。
+２,３週間ほどお休みをいただいてから、「C#5.0編」の開始予定です。
+
+─────────────────────────────────────
+『C#プログラミングレッスン』  (ほぼ週刊）                                 
+☆皆さまからの感想をお待ちしています。http://gushwell.ifdef.jp/mail.html  
+─────────────────────────────────────
+Published by Gushwell.                                                    
+Copyright (C) 2013 Gushwell All rights reserved.                          
+Microsoft MVP for Visual C#(Apr 2005 - Mar 2014)                          
+
+■Gushwell's Page                                                         
+facebook Page                     : http://www.facebook.com/CSharpLesson  
+Gushwell's C# Dev Notes           : http://gushwell.ldblog.jp/            
+Gushwell's C# Programming Page    : http://gushwell.ifdef.jp/             
+Gushwellの読書ノート              : http://gushwell.jugem.jp/             
+Twitterアカウント                 : @gushwell                             
+─────────────────────────────────────

@@ -1,0 +1,119 @@
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━━━ No.285 ━□
+  
+ 「.NET Framework4 編」-- MemoryMappedFileクラス
+                                                             by Gushwell  
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+
+■□───────────────────────────────────
+■□ MemoryMappedFile 
+
+.NET Framework 4 でメモリ マップト ファイルがサポートされるようになりまし
+た。
+メモリ マップト ファイルを使うとプロセス間通でメモリ内のデータを共有する
+ことができます。以下に、簡単な例を示します。
+
+まずは、データを受け渡す側のプログラム（コンソールアプリケーション）のコ
+ードです。
+
+ using System.Text;
+ using System.IO.MemoryMappedFiles;
+ using System.Threading;
+ using System.Diagnostics;
+ using System.IO;
+
+ ...
+
+  class Program {
+     static void Main(string[] args) {
+        bool mutexCreated;
+        using (Mutex mutex = new Mutex(true, "mutexW", out mutexCreated))
+        using (MemoryMappedFile mmf 
+                  = MemoryMappedFile.CreateNew("myMemmapFile", 10000)) {
+           using (var stream = mmf.CreateViewStream()) 
+           using (StreamWriter sw = new StreamWriter(stream)) {
+              string s = "メモリマップトファイルのテストです。";
+              sw.WriteLine(s);
+           }
+           mutex.ReleaseMutex();
+           Process process = new Process();
+           process.StartInfo = new ProcessStartInfo("MemMappedFileTest2.exe
+           process.Start();
+           process.WaitForExit();
+        }
+     }
+  }
+
+MemoryMappedFile.CreateNewメソッドで、myMemmapFile という名前で、メモリマ
+ップトファイルを作成しています。ディスク上にはファイルは作成されません。メ
+モリ内に作成されます。
+データをメモリマップトファイルに書くには、CreateViewStream で Streamオブジ
+ェくトを取得し、この Stream オブジェクトに対し、データを出力する操作をしま
+す。
+メモリマップトファイルにデータを書き出したら、このデータを読み込む別プロセ
+スを起動しています。最後のWaitForExitがないと、作成したメモリマップトファ
+イルが消滅し、別プロセスで読み取れなくなってしまいます。
+
+Mutexは、プロセス間で同期処理を行うためのものです。
+なお、このサンプルでは、準備ができてから、プロセスを起動しているため、ほと
+んど意味を成していませんが、すでに起動している別プロセスが、このデータを読
+み込むような場合には、Mutexなどの同期オブジェクトでの同期処理が必要になり
+ます。
+
+次に、メモリマップトファイルのデータを読み取る側のプログラム（コンソールア
+プリケーション）を示します。
+
+
+ using System;
+ using System.Collections.Generic;
+ using System.Text;
+ using System.Threading;
+ using System.IO.MemoryMappedFiles;
+ using System.IO;
+
+ ...
+   class Program {
+       static void Main(string[] args) {
+           using (Mutex mutex = Mutex.OpenExisting("mutexW"))
+           using (var mmf = MemoryMappedFile.OpenExisting("myMemmapFile"))
+           using (var stream = mmf.CreateViewStream()) 
+           using (StreamReader sr = new StreamReader(stream)) {
+               mutex.WaitOne();
+               string line = sr.ReadLine();
+               Console.WriteLine(line);
+               mutex.ReleaseMutex();
+           }
+           Console.ReadLine();
+       }
+   }
+
+
+mutexで読み取りが可能になるまで待ち、準備ができたら、MemoryMappedFile.
+OpenExistingで、"myMemmapFile" という名前のメモリマップトファイルをオープ
+ンし、データを読み込んでいます。
+
+今回の例では、CreateViewStreamで、Stream オブジェクト経由でデータのやり取
+りをしましたが、MemoryMappedFile.CreateViewAccessor メソッドを使えば、先頭
+からの開始位置(バイト数)を指定したランダムアクセスも可能です。
+CreateViewAccessor で得たMemoryMappedViewAccessorクラスは、構造体のデータ
+を直接、read, writeすることも可能です。
+詳しくは、MSDNライブラリの「MemoryMappedViewAccessor クラス」の説明をご覧
+ください。
+
+
+─────────────────────────────────────
+『C#プログラミングレッスン』  (ぼぼ週刊）                                 
+ ☆皆さまからの感想をお待ちしています。http://gushwell.ifdef.jp/mail.html 
+─────────────────────────────────────
+ Published by Gushwell.                                                   
+   Copyright (C) 2011 Gushwell All rights reserved.                       
+   Microsoft MVP for Visual C#(Apr 2005 - Mar 2011)                       
+                                                                          
+ ■Gushwell's Page                                                        
+ Gushwell's C# Dev Notes           : http://gushwell.ldblog.jp/           
+ Gushwell's C# Programming Page    : http://gushwell.ifdef.jp/            
+ Gushwell's F# Programming Diary   : http://techbank.jp/gushwell/         
+ Gushwellの読書ノート              : http://gushwell.jugem.jp/            
+─────────────────────────────────────
+
+

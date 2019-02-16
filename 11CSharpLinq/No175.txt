@@ -1,0 +1,192 @@
+┏━┳━━━━━━━━━━━━━━━━━━━━━━━━━┳━┳━┳━┓
+┃☆┃ C#プログラミングレッスン                         ┃＿┃□┃×┃
+┣━┻━━━━━━━━━━━━━━━━━━━━━━━━━┻━┻━┻━┫
+┃ C#3.0-LINQ 結合演算子(2)                                   No.175┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+今回はかなり長文になってしまいました。是非最後まで読んでください。
+
+■──────────────────────────────────
+■GroupJoin
+
+MSDNのGroupJoinの項には、
+
+「2 つのコレクションを、単一の階層コレクションに結合します。結合操作は、
+一致するキーに基づいて実行されます。」
+
+といった説明があります。ちょっとピンときませんね。
+実際に、そのコードを見てみましょう。
+
+ var customers = NorthwindObjects.GetCustomers();
+ var orders = NorthwindObjects.GetOrders()
+                              .Where(o => o.OrderDate.Year == 1998);
+ var result = customers
+     .Where(c => c.City == "London")
+     .GroupJoin(orders, c => c.CustomerID, o => o.CustomerID,
+         (c, co) => new { Customer = c, Orders = co });
+ foreach (var item in result) {
+     Console.WriteLine("CompanyName={0}",item.Customer.CompanyName);
+     foreach (var o in item.Orders) {
+         Console.WriteLine("  OrderDate={0}", o.OrderDate);
+     }
+ }
+
+Londonにある顧客と注文をCustomerIDで結びつけています。
+なお、便宜上、1988年の注文に限定しています。
+結果を表示するのに２重ループしている点に注意してください。
+結果は、以下の通りです。
+
+CompanyName=Around the Horn
+  OrderDate=1998/02/02 0:00:00
+  OrderDate=1998/03/03 0:00:00
+  OrderDate=1998/03/16 0:00:00
+  OrderDate=1998/04/10 0:00:00
+CompanyName=B's Beverages
+  OrderDate=1998/03/11 0:00:00
+  OrderDate=1998/03/13 0:00:00
+  OrderDate=1998/04/14 0:00:00
+CompanyName=Consolidated Holdings
+  OrderDate=1998/01/23 0:00:00
+CompanyName=Eastern Connection
+  OrderDate=1998/03/31 0:00:00
+  OrderDate=1998/04/15 0:00:00
+  OrderDate=1998/04/24 0:00:00
+  OrderDate=1998/04/28 0:00:00
+CompanyName=North/South
+  OrderDate=1998/04/29 0:00:00
+CompanyName=Seven Seas Imports
+  OrderDate=1998/02/04 0:00:00
+
+
+
+顧客ごとの売り上げ一覧を表示しています。
+
+■──────────────────────────────────
+■Joinと何が違うのか
+
+CustomerIDで結合するのは、前回のjoinと同じなのですが、違いは
+
+「結合した結果が、2次元の表形式になるのではなく、顧客オブジェクトに、
+  複数の注文がぶら下がる階層形式で結合される」
+
+という点です。
+
+上記コードをJoinで核と、
+
+ var customers = NorthwindObjects.GetCustomers();
+ var orders = NorthwindObjects.GetOrders()
+                              .Where(o => o.OrderDate.Year >= 1998);
+ var result = customers
+     .Where(c => c.City == "London")
+     .Join(orders, c => c.CustomerID, o => o.CustomerID,
+         (c, o) => new { Customer = c, Order = o });
+ foreach (var item in result) {
+     Console.WriteLine("CompanyName={0} OrderDate={1}", 
+         item.Customer.CompanyName, item.Order.OrderDate);
+ }
+
+となり、以下のように出力されます。
+、
+CompanyName=Around the Horn OrderDate=1998/02/02 0:00:00
+CompanyName=Around the Horn OrderDate=1998/03/03 0:00:00
+CompanyName=Around the Horn OrderDate=1998/03/16 0:00:00
+CompanyName=Around the Horn OrderDate=1998/04/10 0:00:00
+CompanyName=B's Beverages OrderDate=1998/03/11 0:00:00
+CompanyName=B's Beverages OrderDate=1998/03/13 0:00:00
+CompanyName=B's Beverages OrderDate=1998/04/14 0:00:00
+CompanyName=Consolidated Holdings OrderDate=1998/01/23 0:00:00
+CompanyName=Eastern Connection OrderDate=1998/03/31 0:00:00
+CompanyName=Eastern Connection OrderDate=1998/04/15 0:00:00
+CompanyName=Eastern Connection OrderDate=1998/04/24 0:00:00
+CompanyName=Eastern Connection OrderDate=1998/04/28 0:00:00
+CompanyName=North/South OrderDate=1998/04/29 0:00:00
+CompanyName=Seven Seas Imports OrderDate=1998/02/04 0:00:00
+
+  .Join(orders, c => c.CustomerID, o => o.CustomerID,
+      (c, o) => new { Customer = c, Order = o });
+
+といった記述の o は、 Order 型でしたが、
+※匿名クラスのプロパティ名も Orderと単数形にしています。
+
+  .GroupJoin(orders, c => c.CustomerID, o => o.CustomerID,
+      (c, co) => new { Customer = c, Orders = co });
+
+の co は、IEnamerable<Order>型となっています。つまり、c である 
+Customerオブジェクトに対し、Orderが複数関連付けられているということで
+す。
+※こちらは匿名クラスのプロパティ名を複数形にしてます。
+ 
++----------+    *  +-------+
+| Customer | ----> | Order |
++----------+       +-------+ 
+
+という構造を再現していると言っても良いでしょう。
+個人的な見解ですが、オブジェクト指向プログラミングという観点からは、
+Join演算子での結果よりは、GroupJoinで得られる結果のほうが、様々な応用
+が利くような気がします。
+
+
+■──────────────────────────────────
+■Groupjoinをクエリ式で書く
+
+上記コードをクエリ式で書くと、以下のようになります。
+
+ var result = from c in customers
+              where c.City == "London"
+              join o in orders on c.CustomerID equals o.CustomerID
+                               into co
+              select new { Customer = c, Orders = co };
+
+join句のところで、into キーワードを使っていますが、これがGroupJoinであ
+ることを示しています。
+CustomerIDで結合されたものが、IEnamerable<Order>型として、coに代入(？
+うまい用語が思いつきません)されています。
+
+■──────────────────────────────────
+■おまけ
+
+最後に、1988年の注文数を顧客ごとに求めるコードを書いてみましょう。
+
+ var customers = NorthwindObjects.GetCustomers();
+ var orders = NorthwindObjects.GetOrders()
+                              .Where(o => o.OrderDate.Year >= 1998);
+ var result = customers
+     .Where(c => c.City == "London")
+     .GroupJoin(orders, c => c.CustomerID, o => o.CustomerID,
+         (c, co) => new { 
+                        CompanyName = c.CompanyName, 
+                        OrderCount = co.Count() 
+                    }
+      );
+ foreach (var item in result) {
+     Console.WriteLine(item);
+ }
+
+結果は、以下の通りです。
+
+{ CompanyName = Around the Horn, OrderCount = 4 }
+{ CompanyName = B's Beverages, OrderCount = 3 }
+{ CompanyName = Consolidated Holdings, OrderCount = 1 }
+{ CompanyName = Eastern Connection, OrderCount = 4 }
+{ CompanyName = North/South, OrderCount = 1 }
+{ CompanyName = Seven Seas Imports, OrderCount = 1 }
+
+GroupJoinの使い方を示す一つの差材にはなるのかな、なんて思います。
+
+
+┌─┬─────────────────────────┬─┬─┬─┐
+│☆│ C#プログラミングレッスン  (ぼぼ週刊）            │＿│□│×│
+├─┴─────────────────────────┴─┴─┴─┤
+│ Published by Gushwell.                                           │
+│ Copyright (C) 2004-2007 Gushwell All rights reserved.            │
+│ Microsoft MVP Visual Developer - Visual C#(Apr 2005 - Mar 2009)  │
+│-------------------- Gushwell's Page ---------------------------- │
+│ 窓際プログラマーの独り言  ：http://blog.livedoor.jp/gushwell/    │
+│ 窓際プログラマーの読書三昧：http://gushwell.jugem.jp/            │
+│ Gushwell's C# Programing Page：http://gushwell.ifdef.jp/         │
+│ C#デザインパターン :                                             │
+│  『増補改訂版Java言語で学ぶデザインパターン入門 / 結城 浩(著)』  │
+│   のサンプルコードをC#に移植したものを掲載しています。           │
+│   移植後のコードの公開は、結城氏の了解を得ています。             │
+│   http://blog.livedoor.jp/gushwell/archives/50333227.html        │
+└─────────────────────────────────┘

@@ -1,0 +1,87 @@
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━━━ No.314 ━□
+
+「レシピ編」-- 文字列の操作 (4)
+                                                           by Gushwell  
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+今回も文字列操作についてです。文字列操作は、題材に事欠かないですね。
+
+
+今日のコード
+
+1.部分文字列が、文字列の中のどの位置にあるかを調べる
+2.部分文字列が、文字列の中にあるかどうかを調べるには
+3.文字列の中に、指定した文字があるかを調べるには
+4.文字列が、指定した文字列で開始されているかを調べるには
+
+
+■□───────────────────────────────────
+■□ 部分文字列が、文字列の中のどの位置にあるかを調べるには
+
+引数で指定した部分文字列が、文字列の中から探し出し、最初に見つかった位置を
+求めるコードです。
+
+string s = "The quick brown fox jumps over a lazy dog.";
+int ix = s.IndexOf("over");
+Console.WriteLine(ix);
+
+このコードの結果は、26 が表示されます。
+
+
+■□───────────────────────────────────
+■□ 部分文字列が、文字列の中にあるかどうかを調べるには
+
+今度のコードは、インデックスを返すのではなく、有るか無いかを調べるものです。
+
+string s = "The quick brown fox jumps over a lazy dog.";
+bool b1 = s.Contains("box");
+bool b2 = s.Contains("fox");
+Console.WriteLine("{0} {1}", b1, b2);
+
+この例では、"box", "fox" があるかどうかを調べています。
+実行すると、
+
+False True
+
+が表示されます。
+
+
+■□───────────────────────────────────
+■□ 文字列の中に、指定した文字があるかを調べるには
+
+言葉で説明するよりは、コードを見ていただいたほうが、理解が早いと思います。
+
+string s = "The quick brown fox jumps over a lazy dog.";
+ix = s.IndexOfAny(new char[] { 'a', 'b', 'c' });
+Console.WriteLine(ix);
+
+この例では、a,b,cいづれかが見つかればその位置が、ixに代入されます。
+最初に見つかるのは、c なので、ix には、7 が入ります。
+
+
+■□───────────────────────────────────
+■□ 文字列が、指定した文字列で開始されているかを調べるには
+
+ここでは、"The" で開始されているかを調べるコードを示します。
+
+string s = "The quick brown fox jumps over a lazy dog.";
+b = s.StartsWith("The");
+
+bには、true が入ります。
+EndsWith() メソッドを使えば、指定した文字列で終わっているかを調べることもで
+きます。
+
+
+─────────────────────────────────────
+『C#プログラミングレッスン』  (ほぼ週刊）                                 
+☆皆さまからの感想をお待ちしています。http://gushwell.ifdef.jp/mail.html  
+─────────────────────────────────────
+Published by Gushwell.                                                    
+ Copyright (C) 2011 Gushwell All rights reserved.                        
+ Microsoft MVP for Visual C#(Apr 2005 - Mar 2012)                        
+
+■Gushwell's Page                                                         
+Gushwell's C# Dev Notes           : http://gushwell.ldblog.jp/            
+Gushwell's C# Programming Page    : http://gushwell.ifdef.jp/             
+Gushwellの読書ノート              : http://gushwell.jugem.jp/             
+─────────────────────────────────────

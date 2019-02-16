@@ -1,0 +1,129 @@
+┏━┳━━━━━━━━━━━━━━━━━━━━━━━━━┳━┳━┳━┓
+┃☆┃ C#プログラミングレッスン                         ┃＿┃□┃×┃
+┣━┻━━━━━━━━━━━━━━━━━━━━━━━━━┻━┻━┻━┫
+┃ポリモーフィズム                                           No.037 ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+
+■──────────────────────────────────
+■ virtual と override キーワード
+
+さて、前回のShape、Triangle、Rectangleクラスを以下のようにちょっと書き
+換えて見ます。
+
+  class Shape {
+      private double x;
+      private double y;
+      public Shape(double width, double height) {
+          x = width;
+          y = height;
+      }
+      public double X {
+          get { return x; }
+      }
+      public double Y {
+          get { return y; }
+      }
+      public virtual double GetArea() {
+          return -1;
+      }
+  }
+
+  class Triangle : Shape {
+      public Triangle(double width, double height) 
+          : base(width,height) {
+      }
+      public override double GetArea() {
+          return X * Y / 2;
+      }
+  }
+
+  class Rectangle : Shape {
+      public Rectangle(double width, double height) 
+          : base(width,height) {
+      }
+      public override double GetArea() {
+          return X * Y;
+      }
+  }
+
+
+変更した箇所は、
+１．Shapeクラス
+     新たに、GetAreaを追加。virtualキーワードに注目
+２．Triangle、Rectangleクラス
+     既存の GetAreaメソッドに overrideキーワードを付加。
+です。
+親クラスである Shapeクラスと、派生クラスであるTriangle,Rectangleクラス
+に同じ名前（同じ目的）のメソッド GetAreaがあります。
+このように、  親子で同じ名前のメソッドを定義する場合は、 親クラスで、
+virtualを子供のクラスで、 overrideキーワードを使います。
+
+なお、親クラスでは、Shapeクラスでは、面積を求める方法は分かりませんので、
+-1 を返すようにしています。
+
+  ※ この部分は、次回（あるいは、次々回？）でさらに改良します。
+
+なお、 virtualが付いたメソッドを「仮想メソッド」と言います。その仮想メ
+ソッドを子孫クラスで上書きするすることを「オーバーライドする」と言いま
+す。
+
+■──────────────────────────────────
+■ ポリモーフィズム
+
+この修正でいったい何が変わったのでしょうか。 virtual と overrideを導入
+することで、実は、とても面白いことが可能になるのです。
+以下のコードを見てください。
+
+    Shape[] shapes = new Shape[4];
+    shapes[0] = new Triangle(8, 6);
+    shapes[1] = new Triangle(10, 5);
+    shapes[2] = new Rectangle(5, 3);
+    shapes[3] = new Rectangle(8, 5);
+    for ( int i = 0; i < shapes.Length; i++ ) {
+        Shape shape = shapes[i];
+        Console.WriteLine(shape.GetArea());
+    }
+
+shapes配列には、TriangleとRectangleのインスタンスが格納されています。
+  ※ この部分は、前回説明しましたよね。覚えていますか？
+     親クラスの変数には、子孫クラスのインスタンスが格納できたのですよ
+     ね。
+そして、注目すべきは、for 文の中です。shapes配列に格納されている全ての
+インスタンスの面積を求めているのですが、 プログラムのコード上は、Shape
+クラスの GetAreaを呼び出しているように見えます。
+しかし、実際には、ShapeクラスのGetAreaは呼び出されずに、shapes配列に格
+納されているインスタンスがTriangleならば、 TriangleのGetAreaメソッドが
+呼ばれ、 shapes 配列に格納されているインスタンスが、 Rectangleならば、
+Rectangleクラスの、GetAreaが呼び出されるのです。
+
+結果は、次のようになります。
+
+ 24
+ 25
+ 15
+ 40
+
+今回示したプログラムでは、Triangle, Rectangleのインスタンスをあたかも、
+Shapeのインスタンスであるかのように扱っています。 これを、オブジェクト
+指向の用語では、ポリモーフィズムと言います。
+別の言い方をすれば、「異なる型の同一視」です。
+TriangleやRectangle を Shape型と同一視してプログラミングしているわけで
+す。
+
+もし、このポリーフィズムの機能を使わないと、どういったプログラムになる
+か考えて見てください。 そのインスタンスが、TriangleかRectangleかの判断
+をし、分岐処理を書かなくてはなりません。
+ポリモーフィズムを使えば、 このようなif 文が不要になり、プログラムがと
+てもすっきりとします。
+
+┌─┬─────────────────────────┬─┬─┬─┐
+│☆│ C#プログラミングレッスン  (ぼぼ週刊）            │＿│□│×│
+├─┴─────────────────────────┴─┴─┴─┤
+│ Published by GushWell  (Microsoft MVP for Visual C#)             │
+│ Copyright (C) 2004-2005 GushWell All rights reserved.            │
+│-------------------- GushWell's Page ---------------------------- │
+│ 窓際プログラマーの独り言  ：http://blog.livedoor.jp/gushwell/    │
+│ 窓際プログラマーの読書三昧：http://gushwell.jugem.jp/            │
+│             よろしかったらアクセスしてみてください！             │
+└─────────────────────────────────┘

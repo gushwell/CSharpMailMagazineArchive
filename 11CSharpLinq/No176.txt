@@ -1,0 +1,226 @@
+┏━┳━━━━━━━━━━━━━━━━━━━━━━━━━┳━┳━┳━┓
+┃☆┃ C#プログラミングレッスン                         ┃＿┃□┃×┃
+┣━┻━━━━━━━━━━━━━━━━━━━━━━━━━┻━┻━┻━┫
+┃ C#3.0-LINQ SelectMany                                      No.176┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+SelectManyは、理解するのが少し難しい演算子かもしれません。
+そのため、いきなりSelectManyの例を示すのではなく、Select演算子の復習
+から話を始めます。
+
+■──────────────────────────────────
+■Select演算子の復習
+
+まず、「スペインの顧客の注文データを抜き取る」コード例を示します。
+
+ var customers = NorthwindObjects.GetCustomers();
+ var orders = customers
+             .Where(c => c.Country == "Spain")
+             .Select(c => c.Orders);
+
+クエリ式を使ったコードは、以下のとおりです。
+
+ var customers = NorthwindObjects.GetCustomers();
+ var orders = from c in customers
+              where c.Country == "Spain"
+              select c.Orders;
+
+ちなみに、Customerクラスは、
+
+ public class Customer {
+     public string CustomerID { get; set; }
+     public string CompanyName { get; set; }
+     public string ContactName { get; set; }
+     public string Country { get; set; }
+     ...
+     public IEnumerable<Order> Orders { get; set; } // 注文オブジェクト一覧
+ }
+
+のように、注文オブジェクトと関連をもっています。
+この注文オブジェクトを一つ一つ取り出すには、
+
+ // スペインにある顧客の数だけ繰り返し
+ foreach (var g in orders) {
+     // 一つの顧客に関する注文の数だけ繰り返し
+     foreach (var o in g)
+         Console.WriteLine("{0} {1} {2}", 
+              o.CustomerID, o.OrderID, o.OrderDate);
+ }
+
+
+のように、２重ループが必要になります。
+結果を以下に示します。
+
+BOLID 10326 1996/10/10 0:00:00
+BOLID 10801 1997/12/29 0:00:00
+BOLID 10970 1998/03/24 0:00:00
+GALED 10366 1996/11/28 0:00:00
+GALED 10426 1997/01/27 0:00:00
+GALED 10568 1997/06/13 0:00:00
+GALED 10887 1998/02/13 0:00:00
+GALED 10928 1998/03/05 0:00:00
+GODOS 10303 1996/09/11 0:00:00
+GODOS 10550 1997/05/28 0:00:00
+GODOS 10629 1997/08/12 0:00:00
+GODOS 10872 1998/02/05 0:00:00
+GODOS 10874 1998/02/06 0:00:00
+GODOS 10888 1998/02/16 0:00:00
+GODOS 10911 1998/02/26 0:00:00
+GODOS 10948 1998/03/13 0:00:00
+GODOS 11009 1998/04/08 0:00:00
+GODOS 11037 1998/04/21 0:00:00
+ROMEY 10281 1996/08/14 0:00:00
+ROMEY 10282 1996/08/15 0:00:00
+ROMEY 10306 1996/09/16 0:00:00
+ROMEY 10917 1998/03/02 0:00:00
+ROMEY 11013 1998/04/09 0:00:00
+
+■──────────────────────────────────
+■SelectMany
+
+SelectManyを使うと、階層構造になっているオブジェクトを展開した形で結果
+を受け取ることができます。
+前回のGroupJoinの反対のような動きと言ったら良いでしょうか。
+SelectManyを使ったコードを以下に示します。
+
+ var customers = NorthwindObjects.GetCustomers();
+ var orders = customers
+             .Where(c => c.Country == "Spain")
+             .SelectMany(c => c.Orders);
+ foreach (var o in orders)
+     Console.WriteLine("{0} {1} {2}", 
+         o.CustomerID, o.OrderID, o.OrderDate);
+
+最初に示したコードの Select演算子が、SelectManyになっている点と、繰り
+返しが一重になっている点が異なります。
+結果は先ほどと同じですので省略します。
+
+
+この SelectManyメソッドと同等のクエリ式を書くには、from句を複数使いま
+す。
+
+ var customers = NorthwindObjects.GetCustomers();
+ var orders = from c in customers
+              where c.Country == "Spain"
+              from o in c.Orders
+              select o;
+ foreach (var o in orders)
+     Console.WriteLine("{0} {1} {2}", 
+         o.CustomerID, o.OrderID, o.OrderDate);
+
+
+■──────────────────────────────────
+■SelectMany応用
+
+応用例として２つの例をあげましょう。
+
+■例1
+ var customers = NorthwindObjects.GetCustomers();
+ var orders = customers
+             .Where(c => c.Country == "Spain")
+             .SelectMany(c => c.Orders)
+             .Where(o => o.OrderDate.Year == 1998)
+             .Select(o => 
+                  new { o.CustomerID, o.OrderID, o.OrderDate });
+ foreach (var o in orders)
+     Console.WriteLine(o);
+
+
+これは、Spainの顧客で、1998年の注文データを抜き出し、必要な項目だけを
+匿名クラスとして抜き出しているコードです。
+
+クエリ式だと、以下のようになります。
+
+ var customers = NorthwindObjects.GetCustomers();
+ var orders = 
+     from c in customers
+     where c.Country == "Spain"
+     from o in c.Orders
+     where o.OrderDate.Year == 1998 
+     select new {c.CustomerID, o.OrderID, o.OrderDate};
+ foreach (var o in orders)
+     Console.WriteLine(o);
+
+結果の一部を以下に示します。
+{ CustomerID = BOLID, OrderID = 10970, OrderDate = 1998/03/24 0:00:00 }
+{ CustomerID = GALED, OrderID = 10887, OrderDate = 1998/02/13 0:00:00 }
+{ CustomerID = GALED, OrderID = 10928, OrderDate = 1998/03/05 0:00:00 }
+{ CustomerID = GODOS, OrderID = 10872, OrderDate = 1998/02/05 0:00:00 }
+{ CustomerID = GODOS, OrderID = 10874, OrderDate = 1998/02/06 0:00:00 }
+
+※ 匿名クラスの場合は、ToString() メソッドがoverrideされているため、
+   WriteLine メソッドで、オブジェクトを渡すだけで、プロパティの内容が
+   表示されます。
+
+
+■例2
+
+今度は、数値が格納されたジャグ配列を操作の対象としてみましょう。
+
+ var numtable = new[] { 
+     new[] { 10, 32, 54, 91, 3 },
+     new[] { 33, 65, 2, 50 },
+     new[] { 98, 43, 74, 74, 12, 6 },
+ };
+
+このnumtableに対し、
+
+ numtable.SelectMany(nums => nums)
+
+とすると、
+
+ 10, 32, 54, 91, 3, 33, 65, 2, 50, 98, 43, 74, 74, 12, 6
+
+というシーケンスが生成されます。
+
+これがわかれば、上記配列から、10以下の数を抜き出し、小さい順に取りだす
+ことが SelectManyを使って実現できます。
+
+var q = numtable.SelectMany(nums => nums)
+                .Where(n => n <= 10)
+                .OrderBy(n => n);
+foreach (var n in q)
+    Console.WriteLine(n);
+
+なお、SelectManyにわたるのは、numtableの各要素(intの配列)ですので、そ
+の配列の先頭3つまでの値を対象にしたいのならば、
+
+ var q = numtable.SelectMany(nums => nums.Take(3))
+                 .Where(n => n <= 10)
+                 .OrderBy(n => n);
+
+と書くことで、91,3, 50, 74, 12, 6 は除外されますので結果は、
+
+ 2
+ 10
+
+と表示されます。
+
+このコードをクエリ式で書くと、以下のようになります。
+
+ var q = from a in numtable
+         from b in a.Take(3)
+         where b <= 10
+         orderby b
+         select b;
+
+参考文献
+ http://www.microsoft.com/japan/msdn/net/bb394939.aspx
+
+
+┌─┬─────────────────────────┬─┬─┬─┐
+│☆│ C#プログラミングレッスン  (ぼぼ週刊）            │＿│□│×│
+├─┴─────────────────────────┴─┴─┴─┤
+│ Published by Gushwell.                                           │
+│ Copyright (C) 2004-2007 Gushwell All rights reserved.            │
+│ Microsoft MVP Visual Developer - Visual C#(Apr 2005 - Mar 2009)  │
+│-------------------- Gushwell's Page ---------------------------- │
+│ 窓際プログラマーの独り言  ：http://blog.livedoor.jp/gushwell/    │
+│ 窓際プログラマーの読書三昧：http://gushwell.jugem.jp/            │
+│ Gushwell's C# Programing Page：http://gushwell.ifdef.jp/         │
+│ C#デザインパターン :                                             │
+│  『増補改訂版Java言語で学ぶデザインパターン入門 / 結城 浩(著)』  │
+│   のサンプルコードをC#に移植したものを掲載しています。           │
+│   移植後のコードの公開は、結城氏の了解を得ています。             │
+│   http://blog.livedoor.jp/gushwell/archives/50333227.html        │
+└─────────────────────────────────┘

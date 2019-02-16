@@ -1,0 +1,94 @@
+┏━┳━━━━━━━━━━━━━━━━━━━━━━━━━┳━┳━┳━┓
+┃☆┃ C#プログラミングレッスン                         ┃＿┃□┃×┃
+┣━┻━━━━━━━━━━━━━━━━━━━━━━━━━┻━┻━┻━┫
+┃static (3)                                                 No.030 ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+さて、今回も、staticについてです、本当は、staticの説明は、前回で終わる
+予定だったのですが、書き忘れたことがあり、今回も static について説明し
+ます。
+ちょっと、しつこいような気もしましたが、staticメソッドと非staticメソッ
+ドの違いは重要だと思うので、 「善は急げ」ということで、No030をちょっと
+早めに発行することとしました。もともと「ほぼ週刊」という発行形態なので、
+御容赦を。
+
+■──────────────────────────────────
+■ 再度、staticについて考えてみる
+
+今まで作成してきた MyDate クラスのほかに、私たちは、もう一つクラスを定
+義してきました。それは、Mainメソッドが定義されている、Program クラスで
+す。
+第１８回で示したプログラムコードを再度掲載します。
+
+using System;
+
+class Program {
+    static void Main() {
+        string s = Console.ReadLine();
+        double num = double.Parse(s);
+        double meter = YardToMeter(num);
+        Console.WriteLine(meter);
+    }
+
+    static double YardToMeter(double yd) {
+        double meter = yd * 0.9144;
+        return meter;
+    }
+}
+
+static の意味が分かると、 なぜ、YardToMeter メソッドにstaticが付いてい
+るのかもわかると思います。
+プログラムが開始される時には、 どのクラスのインスタンスも new されてい
+ません。つまり Program クラスのインスタンスも new されていない状態です。
+つまり、 Mainメソッドが呼び出された時点で、Programクラスのインスタンス
+は存在しておらず、  この状態で、  YardToMeterメソッドを呼び出すには、
+YardToMeterメソッドを、staticする必要がある、ということです。
+
+なお、
+        double meter = YardToMeter(num);
+の部分は、
+        double meter = Program.YardToMeter(num);
+という意味です。 Programクラスに属しているYardToMeter を呼び出している
+ので、クラス名である Program. を省略することが可能です。
+
+では、問題です。この YardToMeterメソッドの static を取り去った時に、コ
+ンパイルエラーをなくすには、Main メソッドをどう直せば良いでしょうか。
+
+それは、以下のようにすればOKです。
+
+    static void Main() {
+        string s = Console.ReadLine();
+        double num = double.Parse(s);
+        Program pgm = new Program();
+        double meter = pgm.YardToMeter(num);
+        Console.WriteLine(meter);
+    }
+
+Mainメソッドから、 自分自身のインスタンスを new し、そのインスタンス変
+数に対し、YardToMeter を呼ぶのです。
+
+
+■──────────────────────────────────
+■ 最後に
+
+.NET Framework のクラスには、沢山の static メソッドがありますので、プ
+ログラミング初心者の方は、なぜ、newしないと使えないメソッドと、newしな
+くても使えるメソッドがあるのか、疑問に思う人もいるようですが、staticの
+意味を正しく理解すれば、その疑問も自ずと解けてきます。
+
+ちなみに、 Console クラスでは、WriteLineメソッドをはじめとする全てのメ
+ソッドが、staticとして定義されています。また、new できないように、コン
+ストラクタが、privateになっています。
+なぜ、そのようになっているのかを是非、考えて見てください。
+
+┌─┬─────────────────────────┬─┬─┬─┐
+│☆│ C#プログラミングレッスン                         │＿│□│×│
+├─┴─────────────────────────┴─┴─┴─┤
+│ Published by GushWell                                            │
+│ Copyright (C) 2004-2005 GushWell All rights reserved.            │
+│-------------------- GushWell's Page ---------------------------- │
+│ 窓際プログラマーの独り言  ：http://blog.livedoor.jp/gushwell/    │
+│ 窓際プログラマーの読書三昧：http://gushwell.jugem.jp/            │
+│             よろしかったらアクセスしてみてください！             │
+└─────────────────────────────────┘
+

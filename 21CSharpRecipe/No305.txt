@@ -1,0 +1,154 @@
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━━━ No.305 ━□
+
+「レシピ編」-- リストの操作 (2)
+                                                           by Gushwell  
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+今日のコード
+
+1. リストに要素を最後尾に追加するには
+2. リストに要素を挿入するには
+3. リストから要素を削除するには
+4. リスト内の２つの要素を入れ替えるには
+5. リストの要素を並び替えるには
+6. リストから条件に一致する要素を検索するには
+7. リスト内の全ての要素に対して処理をするするには
+
+■□───────────────────────────────────
+■□ 説明に使うクラスの定義
+
+今回は、以下のような Fruitオブジェクトのリストに対する処理をみていきましょ
+う。
+
+class Fruit {
+    public int Code { get; set; }
+    public int Price { get; set; }
+    public string Name { get; set; }
+    public override string ToString() {
+        return string.Format("{0} {1} {2}",Code, Price, Name);
+    }
+}
+...
+
+List<Fruit> fruits = new List<Fruit> {
+    new Fruit { Code = 10, Price = 100,  Name = "Apple" },
+    new Fruit { Code = 20, Price = 80,   Name = "Orange" },
+    new Fruit { Code = 30, Price = 1000, Name = "Melon" },
+    new Fruit { Code = 40, Price = 50,   Name = "Strawberry" },
+    new Fruit { Code = 50, Price = 120,  Name = "Peach" },
+};
+
+前回までとは異なり、リストそのものに処理を加えるコード（追加、削除、並び替
+えなど）とします。
+なお、ラムダ式が使えるところでは積極的にラムダ式を使用することとします。
+
+
+■□───────────────────────────────────
+■□ リストから条件に一致する要素を検索するには
+
+条件に一致する要素を見つけるコードです。最初に見つかった要素を返します。
+
+var obj = fruits.Find(o => o.Code == 4);
+
+なお、Findメソッドは、Predicate<T>デリゲートを引数に取りますので、この例の
+ように、ラムダ式で、条件を指定することが可能です。
+
+次は、条件に一致する要素をすべて見つけるコードです。
+
+var list = fruits.FindAll(o => o.Price < 100);
+
+■□───────────────────────────────────
+■□ リストに要素を追加するには
+
+リストの最後尾に、要素を追加するコードです。Addメソッドを使います。
+
+fruits.Add(new Fruit { Code = 60, Price = 800, Name = "Pineapple" });
+
+
+■□───────────────────────────────────
+■□ リストに要素を挿入するには
+
+任意の位置に要素を挿入するコードです。Insertを使うことで、任意の位置に要素
+を挿入することができます。
+次の例では、インデックスに0を指定することで、先頭に要素を挿入しています。
+
+fruits.Insert(0, new Fruit { Code = 1, Price = 90, Name = "Lemon" });
+
+
+■□───────────────────────────────────
+■□ リストから要素を削除するには
+
+位置を指定し、要素を削除するコードです。
+
+fruits.RemoveAt(2);
+
+条件に一致した要素をひとつだけ削除するコードです。Findメソッドで一致した要
+素を見つけ、それをRemoveメソッドの引数に渡してあげることで、
+要素を削除しています。
+
+fruits.Remove(list.Find(f => f.Name == "Peach"));
+
+
+条件に一致する要素をすべて削除するには、RemoveAllメソッドを使います。
+
+fruits.RemoveAll(f => f.Price < 120);
+
+
+■□───────────────────────────────────
+■□ リスト内の２つの要素を入れ替えるには
+
+ここでは、0番目と１番目の要素を入れ替えるコードを示します。
+これは基本中の基本のコードですね。
+
+var temp = fruits[0];
+fruits[0] = fruits[1];
+fruits[1] = temp;
+
+
+■□───────────────────────────────────
+■□ リストの要素を並び替えるには
+
+リストの要素をある条件にしたがい並び替えるコードです。
+ここでは、価格の安い順に並び替えています。
+
+fruits.Sort((o1, o2) => o1.Price - o2.Price);
+
+LINQのOrderByを使った場合、オリジナルのリストを並び替えることができません。
+そのため、OrderByを使うのならば、以下のようなコードを書く必要があります。
+
+
+fruits = fruits.OrderBy(o => o.Price).ToList();
+
+
+■□───────────────────────────────────
+■□ リスト内の全ての要素に対して処理をするするには
+
+ここでは、Fruit型のオブジェクトを引数に取る、Exec メソッドを呼び出すコード
+を示すます。
+
+foreach (var f in fruits)
+    Exec(f);
+
+これが、もっとも一般的なコードだと思います。
+しかし、ForEachメソッドを使えば、以下のように書くことが可能です。
+
+fruits.ForEach(Exec);
+
+引数が一つの場合は、以下のように、わざわざラムダ式を使う必要はありません。
+
+fruits.ForEach(f => Exec(f));
+
+
+─────────────────────────────────────
+『C#プログラミングレッスン』  (ぼぼ週刊）                                 
+☆皆さまからの感想をお待ちしています。http://gushwell.ifdef.jp/mail.html  
+─────────────────────────────────────
+Published by Gushwell.                                                    
+ Copyright (C) 2011 Gushwell All rights reserved.                        
+ Microsoft MVP for Visual C#(Apr 2005 - Mar 2012)                        
+
+■Gushwell's Page                                                         
+Gushwell's C# Dev Notes           : http://gushwell.ldblog.jp/            
+Gushwell's C# Programming Page    : http://gushwell.ifdef.jp/             
+Gushwellの読書ノート              : http://gushwell.jugem.jp/             
+─────────────────────────────────────

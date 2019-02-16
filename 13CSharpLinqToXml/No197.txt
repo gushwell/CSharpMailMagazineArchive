@@ -1,0 +1,107 @@
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━ No.197 ━□
+  
+   「LINQ to XML編」 -- XMLをカスタムクラスに変換する
+                                                         by Gushwell  
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+■□―――――――――――――――――――――――――――――――――
+■□ カスタムクラスを利用する
+
+これまでは、LINQのクエリで取得したデータは、匿名クラスを利用していまし
+たが、今回は以下のクラスのオブジェクトとして扱いたいとします。
+
+ class Book {
+     public string Title;
+     public string Publisher;
+     public int Price;
+     public string Isbn;
+     public IEnumerable<string> Authers;
+ }
+
+XMLファイルから、すべてのBook要素を取得するクエリ式は、
+ 
+ var query = from xbook in xdoc.Root.Elements()
+             select new Book {
+                Title = xbook.Element("title").Value,
+                Price = (int)xbook.Element("price"),
+                Isbn = xbook.Attribute("isbn").Value,
+                Publisher = xbook.Element("publisher").Value,
+                Authers = xbook.Element("authers")
+                               .Elements().Select(a => a.Value)
+             };
+
+となります。
+
+ ※ sample.xmlは、http://gushwell.ifdef.jp/mailmag/sample.xmlに掲載し
+    てあります。
+
+このquery変数の方は、IEnumerable<Book>ですので、さらにLINQ to Objectの
+クエリ式を書くこともできます。
+今度は、Bookオブジェクトとして扱えるので、Title,Priceなどのプロパティ
+名が使えますので、可読性を上げることができます。
+
+ var oreillyBooks = from book in query
+                    where book.Price < 5000 &&
+                          book.Publisher == "Oreilly"
+                    orderby book.Title
+                    select book;
+ foreach (var b in q)
+     Console.WriteLine(b.Title);
+                
+
+■□―――――――――――――――――――――――――――――――――
+■□ 配列に変換する
+
+また、
+
+    Book[] books = query.ToArray();  // ★
+
+と配列に変換してしまえば、それ以降は、配列としてXMLデ―タ扱うことが可
+能です。
+
+ここまで読んで、「えっ、この場合Authersはどうなるの？」と疑問に思った
+方は、鋭い感覚の持ち主です。
+そうです、最初に示したクエリ式では、BookオブジェクトのAuthersには、
+
+   Authers = xbook.Element("authers")
+                  .Elements().Select(a => a.Value)
+
+と、Select演算子で得られた結果が格納されていますので、クエリがまだ実行
+されていません。Booksを完全な配列にするには、最初に示したクエリ式で
+
+  Authers = xbook.Element("authers")
+                 .Elements()
+                 .Select(a => a.Value)
+                 .ToArray()
+  
+と配列に変換しておくか、あるいは、★印のquery.ToArray()の実行後に、各
+Authersを配列に変換してあげる必要があります。以下にそのコ―ドを示しま
+す。 
+
+  Book[] books = query.ToArray();
+  foreach (var book in books) {
+     book.Authers = book.Authers.ToArray();
+  }
+
+  ※ 配列も IEnumerable<T>インタ―フェ―スを実装していますので、
+     IEnumerable<string>型のAuthersメンバ―に、ToArray()で求めた
+     配列を再代入することができます。
+     
+
+───────────────────────────────────
+『C#プログラミングレッスン』  (ぼぼ週刊）                             
+───────────────────────────────────
+ Published by Gushwell.                                               
+   Copyright (C) 2004-2009 Gushwell All rights reserved.              
+   Microsoft MVP - Visual C#(Apr 2005 - Mar 2009)                     
+
+ <<■ Gushwell's Page ■>>
+ 窓際プログラマ―の独り言  ：http://blog.livedoor.jp/gushwell/        
+ 窓際プログラマ―の読書三昧：http://gushwell.jugem.jp/                
+ Gushwell's C# Programming Page：http://gushwell.ifdef.jp/            
+ C#デザインパタ―ン :                                                 
+  『増補改訂版Java言語で学ぶデザインパタ―ン入門 / 結城 浩(著)』      
+   のサンプルコ―ドをC#に移植したものを掲載しています。               
+   移植後のコ―ドの公開は、結城氏の了解を得ています。                 
+   http://gushwell.ifdef.jp/dp/csdpindex.html                         
+───────────────────────────────────

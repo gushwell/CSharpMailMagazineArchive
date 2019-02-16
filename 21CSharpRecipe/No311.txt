@@ -1,0 +1,121 @@
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━━━ No.311 ━□
+
+「レシピ編」-- 文字列の操作 (1)
+                                                           by Gushwell  
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+今回は、文字列を操作するコードをいくつか示します
+
+今日のコード
+
+1.アルファベットの小文字を大文字に変換するには
+2.全てアルファベットの小文字かどうかを調べるには
+3.文字列の前後の空白を取り除くには
+4.文字列の一部を取り除くには
+
+
+■□───────────────────────────────────
+■□ アルファベットの小文字を大文字に変換するには
+
+まずは、簡単な例から始めましょう。最初は、英小文字を、英大文字に変換する
+コードです。
+
+string source = "The quick brown fox jumps over a lazy dog.";
+string target = source.ToUpper();
+
+
+target には、
+"THE QUICK BROWN FOX JUMPS OVER A LAZY DOG."
+がセットされます。
+
+
+■□───────────────────────────────────
+■□ 全てアルファベットの小文字かどうかを調べるには
+
+
+文字列の文字がすべて英小文字かどうかを調べるコードです。
+
+string source = "silverlight";
+bool b = true;
+foreach (var c in source)
+    if (!char.IsLower(c))
+        b = false;
+
+文字列の中の文字を１文字ずつ取り出すのもforeach が使えます。
+IEnumerable<char> を実装しているからですね。
+
+LINQを使えば、もっと簡単に書くことができす。
+
+string source = "silverlight";
+bool b = source.All(c => char.IsLower(c));
+
+さらに
+
+string source = "silverlight";
+bool b = source.All(char.IsLower);
+
+と書くこともできます。
+
+
+文字種を調べるメソッドは、char.IsLower 以外に、
+
+char.IsUpper、char.IsDigit、char.IsLetterOrDigit
+
+などがあります。
+
+
+■□───────────────────────────────────
+■□ 文字列の前後の空白を取り除くには
+
+まずは、Trimメソッドを使うだけです。
+
+string source = "   white space   ";
+string target = source.Trim();
+Console.WriteLine("[{0}]", target);
+
+結果は、
+
+[white space]
+
+と表示されます。
+
+TrimStart、TrimEnd メソッドを使えば、前後片方だけの空白を取り除くことができ
+ます。
+
+string source = "   white space   ";
+string target1 = source.TrimStart();
+string target2 = source.TrimEnd();
+Console.WriteLine("[{0}]\n[{1}]", target1, target);
+
+結果は以下のように表示されます、
+
+[white space   ]
+[   white space]
+
+
+■□───────────────────────────────────
+■□ 文字列の一部を取り除くには
+
+ここでは、文字列の４文字目から６文字文を取り除くコードを示します。
+Removeメソッドを使うだけです。
+
+string source = "The quick brown fox jumps over a lazy dog.";
+string target = source.Remove(4, 6);
+
+targetには、次の文字列が格納されます。
+
+"The brown fox jumps over a lazy dog."
+
+─────────────────────────────────────
+『C#プログラミングレッスン』  (ほぼ週刊）                                 
+☆皆さまからの感想をお待ちしています。http://gushwell.ifdef.jp/mail.html  
+─────────────────────────────────────
+Published by Gushwell.                                                    
+ Copyright (C) 2011 Gushwell All rights reserved.                        
+ Microsoft MVP for Visual C#(Apr 2005 - Mar 2012)                        
+
+■Gushwell's Page                                                         
+Gushwell's C# Dev Notes           : http://gushwell.ldblog.jp/            
+Gushwell's C# Programming Page    : http://gushwell.ifdef.jp/             
+Gushwellの読書ノート              : http://gushwell.jugem.jp/             
+─────────────────────────────────────

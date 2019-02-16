@@ -1,0 +1,118 @@
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━━━ No.287 ━□
+  
+ 「.NET Framework4 編」-- SortedSet<T>クラス
+                                                             by Gushwell  
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+
+■□───────────────────────────────────
+■□ System.Collections.Generic.SortedSet<T>
+
+SortedSet<T> は、要素を挿入および削除するときに並べ替え順序を保持するコレ
+クションクラスです。重複する要素は使用できません。
+UnionWith, IntersectWith, ExceptWith などの２つのコレクション間の演算を
+行うメソッドが用意されています。
+
+ UnionWith      現在のSortedSet<T>と指定されたコレクションの両方に存在する
+                すべての要素が格納されるようにオブジェクトを変更します。
+
+ IntersectWith  指定されたコレクションに存在する要素だけが含まれるように
+                現在のSortedSet<T>オブジェクトを変更します。
+
+ ExceptWith     現在の SortedSet<T> オブジェクトから、指定されたコレクシ
+                ョンに含まれる要素をすべて削除します。
+
+これからわかるように、SortedSet<T>は、集合演算をサポートします。
+
+簡単なサンプルコードを示します。
+
+■ Addメソッド
+
+SortedSet<T>に要素を追加するコードです。
+
+  SortedSet<int> set = new SortedSet<int>();
+  set.Add(10);
+  set.Add(6);
+  set.Add(4);
+  set.Add(4);
+  set.Add(7);
+  set.Add(6);
+  foreach (var n in set) 
+      Console.Write("{0} ", n);
+  Console.WriteLine();
+
+結果は
+
+4 6 7 10 
+
+と表示されます。
+
+
+■ UnionWithメソッド
+
+和集合演算をする UnionWith メソッドのサンプルコードです。
+
+  SortedSet<int> set1 = new SortedSet<int>(new int[] { 4, 5, 6, 7, 8, 9 });
+  SortedSet<int> set2 = new SortedSet<int>(new int[] { 1, 2, 3, 4, 5, 6 });
+  set1.UnionWith(set2);
+  foreach (var n in set1)
+      Console.Write("{0} ", n);
+
+両方に存在するすべての要素が格納されるようにset1を変更しています。
+結果は、
+
+1 2 3 4 5 6 7 8 9
+
+が表示されます。
+
+
+■ IntersectWithメソッド
+
+積集合演算をする IntersectWith メソッドのサンプルコードです。
+
+ SortedSet<int> set1 = new SortedSet<int>(new int[] { 4, 5, 6, 7, 8, 9 });
+ SortedSet<int> set2 = new SortedSet<int>(new int[] { 1, 2, 3, 4, 5, 6 });
+ set1.IntersectWith(set2);
+ foreach (var n in set1)
+     Console.Write("{0} ", n);以下のコードは、ExceptWith メソッドの例です。
+
+結果は、
+
+4 5 6
+
+と表示されます。
+
+
+■ ExceptWithメソッド
+
+差集合演算をする ExceptWith メソッドのサンプルコードです。
+
+  SortedSet<int> set1 = new SortedSet<int>(new int[] { 4, 5, 6, 7, 8, 9 });
+  SortedSet<int> set2 = new SortedSet<int>(new int[] { 1, 2, 3, 4, 5, 6 });
+  set1.ExceptWith(set2);
+  foreach (var n in set1)
+      Console.Write("{0} ", n);
+
+
+実行すると、
+
+7 8 9
+
+が表示されます。
+
+
+─────────────────────────────────────
+『C#プログラミングレッスン』  (ぼぼ週刊）                                 
+ ☆皆さまからの感想をお待ちしています。http://gushwell.ifdef.jp/mail.html 
+─────────────────────────────────────
+ Published by Gushwell.                                                   
+   Copyright (C) 2011 Gushwell All rights reserved.                       
+   Microsoft MVP for Visual C#(Apr 2005 - Mar 2012)                       
+                                                                          
+ ■Gushwell's Page                                                        
+ Gushwell's C# Dev Notes           : http://gushwell.ldblog.jp/           
+ Gushwell's C# Programming Page    : http://gushwell.ifdef.jp/            
+ Gushwell's F# Programming Diary   : http://techbank.jp/gushwell/         
+ Gushwellの読書ノート              : http://gushwell.jugem.jp/            
+─────────────────────────────────────
+

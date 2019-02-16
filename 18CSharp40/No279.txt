@@ -1,0 +1,110 @@
+
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━━━ No.279 ━□
+  
+ 「C#4.0 編」-- ジェネリッククラスの共変性
+                                                             by Gushwell  
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+みなさん、あけましておめでとうございます。
+C#プログラミングレッスンを始めてなんと７回目のお正月を迎えました。これだけ
+続けているとさすがに書くネタに困ってきたのですが、今年もなんとか頑張って続
+けていきたいと思います。
+今年1年「C#プログラミングレッスン」をよろしくお願いします。
+
+C#4.0で新たにサポートされたジェネリッククラスの共変性と反変性について2回に
+わたって説明します。
+今回は共変性についてです。
+
+■□───────────────────────────────────
+■□ ジェネリッククラスの共変性
+
+C#では、以下のようなコードを書くことができません。
+
+  List<string> strList = new List<string>();
+  List<object> objList = strList;  //この代入はコンパイルエラーになる
+
+この理由を考えてみましょう。
+
+ string str = "abc";
+ object obj = str;
+
+という代入ができるのだから、List<T> についても出来てもよさそうですが、コン
+パイルエラーになってしまいます。なぜでしょうか。その理由ですが、もしこれを
+許してしまうと、
+
+ List<string> strings = new List<string> {"A", "B", "C"};
+ List<object> objs = strings;
+ objs[0] = 123;  // 文字列以外を代入できる。
+ strings = objs;
+ 
+というコードが書けてしまうからです。これはとても危険です。
+C#4.0では、このような危険を排除するために、IEnumerable<T> のような型に限
+定し、
+
+  IEnumerable<string> strList = new IEnumerable<string>();
+  IEnumerable<object> objList = strList;
+
+というコードが書けるようになりました。
+これを共変性と言います。上記代入では、
+
+  IEnumerable<string> → IEnumerable<object>
+
+という型変換が行われているわけですが、オブジェクト指向プログラミングでは、
+自明な string -> object という型変換と同じ方向の型変換が行われるため、
+『共変性』と呼ぶ、と覚えていただければよいと思います。
+
+なお、値型に対しては、共変性は認められていません。
+つまり、IEnumerable<int>, IEnumerable<DateTime> といったオブジェクトは対
+象外となります。
+この制限は、次回説明する反変性にも適用されます。
+
+
+■□───────────────────────────────────
+■□ 配列の共変性
+
+C#4.0の機能ではありませんが、せっかくなので、配列の共変性についても見てみ
+ましょう。
+
+  string[] strarray = new string[10];
+  object[] objarray = strarray;  // ★
+
+★が共変性の部分です。
+objarray経由で、stringでない値を代入できてしまうため、危険なコードが
+書けてしまいますので、配列で共変性の機能を利用する場合は
+注意が必要です。
+
+
+もう一つ例を見てみます。
+
+ void Hoge(object[] objs) {
+     foreach (var o in objs) {
+         Console.WriteLine(o);
+     }
+ }
+
+というメソッドを定義すれば、このメソッドは、共変性の機能により、string[]
+やMyClass[] といった参照型の配列オブジェクトを受け取ることができます。
+
+配列の場合も同様に、値型に対しては、共変性は認められていません。
+つまり、int[], DataTime[] といった配列オブジェクトは、Hogeの引数に渡すこ
+とはできません。
+
+
+─────────────────────────────────────
+『C#プログラミングレッスン』  (ぼぼ週刊）                                 
+ ☆皆さまからの感想をお待ちしています。http://gushwell.ifdef.jp/mail.html 
+─────────────────────────────────────
+ Published by Gushwell.                                                   
+   Copyright (C) 2011 Gushwell All rights reserved.                       
+   Microsoft MVP for Visual C#(Apr 2005 - Mar 2011)                       
+                                                                          
+ ■Gushwell's Page                                                        
+ Gushwell's C# Dev Notes           : http://gushwell.ldblog.jp/           
+ Gushwell's C# Programming Page    : http://gushwell.ifdef.jp/            
+ Gushwell's F# Programming Diary   : http://techbank.jp/gushwell/         
+ Gushwellの読書ノート              : http://gushwell.jugem.jp/            
+                                                                          
+ ■コミュニティtechbank.jp (http://techbank.jp/)                          
+ Gushwellが参加している技術系コミュニティです。                           
+ 有志メンバーによるBlogでの技術情報発信も行っています。                   
+─────────────────────────────────────

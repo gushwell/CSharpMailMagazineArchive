@@ -1,0 +1,150 @@
+
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━━━ No.258 ━□
+  
+ 「LINQ to SQL編」-- 遅延実行
+                                                             by Gushwell  
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+■□───────────────────────────────────
+■□ 遅延実行
+
+LINQを使ったクエリ操作は、次の３つの手順を取ります。
+
+ 1.データ ソースを取得します。
+ 2.クエリを作成します。
+ 3.クエリを実行します。
+
+では、以前にお見せした以下のコードと照らし合わせてみましょう。
+
+ using (var db = new NorthwindDataContext()) {
+     var query = from product in db.Products
+                 where product.UnitPrice < 10
+                 select product;
+     foreach (var p in query)
+         Console.WriteLine("{0} | {1} | {2} | {3}",
+             p.ProductID, p.ProductName, p.CategoryID, p.UnitPrice);
+ }
+
+
+NorthwindDataContext() をnewしている箇所が、「データソースを取得」している
+ところです。
+LINQ to SQLでは、必ず、DataCOntextを生成するところから操作が始まります。
+
+次にクエリを作成しています。作成したクエリは、変数queryに代入しています、
+重要なのは、ここではまだ、クエリは発行されていないということです。
+単に「クエリ式」がquery変数に代入されているだけです。
+
+実際のクエリ実行は、foreachステートメントでクエリ変数が反復処理されるまで
+延期されます。これを「遅延実行」と言います。LINQ to Objectと同じですね。
+
+この性質を利用すれば、最新のデータを取得するクエリを一つ用意し、それを、何
+回も使うということが出来ます。この場合、（その間でデータが更新されていれば）
+毎回異なった結果を得ることになります。
+
+
+■□───────────────────────────────────
+■□ クエリ式をつなげる
+
+さらに遅延実行の性質から、以下のようにクエリ式をつなげることができます。
+
+ using (var db = new NorthwindDataContext()) {
+     var query = from product in db.Products
+                 where product.UnitPrice < 10
+                 select product;
+     var query2 = from product in query  // queryを入力にしている
+                  where product.ProductName.StartsWith("T")
+                  select product;
+     foreach (var p in query2)
+         Console.WriteLine("{0} | {1} | {2} | {3}",
+             p.ProductID, p.ProductName, p.CategoryID, p.UnitPrice);
+ }
+
+これは、遅延実行の利点の 1 つと捕らえることができます。
+クエリを部分的に作成し、それをつなげることが出来ますので、単純なクエリ式
+の組み合わせで、複雑なクエリを作り出すことが出来ます。
+もちろん、実際のSQLが発行されるときには、一つのSQL文として発行されます。
+
+このサンプルコードでは、
+
+ SELECT [t0].[ProductID], [t0].[ProductName], [t0].[SupplierID], 
+        [t0].[CategoryID], [t0].[QuantityPerUnit], [t0].[UnitPrice], 
+        [t0].[UnitsInStock], [t0].[UnitsOnOrder], [t0].[ReorderLevel],
+        [t0].[Discontinued]
+ FROM [dbo].[Products] AS [t0]
+ WHERE ([t0].[ProductName] LIKE @p0) AND ([t0].[UnitPrice] < @p1)
+ -- @p0: Input NVarChar (Size = 4000; Prec = 0; Scale = 0) [T%]
+ -- @p1: Input Decimal (Size = -1; Prec = 33; Scale = 4) [10]
+
+というクエリが発行されます。
+
+実行結果は
+
+ 19 | Teatime Chocolate Biscuits | 3 | 9.2000
+ 23 | Tunnbrod | 5 | 9.0000
+ 54 | Tourtiere | 6 | 7.4500
+
+となります。
+
+※ここで示したサンプルは、あくまでも、機能を示すためのものです。
+  この程度ならば、わざわざ２つに分割する必要はありませんね。
+
+
+--------------------------------------------------------------------------
+■■読者プレゼント■■
+--------------------------------------------------------------------------
+Visual Studio 2010 Ultimate with MSDN Subscription のアクティベーションカ
+ードを、当メールマガジンの読者 1 名の方にプレゼントします。
+
+Visual Studio 2010 Ultimate with MSDN Subscription は、Visual Studio シリ
+ーズの中の最上位エディションで、設計、開発、テスト、導入、そしてその管理ま
+で、アプリケーション ライフサイクルを広範囲にカバーする製品です。
+
+●応募方法
+  希望される方は、以下に示す「Gushwellへの問い合わせ」ページから、申込んで
+  ください。
+  http://gushwell.ifdef.jp/mail.html
+
+  お名前：ハンドル名でもかまいません。
+  メールアドレス：連絡可能なメールアドレス
+  題名：「プレゼント希望」と記入してください。
+  本文：以下の３項目を必ずご記入ください。
+        ・応募要件にあるWebサイト、ブログのUR。
+        ・Visual Studio 2010 を利用する目的
+        ・当メールマガジンのご意見、ご感想
+ 
+  ※ メールアドレスは、当選者に連絡をする目的のみで利用いたします。
+
+●応募要件
+・当メールマガジンを購読していただいている方
+・ブログスペースまたはWebサイトををお持ちの方
+・Visual Studio 2010 を使った感想などをブログなどで公開して下さる方
+・MSDN サブスクリプションを所持または使用したことがないこと。
+・Visual Studio 2010 Ultimate を所持または使用したことがないこと。
+
+●締め切り
+ 2010年7月31日
+
+●当選通知
+ 8月上旬
+ 当選した方には、直接メールでお知らせいたします。
+
+
+─────────────────────────────────────
+『C#プログラミングレッスン』  (ぼぼ週刊）                                 
+ ☆皆さまからの感想をお待ちしています。http://gushwell.ifdef.jp/mail.html 
+─────────────────────────────────────
+ Published by Gushwell.                                                   
+   Copyright (C) 2004-2010 Gushwell All rights reserved.                  
+   Microsoft MVP for Visual C#(Apr 2005 - Mar 2011)                       
+                                                                          
+ ■Gushwell's Page                                                        
+ 窓際プログラマ─の独り言        : http://gushwell.ldblog.jp/             
+ Gushwell's C# Programming Page  : http://gushwell.ifdef.jp/              
+ Gushwell's F# Programming Diary : http://techbank.jp/gushwell/           
+ Gushwellの読書ノート            : http://gushwell.jugem.jp/              
+                                                                          
+ ■コミュニティtechbank.jp (http://techbank.jp/Community/blogs/)          
+ Gushwellが参加している技術系コミュニティです。                           
+ 有志メンバーによるBlogでの技術情報発信も行っています。
+─────────────────────────────────────
+

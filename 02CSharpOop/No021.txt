@@ -1,0 +1,131 @@
+┏━┳━━━━━━━━━━━━━━━━━━━━━━━━━┳━┳━┳━┓
+┃☆┃ C#プログラミングレッスン                         ┃＿┃□┃×┃
+┣━┻━━━━━━━━━━━━━━━━━━━━━━━━━┻━┻━┻━┫
+┃クラスの定義と利用                                         No.021 ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+■──────────────────────────────────
+■ クラスのインスタンスは複数作成できる
+
+さて、前回、クラスのインスタンスを作成する方法について説明しました。
+インスタンスを作成するには、new 演算子を使い、
+
+  MyDate date = new MyDate();
+
+と書くのでしたね。
+では、プログラムで２つの日付を同時に扱う時はどうしたらよいのでしょうか。
+新たな、MyDate2 というクラスを定義するのでしょうか。いえそうではなく、
+クラスと言うのは、テンプレート、あるいは設計図のようなものですから、そ
+こからインスタンス（実体）を複数作成することができます。
+
+  MyDate date1 = new MyDate();
+  MyDate date2 = new MyDate();
+
+と書けば、２つの日付を扱うことができるようになります。
+
+  MyDate date1 = new MyDate();
+  MyDate date2 = new MyDate();
+  date1.year = 2004;
+  date1.month = 12;
+  date1.day = 29;
+  date2.year = 2005;
+  date2.month = 1;
+  date2.day = 10;
+  PrintDate(date1);
+  PrintDate(date2);
+
+のように書くことができます。
+
+
+■──────────────────────────────────
+■ クラスの配列
+
+２つではなく、もっと沢山の日付を一度に扱う場合は、配列を使うこともでき
+ます。
+
+配列は、
+  int[] nums = new int[4];
+のように書きましたね。 この int の部分を MyDate という型名に替えること
+で、日付を配列に格納できるようになります。
+
+  MyDate[] dates = new MyDate[4];
+
+なお、 ここで注意しないといけないのは、上記の new は、
+
+「 配列を確保するための  new であり、
+   MyDate インスタンスを生成する new ではない 」
+
+ということです。
+つまり、 この段階では、4個の容器を確保しただけであり、日付そのものは、
+まだメモリに存在していません。このため、配列 dates に日付を入れるには、
+以下のように書く必要があります。
+
+  MyDate[] dates = new MyDate[4];
+  dates[0] = new MyDate();
+  dates[1] = new MyDate();
+  dates[2] = new MyDate();
+  dates[3] = new MyDate();
+
+それぞれの日付に、年月日をセットするには、
+
+  dates[0].year = 2005;
+  dates[0].month = 1;
+  dates[0].day = 10;
+
+のように書きます。
+
+メモリの状態を図で示すと、以下のようになります。
+
+  dates          確保した配列
+ ┏━━━━┓     ┏━━━┓     ┏━━━━━━━━━━━━┓
+ ┃      ─╂──>┃    ─╂──>┃MyDateのインスタンス    ┃
+ ┗━━━━┛     ┣━━━┫     ┗━━━━━━━━━━━━┛
+                  ┃    ─╂┐
+                  ┗━━━┛│   ┏━━━━━━━━━━━━┓
+                            └─>┃MyDateのインスタンス    ┃
+                                 ┗━━━━━━━━━━━━┛
+
+
+では、今回の最後として、実際に動くプログラムリストを載せておきます。
+
+using System;
+
+class MyDate {
+    public int year;
+    public int month;
+    public int day;
+}
+
+class Program {
+    static void Main(string[] args) {
+        MyDate[] dates = new MyDate[2];
+        dates[0] = new MyDate();
+        dates[0].year = 2004;
+        dates[0].month = 12;
+        dates[0].day = 27;
+        dates[1] = new MyDate();
+        dates[1].year = 2005;
+        dates[1].month = 1;
+        dates[1].day = 10;
+        foreach ( MyDate dt in dates )
+          PrintDate(dt);
+
+    }
+
+    private static void PrintDate(MyDate date) {
+        Console.WriteLine("{0}年{1}月{2}日",
+                          date.year, date.month, date.day);
+    }
+}
+
+
+┌─┬─────────────────────────┬─┬─┬─┐
+│☆│ C#プログラミングレッスン                         │＿│□│×│
+├─┴─────────────────────────┴─┴─┴─┤
+│ Published by GushWell                                            │
+│ Copyright (C) 2004/08-2004/12                                    │
+│-------------------- GushWell's Page ---------------------------- │
+│ 窓際プログラマーの独り言  ：http://blog.livedoor.jp/gushwell/    │
+│ 窓際プログラマーの読書三昧：http://gushwell.jugem.jp/            │
+│             よろしかったらアクセスしてみてください！             │
+└─────────────────────────────────┘

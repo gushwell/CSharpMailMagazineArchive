@@ -1,0 +1,216 @@
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━━━ No.249 ━□
+  
+ 「どう書く？org編」-- 重複無し乱数
+                                                             by Gushwell  
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+
+■□───────────────────────────────────
+■□ お題： 重複無し乱数 (http://ja.doukaku.org/46/)
+
+
+整数nを渡すと1 ～ n までの整数を重複しないようランダムに出力する関数
+「bingo」を作ってください。
+
+■□───────────────────────────────────
+■□ 解答
+
+方針としては、1 ～ n までの正数のリストを作成し、その要素の順番をランダム
+に変更する処理を書くことにします。
+お題では「ランダムに出力する関数」を作成せよとのことですが、ここでは、「ラ
+ンダムな整数列を返すメソッド」として実装しました。
+
+ using System;
+ using System.Collections.Generic;
+ using System.Linq;
+
+ namespace Sample {
+     class Program {
+         static void Main(string[] args) {
+             List<int> nums = Bingo(20);
+             foreach (int n in nums)
+                 Console.Write("{0} ", n);
+             Console.ReadLine();
+         }
+
+         static List<int> Bingo(int n) {
+             var list = Enumerable.Range(1, n).ToList();
+             Shuffle(list);
+             return list;
+         }
+
+         private static Random rnd = new Random();
+
+         private static void Shuffle(List<int> list) {
+             int n = list.Count();
+             for (int i = 0; i < n * 2; i++) {
+                 int x = rnd.Next(0, n);
+                 int a = list[x];
+                 list.RemoveAt(x);
+                 list.Add(a);
+             }
+         }
+     }
+}
+
+■□───────────────────────────────────
+■□ 解説
+
+この関数の肝は、Shuffleメソッドです。このメソッドでは、リストのある場所の
+要素を取り出し、それを一番後ろに移動する（削除して追加する）ことを繰り返す
+ことで、リストの要素をばらばらに並べ替えています。引数 n には、要素を入替
+える回数を与えます。
+
+もうひとつのやり方として、1 ～ n までの乱数を発生させ、まだリストに存在し
+ない値ならば、リストに追加してゆくというやり方もあります、しかし、この方法
+は、
+・"同じ数が連続して生成される可能性がある"、
+・"その都度リストの中を走査する必要がある"
+という点で、効率的なやり方ではないと思われます。
+
+
+■□───────────────────────────────────
+■□ 発展(1)
+
+では、別の方法で実装したBingoメソッドも示します。
+
+■別バージョンその１
+
+    private static Random rnd = new Random();
+        
+    static List<int> Bingo(int n) {
+        List<int> list = new List<int>();
+        for ( int i = 1; i <= n; i++ ) {
+            int ix = rnd.Next(i);  // ★ 引数を i にしているのがポイント
+            list.Insert(ix, i);
+        }
+        return list;
+    }
+
+1からnまでの数を、ランダムな位置に挿入してゆくことで、ランダムな数列を作り
+出しています。
+ポイントは、挿入位置を求める際に、リストのサイズをオーバーしないようにして
+いる点です。
+
+■別バージョン その２(LINQ版）
+
+  using System.Linq;
+  ....
+
+    private static Random rnd = new Random();
+
+    static List<int> Bingo(int n) {
+        return Enumerable.Range(1, n).OrderBy(x => rnd.Next(n)).ToList();
+    }
+
+1-nまでの数列をRangeメソッドで作りだし、それを OrderByメソッドで、ソートし
+ています。このときのソートキーを乱数にすることで、ばらばらの数列を作り出し
+ています。
+
+
+■□───────────────────────────────────
+■□ 発展(2)
+
+先ほど、出てきたShuffle関数ですが、これをもう少し汎用性の高いものに書き直
+してみようと思います。
+
+    static List<int> Bingo(int n) {
+        var list = Enumerable.Range(1, n).ToList();
+        Shuffle(list);
+        return list;
+    }
+
+が、
+
+    static List<int> Bingo(int n) {
+        return Enumerable.Range(1, n).Shuffle().ToList();
+    }
+
+とかけると、とてもコードがすっきりしますよね。
+これには、C#3.0で導入された拡張メソッドを定義する必要があります。
+拡張メソッドを書くと、既存の型にメソッドを "追加" できます。
+拡張メソッド版のShuffleを示します。
+
+  static class ListExtentions {
+      static Random rnd = new Random();
+      public static List<T> Shuffle<T>(this IEnumerable<T> list) {
+          List<T> result = list.ToList<T>();
+          int n = list.Count();
+          for (int i = 0; i < n*2; i++) {
+              int x = rnd.Next(0, n);
+              T a = result[x];
+              result.RemoveAt(x);
+              result.Add(a);
+          }
+          return result;
+      }
+  }
+
+このメソッドでは、引数で与えられた listの中身を入れ替えるのではなく、
+listの複製を作り、その中身を入れ替え、複製を返しています。
+これは、メソッドに副作用をもたらさないために必要なものです。
+
+なお、このメソッドは、int以外の型にも対応しています。
+
+例えば、
+
+      string s = "ABCDEFGHIJKLMN";
+      string s2 = new string(s.Shuffle(10).ToArray());
+      Console.WriteLine(s2);
+
+とすれば、文字列 ｓ の文字の順番を入替えて、新たな文字列 s2を生成できます。
+
+※ 拡張メソッドの説明は、ナックナンバー No.159
+   http://www.melma.com/backnumber_120830_4024802/
+   をご覧ください。
+
+
+
+■□───────────────────────────────────
+■□ 次回のお題： 漢数字で九九の表 (http://ja.doukaku.org/212/)
+
+漢数字で九九の表を作ってください。 
+ただし以下の条件をつけます。 
+
+条件 
+一．アラビア数字（0～9）禁止。 
+    プログラムにも出力結果にもアラビア数字を含んではいけない。（全角・半角とも） 
+二．結果の数字は、「七」とか「一○」(=10)とか「六四」(=64)のような形式とする。 
+三．九九の結果をそのままプログラム中に書き込んではいけない。 
+
+出力例
+
+　一　　二　　三　　・・・・
+　二　　四　　六　　・・・・
+　三　　六　　九　　・・・・
+　四　　八　一二　　・・・・
+　五　一〇　一五　　・・・・
+　・
+　・
+
+
+ 出題:syatさん
+
+─────────────────────────────────────
+『C#プログラミングレッスン』  (ぼぼ週刊）                                 
+─────────────────────────────────────
+ ☆メールマガジンの感想お待ちしています☆                                 
+   http://gushwell.ifdef.jp/mail.html                                     
+
+ Published by Gushwell.                                                   
+   Copyright (C) 2004-2010 Gushwell All rights reserved.                  
+   Microsoft MVP for Visual C#(Apr 2005 - Mar 2011)                       
+                                                                          
+ <<■ Gushwell's Page ■>>                                                
+ 窓際プログラマ─の独り言        : http://gushwell.ldblog.jp/             
+ Gushwellの読書ノート            : http://gushwell.jugem.jp/              
+ Gushwell's F# Programming Diary : http://techbank.jp/gushwell/           
+ Gushwell's C# Programming Page  : http://gushwell.ifdef.jp/              
+   C#デザインパタ─ン  : http://gushwell.ifdef.jp/dp/csdpindex.html       
+                                                                          
+ <<■ コミュニティtechbank.jp (http://techbank.jp/Community/) ■>>        
+ Gushwellが参加している技術系コミュニティです。                           
+ マイクロソフト系テクノロジー＆製品に特化したコミュニティです。Webサイトで
+ は、VB、C#、VC++、SQL Server, BizTalk Server などの技術情報を公開していま
+ す。皆さんの参加をお待ちしています。
+─────────────────────────────────────

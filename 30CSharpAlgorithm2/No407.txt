@@ -1,0 +1,208 @@
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━━━ No.407 ━□
+
+「続・アルゴリズム編」-- 有効グラフ(1)
+                                                          by Gushwell
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+■□───────────────────────────────────
+■□ 問題 （有効グラフ）
+
+有効グラフが与えられたとき、2つのノード間に経路があるかどうかを見つけるアル
+ゴリズムを設計してください。
+
+ 出展：『世界で闘うプログラミング力を鍛える150問』
+ http://www.amazon.co.jp/exec/obidos/ASIN/4839942390/gaius-22/
+
+
+■□───────────────────────────────────
+■□ 下準備 （EgeとNode)
+
+グラフ構造をあらわすクラスが.NET Frameworkには無いようなので、ここでは簡易
+な Graph<T>クラスを定義することとします。
+
+このGraph<T>が持つ要素として、頂点（Vertex）と辺（Edge）がありますので、ま
+ずはその二つのクラスから定義しましょう。
+なお、このプログラムでは、頂点クラスはVertexではなく、Nodeという用語を使う
+こととします。
+
+まずは、Edge<T>クラスのコード。
+
+   class Edge<T> where T : IComparable {
+       public Edge(Node<T> toNode) {
+           this.ToNode = toNode;
+       }
+
+       // A -> Bを表す Aは自分自身、ToNodeは Bを表す
+       public Node<T> ToNode { get; private set; }
+   }
+
+有向グラフということなので、このEdge<T>クラスは方向を表します。コメントにあ
+るとおり、AノードからBノードへの辺を表す場合、Egde<T>にはBノードだけを保持
+します。
+次に Node<T>クラスのコードを示します。
+
+   class Node<T> where T : IComparable {
+       // コンストラクタ
+       // ノードが持つ値を受け取る。
+       public Node(T val) {
+           EdgeList = new List<Edge<T>>();
+           Value = val;
+       }
+
+       // ノードが保持する値
+       public T Value { get; private set; }
+
+       // Nodeが保持する　エッジ・リスト
+       private List<Edge<T>> EdgeList { get; set; }
+
+       // エッジを追加
+       public void AddEdge(Edge<T> edge) {
+           EdgeList.Add(edge);
+       }
+
+       // 隣接するノードを取り出す
+       public IEnumerable<Node<T>> GetAdjacents() {
+           return EdgeList.Select(x => x.ToNode);
+       }
+   }
+
+
+Node<T>クラスは、EdgeList という複数の辺(Edge)を保持するフィールドを保持し
+ています。つまり、ひとつのノードから複数の辺が伸びていて、その先に別のノー
+ドが存在するということになります。
+
+例えば、AノードのEdgeListプロパティに、Bノードへの参照を持つEdgeオブジェク
+トがあれば、A から B への方向を持つことがわかります。
+Edge<T>は無くして、Node<T>に、複数のNodeリストだけで有効グラフを表すことも
+できると思いますが、あえて(Edge)辺クラスを設け、グラフということを明確にし
+てみました。
+
+■□───────────────────────────────────
+■□ 下準備 （Graph)
+
+次に、グラフ全体を現すクラス Graph<T> のコードです。
+
+   class Graph<T> where T : IComparable  {
+       private Dictionary<Node<T>,object> AllNodes { get; set; }
+
+       // コンストラクタ
+       public Graph() {
+           AllNodes = new Dictionary<Node<T>,object>();
+       }
+
+       // すべてのノードを取得
+       public IEnumerable<Node<T>> GetNodes() {
+           return AllNodes.Keys;
+       }
+
+       // ノードを追加
+       public void AddNode(Node<T> node) {
+           AllNodes[node] = null;
+       }
+
+       // 複数のノードを追加
+       public void AddNodes(params Node<T>[] nodes) {
+           foreach (var n in nodes)
+               AddNode(n);
+       }
+
+       // node1 -> node2 を表すエッジを追加
+       public void AddEdge(Node<T> node1, Node<T> node2) {
+           if (!AllNodes.ContainsKey(node1))
+               throw new InvalidOperationException();
+           node1.AddEdge(new Edge<T>(node2));
+       }
+
+       public Node<T> FindNode(T value) {
+           foreach (var obj in AllNodes.Keys) {
+               if (obj.Value.CompareTo(value) == 0 )
+                   return obj;
+           }
+           return null;
+       }
+   }
+
+
+■□───────────────────────────────────
+■□ Graph<T>の動作を確認する
+
+Graph<T>クラスの定義が終わりましたので、定義したクラスの使い方と動きを確認
+しましょう。以下のようなコードでグラフを作り出します。
+
+       private static Graph<char> MakeGraph() {
+           var graph = new Graph<char>();
+           var a = new Node<char>('A');
+           var b = new Node<char>('B');
+           var c = new Node<char>('C');
+           var d = new Node<char>('D');
+           var e = new Node<char>('E');
+           var f = new Node<char>('F');
+           var g = new Node<char>('G');
+           graph.AddNodes(a, b, c, d, e, f, g);
+           graph.AddEdge(a, b);
+           graph.AddEdge(a, c);
+           graph.AddEdge(b, d);
+           graph.AddEdge(b, e);
+           graph.AddEdge(b, f);
+           graph.AddEdge(c, g);
+           graph.AddEdge(e, d);
+           graph.AddEdge(f, g);
+           return graph;
+       }
+
+見てお分かりの通り、すべてのノードをグラフに追加してから、辺の情報を与えて、
+ノード間の経路を作り出しています。
+この例では、経路のループはありません。
+
+次に、このグラフの内容を確認するコード。
+
+       private static void Print(Graph<char> graph) {
+           foreach (var node in graph.GetNodes()) {
+               Console.Write(node.Value);
+               Console.Write(" -> ");
+               foreach (var n in node.GetAdjacents())
+                   Console.Write(n.Value.ToString() + " ");
+               Console.WriteLine();
+           }
+       }
+
+       static void Main(string[] args) {
+           var graph = MakeGraph();
+           Print(graph);
+           Console.ReadLine();
+       }
+
+実行すると以下のような出力が得られます。
+
+   A -> B C
+   B -> D E F
+   C -> G
+   D ->
+   E -> D
+   F -> G
+   G ->
+
+これを見れば、Aノードからは、Bノード、Cノードへの辺があることが分かります。
+また、Dノードからは、どこへの辺が出ていないのが分かります。
+いちおう正しく動いているようです。
+
+それでは、いよいよ問題を解いていくことになりますが、今回もずいぶんと長くなって
+しまいましたので、続きは次回ということにします。
+皆さんも、それまでに、どうやって解くのかを考えてみてください。
+
+
+─────────────────────────────────────
+『C#プログラミングレッスン』  (ほぼ週刊）
+☆皆さまからの感想をお待ちしています。http://gushwell.ifdef.jp/mail.html
+─────────────────────────────────────
+Published by Gushwell.
+Copyright (C) 2014 Gushwell All rights reserved.
+Microsoft MVP for Visual C#(Apr 2005 - Mar 2015)
+
+■Gushwell's Page
+facebook Page                     : http://www.facebook.com/CSharpLesson
+Gushwell's C# Dev Notes           : http://gushwell.ldblog.jp/
+Gushwell's C# Programming Page    : http://gushwell.ifdef.jp/
+気ままな読書ノート                : http://gwbooks.hatenablog.com/
+Twitterアカウント                 : @gushwell
+─────────────────────────────────────

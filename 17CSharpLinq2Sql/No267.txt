@@ -1,0 +1,164 @@
+
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━━━ No.267 ━□
+  
+ 「LINQ to SQL編」-- データベースの更新
+                                                             by Gushwell  
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+
+■□───────────────────────────────────
+■□ 前回の復習
+
+まずは、前回の復習です。
+
+エンティティオブジェクトに対する変更は、メモリ内のデータベースのレプリカ
+に対してのみ行われると書きましたが、それを確認してみます。
+前回示したコードを再度掲載します。
+
+
+ using (var db = new NorthwindDataContext()) {
+     var query = from product in db.Products
+                 where product.ProductID == 5
+                 select product;
+     var p = query.SingleOrDefault();
+     if (p != null) {
+         Console.WriteLine("{0} {1}", p.ProductID, p.UnitPrice);
+         p.UnitPrice = 30.5m;   // ★
+         var p2 = db.Products
+                    .Where(product => product.ProductID == 5)
+                    .Single();
+         Console.WriteLine("{0} {1}", p2.ProductID, p2.UnitPrice);
+     }
+ }
+
+
+実行すると、コンソールには、
+
+ 5 21.3500
+ 5 30.5
+
+
+と表示されますが、NorthwindDataContextをDisposeした後、再度、別の
+NorthwindDataContextオブジェクトでデータを取得すると、変更前のデータが取得
+されます。
+
+
+ using (var db = new NorthwindDataContext()) {
+     var query = from product in db.Products
+                 where product.ProductID == 5
+                 select product;
+     var p = query.SingleOrDefault();
+     if (p != null) {
+         Console.WriteLine("{0} {1}", p.ProductID, p.UnitPrice);
+         p.UnitPrice = 30.5m;   // ★
+     }
+ }
+ // 再度、Northwindデータベースに接続しなおし、読み込んでみる。
+ using (var db = new NorthwindDataContext()) {
+     var p2 = db.Products.Where(product => product.ProductID == 5).Single();
+     Console.WriteLine("{0} {1}", p2.ProductID, p2.UnitPrice);
+ }
+
+
+というコードでは、
+
+ 5 21.3500
+ 5 21.3500
+
+と表示され、変更が反映されていません。
+
+
+■□───────────────────────────────────
+■□ 変更を反映させるSubmitChangesメソッド
+
+では、変更をデータベースに反映させるには、どうすればよいかと言うと、単に
+DataContext.SubmitChangeメソッドを呼び出すだけです。
+
+
+ using (var db = new NorthwindDataContext()) {
+     var query = from product in db.Products
+                 where product.ProductID == 5
+                 select product;
+     var p = query.SingleOrDefault();
+     if (p != null) {
+         Console.WriteLine("{0} {1}", p.ProductID, p.UnitPrice);
+         p.UnitPrice = 30.5m;   // ★
+         b.SubmitChanges();
+     }
+ }
+
+
+これで、データベースに反映されます。
+
+SubmitChanges() は、メモリ内で行ったすべての変更を同等の SQL コマンドに変
+換し、対応するテーブルに対し、挿入、更新、削除を行います。
+
+ db.Log = Console.Out;
+
+
+の行を追加してみれば、UPDATE文が発行されているのが確認できるはずです。
+
+
+UPDATE [dbo].[Products]
+SET [UnitPrice] = @p9
+WHERE ([ProductID] = @p0) AND ([ProductName] = @p1) AND ([SupplierID] = @p2) AND
+ ([CategoryID] = @p3) AND ([QuantityPerUnit] = @p4) AND ([UnitPrice] = @p5) AND
+([UnitsInStock] = @p6) AND ([UnitsOnOrder] = @p7) AND ([ReorderLevel] = @p8) AND
+ ([Discontinued] = 1)
+-- @p0: Input Int (Size = -1; Prec = 0; Scale = 0) [5]
+-- @p1: Input NVarChar (Size = 4000; Prec = 0; Scale = 0) [Chef Anton's Gumbo Mi
+x]
+-- @p2: Input Int (Size = -1; Prec = 0; Scale = 0) [2]
+-- @p3: Input Int (Size = -1; Prec = 0; Scale = 0) [2]
+-- @p4: Input NVarChar (Size = 4000; Prec = 0; Scale = 0) [36 boxes]
+-- @p5: Input Money (Size = -1; Prec = 19; Scale = 4) [21.3500]
+-- @p6: Input SmallInt (Size = -1; Prec = 0; Scale = 0) [0]
+-- @p7: Input SmallInt (Size = -1; Prec = 0; Scale = 0) [0]
+-- @p8: Input SmallInt (Size = -1; Prec = 0; Scale = 0) [0]
+-- @p9: Input Money (Size = -1; Prec = 19; Scale = 4) [30.5]
+
+
+■注意事項
+
+なお、LINQ to SQL では、主キーが設定されていないテーブルに対しては、テー
+ブルに関するクエリを発行することはできますが、更新は行えないようですので
+注意してください。これは、一意のキーがない場合には、更新する行をフレーム
+ワークが認識できないためだと思われます。
+
+
+■ おまけ
+
+既に、ADO.NETを利用し開発している人には自明のことですが、
+Visual Studio でビルドすると、デフォルト設定では、NORTHWND.MDFは、デバッグ
+実行の出力フォルダに、ビルドの度にコピーされることになります。プログラムで
+行ったデータベースへの更新は、出力フォルダーにコピーされたデータベースに対
+して更新が行われます。そのため、更新、削除、挿入したとしても、再度プログラ
+ムを修正しビルドし直すと、変更前の状態のデータベースに対する処理となります。
+デバッグにはとても便利な機能です。
+
+なお、サーバーエクスプローラに表示されている NORTHWND.MDFは、プロジェクト
+フォルダにあるNORTHWND.MDFですので、デバッグ実行後に、このNORTHWND.MDFの
+内容を確認しても、プログラムで変更した内容は反映されていませんので注意し
+てください。
+
+
+
+─────────────────────────────────────
+『C#プログラミングレッスン』  (ぼぼ週刊）                                 
+ ☆皆さまからの感想をお待ちしています。http://gushwell.ifdef.jp/mail.html 
+─────────────────────────────────────
+ Published by Gushwell.                                                   
+   Copyright (C) 2004-2010 Gushwell All rights reserved.                  
+   Microsoft MVP for Visual C#(Apr 2005 - Mar 2011)                       
+                                                                          
+ ■Gushwell's Page                                                        
+ 窓際プログラマ─の独り言        : http://gushwell.ldblog.jp/             
+ Gushwell's C# Programming Page  : http://gushwell.ifdef.jp/              
+ Gushwell's F# Programming Diary : http://techbank.jp/gushwell/           
+ Gushwellの読書ノート            : http://gushwell.jugem.jp/              
+                                                                          
+ ■コミュニティtechbank.jp (http://techbank.jp/)                          
+ Gushwellが参加している技術系コミュニティです。                           
+ 有志メンバーによるBlogでの技術情報発信も行っています。                   
+─────────────────────────────────────
+

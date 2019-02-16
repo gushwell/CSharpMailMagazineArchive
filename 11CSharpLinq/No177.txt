@@ -1,0 +1,175 @@
+┏━┳━━━━━━━━━━━━━━━━━━━━━━━━━┳━┳━┳━┓
+┃☆┃ C#プログラミングレッスン                         ┃＿┃□┃×┃
+┣━┻━━━━━━━━━━━━━━━━━━━━━━━━━┻━┻━┻━┫
+┃ C#3.0-LINQ 連結演算子・等価演算子・限定子                  No.177┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+いよいよ明日(8/26)から TechEd 2008 Yokohama が始まりますね。
+僕も、2日間(8/27, 8/28)だけですが参加する予定です。参加証のカードの余
+白に"Gushwell"と書いておきますので、もし、気が付かれた方は、声をかけて
+ください。当メルマガの感想などをお聞かせいただけると嬉しいです。
+
+さて、今回は、欲張って、３つの演算子(連結演算子・等価演算子・限定子)に
+ついて説明します。
+
+■──────────────────────────────────
+■連結演算子：Concat
+
+Concat 演算子は、2 つのシーケンスを連結します。
+
+ var nums1 = new[] { 1, 2, 3, 5, 7, 9 };
+ var nums2 = new[] { 10, 8, 6, 5, 4, 2 };
+ var query = nums1.Concat(nums2)
+                  .OrderBy(n => n);
+ foreach (var o in query)
+     Console.WriteLine(o.ToString());
+
+これは簡単なので説明は不要ですね。
+結果は以下の通りです。
+
+ 1
+ 2
+ 2
+ 3
+ 4
+ 5
+ 5
+ 6
+ 7
+ 8
+ 9
+ 10
+
+
+■──────────────────────────────────
+■等価演算子：SequenceEqual
+
+SequenceEqual 演算子は、2 つのシーケンスが等しいかどうかをチェックしま
+す。
+
+ var nums1 = new[] { 1, 2, 3, 4, 5, 6 };
+ var nums2 = new[] { 1, 2, 3, 4, 5, 6, 7 };
+ var nums3 = new[] { 1, 2, 3, 4, 5, 6 };
+ bool b = nums1.SequenceEqual(nums2);
+ Console.WriteLine(b);
+ b = nums1.SequenceEqual(nums3);
+ Console.WriteLine(b);
+
+この結果は、
+ False
+ True
+と表示されます。
+
+
+■──────────────────────────────────
+■限定子：All演算子
+
+All 演算子は、シーケンスのすべての要素が条件を満たすかどうかをチェック
+します。戻り値は、boolです。
+もし、すべての要素が、Allの引数で示した条件に合致すれば、trueを返しま
+す。
+
+以下のコードは、すべての商品の在庫(UnitsInStock)があるかどうかを調べて
+います。
+
+ var products = NorthwindObjects.GetProducts();
+ bool b = products.All(p => p.UnitsInStock > 0);
+ Console.WriteLine(b);
+
+All 演算子は、空のシーケンスに対しては true を返します。
+
+
+■──────────────────────────────────
+■限定子：Any演算子
+
+Any演算子は、シーケンスのいずれかの要素が条件を満たすかどうかをチェッ
+クします。
+戻り値は boolです。
+もし、Anyの引数で示した条件に合致する要素が一つでもあれば、trueを返し
+ます。
+
+以下の例は、在庫が無い商品があるかどうかをチェックしています。
+
+ var products = NorthwindObjects.GetProducts();
+ bool b = products.Any(p => p.UnitsInStock == 0);
+ Console.WriteLine(b);
+
+
+■──────────────────────────────────
+■限定子：Contains演算子
+
+Contains 演算子は、指定された要素がシーケンスに含まれているかどうかを
+チェックします。
+以下のコードは、配列に 15 が含まれているかどうかをチェックしています。
+
+ var nums = new[] { 5, 10, 15, 20, 25, 30 };
+ bool b = nums.Contains(15);
+ Console.WriteLine(b);
+
+これを Anyで書けば、
+
+ bool b = nums.Any(n => n == 15);
+
+となります。
+
+
+■──────────────────────────────────
+■おまけ
+
+Contains拡張メソッドは、以下のoverloadも用意されています。
+
+ public static bool Contains<TSource>(
+        this IEnumerable<TSource> source,
+        TSource value,
+        IEqualityComparer<TSource> comparer);
+
+IEqualityComparerを実装した比較クラスを作れば、参照型のオブジェクトに
+おいて独自の比較をすることができます。
+
+たとえば、
+
+ class ProductComparer : IEqualityComparer<Product> {
+     public bool Equals(Product x, Product y) {
+         return x.ProductID == y.ProductID;
+     }
+
+     public int GetHashCode(Product obj) {
+         return obj.ProductID.GetHashCode();
+     }
+ }
+
+
+といたクラスを作成すれば、
+
+ var products = NorthwindObjects.GetProducts();
+ bool b = products.Contains(myProduct, new ProductComparer());
+
+と、独自の比較をすることができます。
+
+なお、このIEqualityComparer<T>を実装したクラスは、先に示した
+SequenceEqualでも利用できます。
+こんな感じ。
+
+ bool b = products1.SequenceEqual(products2,new ProductComparer());
+
+と書けば、独自の比較ができます。
+Productクラスで、Equalsメソッドをoverrideすれば、独自の比較はできます
+が、Productクラスに手を入れたくない、あるいは、場面に応じて、比較方法
+が異なるといった場合は、IEqualityComparer<T>が利用できます。
+
+┌─┬─────────────────────────┬─┬─┬─┐
+│☆│ C#プログラミングレッスン  (ぼぼ週刊）            │＿│□│×│
+├─┴─────────────────────────┴─┴─┴─┤
+│ Published by Gushwell.                                           │
+│ Copyright (C) 2004-2007 Gushwell All rights reserved.            │
+│ Microsoft MVP Visual Developer - Visual C#(Apr 2005 - Mar 2009)  │
+│-------------------- Gushwell's Page ---------------------------- │
+│ 窓際プログラマーの独り言  ：http://blog.livedoor.jp/gushwell/    │
+│ 窓際プログラマーの読書三昧：http://gushwell.jugem.jp/            │
+│ Gushwell's C# Programing Page：http://gushwell.ifdef.jp/         │
+│ C#デザインパターン :                                             │
+│  『増補改訂版Java言語で学ぶデザインパターン入門 / 結城 浩(著)』  │
+│   のサンプルコードをC#に移植したものを掲載しています。           │
+│   移植後のコードの公開は、結城氏の了解を得ています。             │
+│   http://gushwell.ifdef.jp/dp/csdpindex.html                     │
+└─────────────────────────────────┘

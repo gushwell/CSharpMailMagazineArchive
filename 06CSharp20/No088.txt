@@ -1,0 +1,104 @@
+┏━┳━━━━━━━━━━━━━━━━━━━━━━━━━┳━┳━┳━┓
+┃☆┃ C#プログラミングレッスン                         ┃＿┃□┃×┃
+┣━┻━━━━━━━━━━━━━━━━━━━━━━━━━┻━┻━┻━┫
+┃Generics(3) 制約                                            No.088┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+■──────────────────────────────────
+■ 制約
+
+ジェネリッククラスを作成していると、ある特定のメソッドを呼び出したくな
+る場合があります。
+例えば、CompareTo メソッドを使用して、ある値と比較する必要があるとしま
+す。
+
+ public class Stack<T> {
+     ...
+     public void Push(T x) {
+         if ( x.CompareTo(obj) > 0 ) {   // ※ 比較したい
+             items[size++] = x;
+         }
+     }
+     ...
+ }
+
+パラメータ T は、 どのような型でも受け取れるため、 その変数である x は
+object型によって宣言されているメソッド(Equals,  GetHashCode, ToString,
+GetType の４つに限られます。 そのため、上記コードは、※ の行でコンパイ
+ルエラーとなります。
+
+このエラーを回避するには、
+
+ if ( ((IComparable)x).CompareTo(obj) > 0 ) {
+
+のように、キャストすることが最も手取り早いのですが、これだと、T が、
+IComparable を実装していることが保障されていませんので、実行時に例外が
+発生する危険があります。
+
+そこで登場するのが、「制約」です。
+
+Stack<T>で、T が必ず、IComparable を実装していることを保障するには、
+whereキーワードを使い、次のように記述します。
+
+    public class Stack<T> where T: IComparable { ...} 
+
+のように記述します。これにより、T は IComparableを実装していることが
+保障されます。
+つまり、STack<T>を利用する側からみると、
+
+   Stack<MyClass> stack = new Stack<MyClass>();
+
+と書いた場合、MyClassは、IComparableインターフェースを実装していないと
+コンパイルエラーになります。
+
+なお、一つの型に、複数の制約を付けることも出来ます。
+
+    public class Stack<T> where T: IComparable, ICloneable {
+
+
+■──────────────────────────────────
+■ 制約いろいろ
+
+制約には、上記例で示した インターフェース以外に、いろいろな指定が可能で
+す。以下にその一部を示します。
+
+・構造体のみ許可
+    public class MyClass<T> where T : struct {
+        ...
+    }
+
+・クラスのみ許可
+    public class MyClass<T> where T : class {
+        ...
+    }
+
+・Personとそのサブクラスのみ許可
+    public class MyClass<T> where T : Person {
+       ...
+    }
+
+・IComparerを実装している Personとそのサブクラスのみ許可
+    public class MyClass<T> where T : Person, IComparer {
+        ...
+    }
+
+・引数なしパブリックコンストラクタを持っているもののみ許可
+    public class MyClass<T> where T : new() {
+        ...
+    }
+
+  ※ 制約を複数指定する場合、new()制約は、一番最後に指定する必要があり
+     ます。
+
+
+┌─┬─────────────────────────┬─┬─┬─┐
+│☆│ C#プログラミングレッスン  (ぼぼ週刊）            │＿│□│×│
+├─┴─────────────────────────┴─┴─┴─┤
+│ Published by Gushwell.                                           │
+│ Copyright (C) 2004-2006 Gushwell All rights reserved.            │
+│ Microsoft MVP Visual Developer - Visual C#(Apr 2006 - Mar 2006)  │
+│-------------------- Gushwell's Page ---------------------------- │
+│ 窓際プログラマーの独り言  ：http://blog.livedoor.jp/gushwell/    │
+│ 窓際プログラマーの読書三昧：http://gushwell.jugem.jp/            │
+│             よろしかったらアクセスしてみてください！             │
+└─────────────────────────────────┘

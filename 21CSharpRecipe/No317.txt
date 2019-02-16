@@ -1,0 +1,110 @@
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━━━ No.317 ━□
+
+「レシピ編」-- ファイル・ディレクトリの操作 (2)
+                                                           by Gushwell  
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+みなさん、こんにちは。
+このたび、「C#プログラミングレッスン」のFacebookページを作成しました。
+メルマガの発行のお知らせをはじめ、GushwellのWebページの更新情報なども発信し
+ていきたいと思います。
+facebookのアカウントを持っている方は、是非「いいね！」をしていただけれると
+うれしいです。
+http://bit.ly/zU9M02
+※URLが長いので、bit.ly で URLを短縮しています。
+
+それでは、今日のコードです。
+
+1. 一時ファイル名を取得するには
+2. ファイル名（パス名）を構成要素に分割するには
+3. 相対パスからフルパスを得るには
+
+■□───────────────────────────────────
+■□ 一時ファイル名を取得するには
+
+一時ファイル名を取得するには、Pathクラスの GetTempFileName メソッドを呼ぶ
+だけです。
+このメソッドは、一意な名前を持つ 0 バイトの一時ファイルをディスク上に作成し、
+そのファイルの完全パスを返します。
+このメソッドは、.TMP という拡張子を持つ一時ファイルを作成します。
+
+string tempFileName = Path.GetTempFileName();
+Console.WriteLine(tempFileName);
+
+GetTempPathという、時フォルダーのパスを返すメソッドも存在します。
+
+
+■□───────────────────────────────────
+■□ ファイル名（パス名）を構成要素に分割するには
+
+ファイル名を構成要素に分割するコードを示します。
+
+ string path = @"C:\Program Files\Microsoft Office\Office14\EXCEL.EXE";
+ string directoryName = Path.GetDirectoryName(path);
+ string fileName = Path.GetFileName(path);
+ string extention = Path.GetExtension(path);
+ string filenameWithoutExtention = Path.GetFileNameWithoutExtension(path);
+ string pathRoot = Path.GetPathRoot(path);
+
+ Console.WriteLine("DirectoryName : {0}", directoryName);
+ Console.WriteLine("FileName : {0}", fileName);
+ Console.WriteLine("Extention : {0}", extention);
+ Console.WriteLine("FilenameWithoutExtention : {0}", filenameWithoutExtention);
+ Console.WriteLine("PathRoot : {0}", pathRoot);
+
+■GetDirectoryNameメソッド
+指定したパス文字列のディレクトリ情報を返します。返されるパスには、パスの最後の \ 
+は含まれません。
+
+■GetFileName
+指定したパス文字列のファイル名と拡張子を返します。
+
+■GetExtension
+指定したパス文字列の拡張子を返します。返されるパスの拡張子には、ピリオド 
+"." を含みますので、注意してください。
+
+■GetFileNameWithoutExtension
+指定したパス文字列のファイル名を拡張子を付けずに返します。
+
+■GetPathRoot
+指定したパスのルート ディレクトリ情報("C:\" など)を取得します。
+
+
+上記コードの結果は、以下のようになります。
+
+DirectoryName : C:\Program Files\Microsoft Office\Office14
+FileName : EXCEL.EXE
+Extention : .EXE
+FilenameWithoutExtention : EXCEL
+PathRoot : C:\
+
+■□───────────────────────────────────
+■□ 相対パスからフルパスを得るには
+
+相対パスからフルパスを得るには、Path クラスの GetFullPathメソッドを使います。
+
+string fullPath = Path.GetFullPath(@".\sample.txt");
+Console.WriteLine(fullPath);
+
+path で指定したファイルまたはディレクトリは、実際に存在しなくてもOKえす。
+たとえば、c:\temp\gushwell が現在のディレクトリの場合は、test.txt を引数に
+渡し、GetFullPath を呼び出すと、c:\temp\gushwell\test.txt が返されます。
+
+FileInfoクラスにも、FullName プロパティがありますので、そのどちらを使うかは
+ケースバイケースだと思います。
+
+─────────────────────────────────────
+『C#プログラミングレッスン』  (ほぼ週刊）                                 
+☆皆さまからの感想をお待ちしています。http://gushwell.ifdef.jp/mail.html  
+─────────────────────────────────────
+Published by Gushwell.                                                    
+ Copyright (C) 2011 Gushwell All rights reserved.                        
+ Microsoft MVP for Visual C#(Apr 2005 - Mar 2012)                        
+
+■Gushwell's Page                                                         
+Gushwell's C# Dev Notes           : http://gushwell.ldblog.jp/            
+Gushwell's C# Programming Page    : http://gushwell.ifdef.jp/             
+Gushwellの読書ノート              : http://gushwell.jugem.jp/             
+Facebook page                     : http://bit.ly/zU9M02                  
+Twitterアカウント                 : @gushwell                             
+─────────────────────────────────────

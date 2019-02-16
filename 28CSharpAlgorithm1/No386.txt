@@ -1,0 +1,167 @@
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━━━ No.386 ━□
+
+「アルゴリズム編」-- リンクリスト(1)
+                                                           by Gushwell
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+
+おはようございます。関東地方では、２週連続の大雪となりましたね。まだまだ寒
+い日が続きそうですので、みなさん風邪などひかぬようお気をつけください。
+さて、２週間ほど空いてしまいましたが、「アルゴリズム編」を再開します。
+今回は、リンクリストです。
+
+
+■□───────────────────────────────────
+■□ 問題 （リンクリスト）
+
+ソートされていない連結リストから、重複する要素を削除するコードを書いてくだ
+さい。
+
+発展問題
+もし、一時的なバッファが使用できないとすれば、どうやってこの問題を解きます
+か？
+
+  出展：『世界で闘うプログラミング力を鍛える150問』
+  http://www.amazon.co.jp/exec/obidos/ASIN/4839942390/gaius-22/
+
+
+
+■□───────────────────────────────────
+■□ 問題を解くための準備
+
+問題では連結リストという用語を使っていますが、以降はリンクリストと言うこと
+とします。
+
+.NET Frameworkにも双方向のリンクリスト（LinkedList<T>）は存在するのですが、
+この問題を解くには機能過多であつかいが面倒なので、まずは、最低限の機能を持
+った単方向のリンクリストクラスを自作することとします。
+
+単方向リンクリストは、次の要素への参照を保持していて、この参照を辿ることで、
+リストに格納されている要素に順にアクセスできます。
+また要素の挿入や入替え、削除のコストが低いという特徴があります。
+図に描くと以下のような構造となります。
+
+    +----+----+   +----+----+   +----+----+  
+    |    |  --+-->|    |  --+-->|    |    |  
+    +----+----+   +----+----+   +----+----+  
+       node1         node2         node3
+
+ちなみに、.NET FrameworkのList<T>は、リンクリストではありません。
+
+
+■□───────────────────────────────────
+■□ 単方向リンクリストの実装
+
+ここでは、リンクリストとしての最低限の機能だけを実装することにします。
+
+まずは、Nodeクラスです。
+
+    class Node<T> {
+        public Node(T obj) {
+            Value = obj;
+        }
+        public Node(Node<T> prev, T obj) {
+            Value = obj;
+            Next = null;
+            if (prev != null)
+                prev.Next = this;
+        }
+
+        public T Value { get; set; }
+        public Node<T> Next { get; set; }
+    }
+
+
+Valueにリストに保持する値が入ります。
+Nextは、次の要素（実際にはNode)への参照が入ります。
+
+次に 単方向リンクリストである SingleLinkedListクラスです。
+
+    class SingleLinkedList<T> {
+        private Node<T> Last { get; set; }
+        public Node<T> Head { get; set; }
+        public void Append(T obj) {
+            var node = new Node<T>(obj);
+            if (Head == null)
+                Head = node;
+            else
+                Last.Next = node;
+            Last = node;
+        }
+
+    }
+
+
+Headプロパティには、一番先頭のNodeが格納されます。Lastプロパティは、最後尾
+のNodeが格納されます。
+今回実装するのは、Appendメソッドだけです。
+
+Appnedメソッドではまず、引数の要素をValiyeに持つNoideオブジェクトを生成しま
+す。
+次にこのNodeをリストの最後尾に追加するのですが、最初にAppendが呼ばれたとき
+は、先頭にこのNodeをセットします。
+２回目以降ならば、Last.Nextに、Nodeをセットします。この判定は、Headプロパテ
+ィがnullかどうかで判断しています。
+最後に、Lastプロパティを更新しておきます。
+
+
+■□───────────────────────────────────
+■□ SingleLinkedListの動作を確認
+
+正しく実装できているかちょっと確認するコードを書いてみましょう。
+
+確認コードを書こうとすると、リストを先頭から順にたどる処理が必要なことが
+わかります。
+そのために、リストを先頭から順に辿り、なんらかの処理(Actionデリゲート）を
+実行するメソッドをSingleLinkedListに追加します。
+
+
+    public void ForEach(Action<T> action) {
+        Node<T> curr = Head;
+        while (curr != null) {
+            action(curr.Value);
+            curr = curr.Next;
+        }
+    }
+
+        
+次に示すのが、Appendメソッドを使った確認コードです。
+
+    var list = new SingleLinkedList<int>();
+    list.Append(1);
+    list.Append(2);
+    list.Append(3);
+    list.Append(4);
+    list.ForEach(x => Console.WriteLine(x));
+
+
+結果は、
+
+    1
+    2
+    3
+    4
+
+と表示されますので、正しく動いているようです。最低限のテストしかしてません
+が...(^^;;
+
+
+これで本来の問題を解く準備ができましたが、今号はここまでとし、続きは次号に
+したいと思います。
+
+
+─────────────────────────────────────
+『C#プログラミングレッスン』  (ほぼ週刊）
+☆皆さまからの感想をお待ちしています。http://gushwell.ifdef.jp/mail.html
+─────────────────────────────────────
+Published by Gushwell.
+Copyright (C) 2013 Gushwell All rights reserved.
+Microsoft MVP for Visual C#(Apr 2005 - Mar 2014)
+
+■Gushwell's Page
+facebook Page                     : http://www.facebook.com/CSharpLesson
+Gushwell's C# Dev Notes           : http://gushwell.ldblog.jp/
+Gushwell's C# Programming Page    : http://gushwell.ifdef.jp/
+気ままな読書ノート                : http://gwbooks.hatenablog.com/
+Twitterアカウント                 : @gushwell
+─────────────────────────────────────

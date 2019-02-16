@@ -1,0 +1,129 @@
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━━━ No.358 ━□
+
+「暗号化編」-- デジタル署名
+                                                           by Gushwell  
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+今回は、DSACryptoServiceProviderを使ったデジタル署名についてコードを示し
+ます。公開キー システムを使用してデータにデジタル署名を行うと、データが署
+名者から発信され、署名後に変更されていないことを検証することができます。
+
+
+■□───────────────────────────────────
+■□ デジタル署名の処理流れ
+
+デジタル署名の処理の流れを示します。
+
+送信者(Alice)の処理
+(1) メッセージにハッシュ関数を適用して、メッセージのダイジェストを作成す
+    る。
+(2) メッセージ ダイジェストを自分の秘密キーで暗号化し、送信者のデジタル署
+    名を作成します。
+(3) メッセージと署名を公開キーと共に受信者に送ります。
+
+受信者(Bob)の処理
+(1) 受信者は、メッセージと署名を受け取ります。
+(2) 送信者が使用したものと同じハッシュ アルゴリズムを使用してメッセージか
+    らハッシュ（メッセージダイジェスト）を生成します。
+(3) 受け取った署名と、上記ハッシュを使い検証します。
+    この検証では、上記ハッシュ値と、公開キーを使用して署名から復元したメ
+    ッセージダイジェストに相違がないかを検証します。
+    相違がなければ、Bobはそのメッセージが送信中に改変されていないことと、
+    送信者がAliceであることが確認できます。
+
+なお、Aliceの公開キーは公開されているため、メッセージとデジタル署名があれ
+ば、だれもが検証することが可能です。
+
+■□───────────────────────────────────
+■□ デジタル署名のサンプルコード
+
+DSACryptoServiceProviderクラスを使ったサンプルコードを示します。
+
+using System;
+using System.Security.Cryptography;
+
+namespace Sample {
+    class Program {
+        static void Main() {
+            string message = "この文字列に対しデジタル署名を生成します。";
+
+            DSACryptoServiceProvider dsa = new DSACryptoServiceProvider();
+            string privateKey = dsa.ToXmlString(true);
+            string publicKey = dsa.ToXmlString(false);
+
+            byte[] digitalSign = MakeDigitalSign(message, privateKey);
+
+            if (VerifyDigitalSign(message, digitalSign, publicKey)) {
+                Console.WriteLine("OK");
+            } else {
+                Console.WriteLine("NG");
+            }
+            Console.ReadLine();
+        }
+
+        public static byte[] MakeDigitalSign(string message, string privateKey) {
+            byte[] digest = CreateHash(message);
+
+            // DSACryptoServiceProvider インスタンス生成
+            DSACryptoServiceProvider dsa = new DSACryptoServiceProvider();
+
+            // 秘密キーをインポート   
+            dsa.FromXmlString(privateKey);
+
+            // Formatterオブジェクトを生成
+            DSASignatureFormatter dsaFormatter = new DSASignatureFormatter(dsa);
+
+            // Hashアルゴリズムを指定する
+            dsaFormatter.SetHashAlgorithm("SHA1");
+
+            // 署名を作成
+            return dsaFormatter.CreateSignature(digest);
+
+        }
+
+        public static bool VerifyDigitalSign(string message, 
+                                        byte[] digitalSign, string publicKey) {
+            DSACryptoServiceProvider dsa = new DSACryptoServiceProvider();
+
+            // 公開キーを指定 
+            dsa.FromXmlString(publicKey);
+
+            // Formatterオブジェクトを生成
+            DSASignatureDeformatter dsaDeformatter = new DSASignatureDeformatter(dsa);
+
+            // Hashアルゴリズムを指定する
+            dsaDeformatter.SetHashAlgorithm("SHA1");
+
+            // ダイジェストを作成
+            byte[] digest = CreateHash(message);
+
+            return dsaDeformatter.VerifySignature(digest, digitalSign);
+        }
+
+        static byte[] CreateHash(string message) {
+            byte[] msgData = System.Text.Encoding.UTF8.GetBytes(message);
+            SHA1Managed sha = new SHA1Managed();
+            return sha.ComputeHash(msgData);
+        }
+    }
+}
+
+上記コードでは、秘密キー/公開キーを作成するのが、Alice（送信者）なのか
+Bob（受信者）なのかの区別がつきませんが、実際のコードでは、Aliceが生成す
+るということに注意してください。
+
+─────────────────────────────────────
+『C#プログラミングレッスン』  (ほぼ週刊）                                 
+☆皆さまからの感想をお待ちしています。http://gushwell.ifdef.jp/mail.html  
+─────────────────────────────────────
+Published by Gushwell.                                                    
+Copyright (C) 2013 Gushwell All rights reserved.                          
+Microsoft MVP for Visual C#(Apr 2005 - Mar 2013)                          
+
+■Gushwell's Page                                                         
+facebook Page                     : http://www.facebook.com/CSharpLesson  
+Gushwell's C# Dev Notes           : http://gushwell.ldblog.jp/            
+Gushwell's C# Programming Page    : http://gushwell.ifdef.jp/             
+Gushwellの読書ノート              : http://gushwell.jugem.jp/             
+Twitterアカウント                 : @gushwell                             
+─────────────────────────────────────

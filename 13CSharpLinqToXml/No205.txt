@@ -1,0 +1,131 @@
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━ No.205 ━□
+  
+   「LINQ to XML編」 -- ペア情報を管理する(2)
+                                                         by Gushwell  
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+前回は、SetElementValueメソッドやSetAttributeValueメソッドでペア情報を
+扱う例を示しましたが、今度は、DIctionaryとXMLファイルとの相互変換につ
+いて考えてみます。
+
+■□─────────────────────────────────
+■□DictionaryからXDocumentへ
+
+まずは、DIctionaryで管理しているペア情報を XMLファイルに出力するコ―ド
+です。No.200で説明した「配列からXMLを作成」するコ―ドを応用すれば出来
+そうですね。
+
+ Dictionary<string, int> dict = new Dictionary<string, int>();
+ dict.Add("left", 10);
+ dict.Add("top", 20);
+ dict.Add("width", 120);
+ dict.Add("height", 80);
+ // ここからが、本来の処理
+ var query = from keyValue in dict
+             select new XElement(keyValue.Key, keyValue.Value);
+ XElement root = new XElement("root",query);
+ XDocument doc = new XDocument();
+ doc.Add(root);
+ doc.Save("sample.xml");                        
+
+簡単に解説を。
+まずは、
+
+ var query = from keyValue in dict
+             select new XElement(keyValue.Key, keyValue.Value);
+
+このコードですが、dictから要素（KeyValuePair型のデータ）を取り出し、
+select句で、XElement型のシーケンスに変換しています。
+そして、
+
+ XElement root = new XElement("root",query);
+
+で、クエリの結果を"root"タグの子要素とするXElementを生成します。
+最後に、
+
+ doc.Add(root);
+
+で、XDocumentに追加し、Saveメソッドで保存しています。
+
+以下その結果です。
+
+ <?xml version="1.0" encoding="utf-8"?>
+ <root>
+   <left>10</left>
+   <top>20</top>
+   <width>120</width>
+   <height>80</height>
+ </root>
+
+
+■□─────────────────────────────────
+■□XDocumentからDictionaryへ
+
+今度は、XMLからDIctionaryに変換してみましょう。
+話を単純化するために、値はすべて整数である、先ほどのXMLファイルを使い
+ます。
+
+このXMLファイルに対して、以下のようなコ―ドを書けば、Dictionaryに変換
+することができます。
+
+ XDocument xdoc = XDocument.Load("sample.xml");
+ var query = from pair in xdoc.Root.Elements()
+             select new {
+                 Key = pair.Name.ToString(),
+                 Value = int.Parse(pair.Value)
+             };
+ var dict = query.ToDictionary((x => x.Key), (x => x.Value));
+ foreach (var d in dict) {
+     Console.WriteLine(d.Key + "=" + d.Value);
+ }
+ Console.WriteLine(dict["width"]);
+ 
+２行目のクエリ式で、XMLのデ―タを、KeyとValueのペアのシ―ケンスに変換
+しています。select句では、匿名クラスにしていますが、明示的に
+KeyValuePairクラスを指定してもかまいません。
+
+このシ―ケンスqueryに対して、ToDictionary拡張メソッドを使い、
+Dictionary<string,int>に変換しています。
+このToDiscionary メソッドの構文は、
+
+ static Dictionary<TKey, TElement> ToDictionary<
+     TSource, TKey, TElement>(
+         this IEnumerable<TSource> source,
+         Func<TSource, TKey> keySelector,
+         Func<TSource, TElement> elementSelector
+     )
+
+です。
+２つのFuncデリゲートを引数に取ります。この例では、ラムダ式を使い、
+
+ (x => x.Key)
+と
+ (x => x.Value)
+
+と表現しています。
+
+匿名クラスに対しても、ジェネリックメソッドであるToDictionaryが使えるの
+は便利ですね。
+これ、ジェネリックメソッドの型推論がないと、絶対に書けないコ―ドです。
+
+今まで何度も例をお見せしていますが、これも、LINQ to XMLと Linq to 
+Objectの合わせ技になっています。
+
+
+───────────────────────────────────
+『C#プログラミングレッスン』  (ぼぼ週刊）                             
+───────────────────────────────────
+ Published by Gushwell.                                               
+   Copyright (C) 2004-2009 Gushwell All rights reserved.              
+   Microsoft MVP - Visual C#(Apr 2005 - Mar 2010)                     
+
+ <<■ Gushwell's Page ■>>
+ 窓際プログラマ―の独り言  ：http://blog.livedoor.jp/gushwell/        
+ 窓際プログラマ―の読書三昧：http://gushwell.jugem.jp/                
+ Gushwell's C# Programming Page：http://gushwell.ifdef.jp/            
+ C#デザインパタ―ン :                                                 
+  『増補改訂版Java言語で学ぶデザインパタ―ン入門 / 結城 浩(著)』      
+   のサンプルコ―ドをC#に移植したものを掲載しています。               
+   移植後のコ―ドの公開は、結城氏の了解を得ています。                 
+   http://gushwell.ifdef.jp/dp/csdpindex.html                         
+───────────────────────────────────

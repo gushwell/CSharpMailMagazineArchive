@@ -1,0 +1,113 @@
+
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━━━ No.396 ━□
+
+「MEF編」-- 落穂ひろい
+                                                           by Gushwell
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+これまで、６回にわたりMEFの主要機能について説明してきましたが、まだいくつか
+説明すべき機能が残っていますので、今回はその中から、AggregateCatalog と メ
+ソッドの Emport, Importについて説明します。
+
+
+■□───────────────────────────────────
+■□ AggregateCatalog
+
+これまでは、カタログは、指定アセンブリからカタログを作るのか、指定ディレクトリ
+から作るのかの、２つにひとつでした。
+プラグインを実現する場合、アセンブリ内にある組み込み済みのコンポーネントも、
+後から別ユーザが登録したコンポーネント（指定ディレクトリにある）もどちらも
+扱いたいってことがありますよね。
+そんなときに使えるのが、AggregateCatalog です。
+
+  var catalog = new AggregateCatalog();
+  catalog.Catalogs.Add(new AssemblyCatalog(type.Assembly));
+  catalog.Catalogs.Add(new DirectoryCatalog("."));
+
+  var container = new CompositionContainer(catalog);
+
+などとすれば、アセンブリの中にあるコンポーネントと指定したディレクトリにある
+コンポーネントをカタログ化することができます。
+
+
+■□───────────────────────────────────
+■□ メソッドのExportとImport
+
+これまでは、クラス全体をExportし、Importする例を示してきましたが、メソッド
+のExportとImportの例もお見せします。
+
+
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.Composition;
+using System.ComponentModel.Composition.Hosting;
+using System.Linq;
+using System.Text;
+using MEFSample;
+
+namespace MethodImport {
+    class Program {
+        static void Main(string[] args) {
+                var tp = new TextProcessor();
+                string s = tp.Convert("Windows Phone");
+                Console.WriteLine(s);
+
+            Console.ReadLine();
+
+        }
+    }
+
+    class TextProcessor {
+
+        public TextProcessor() {
+            var catalog = new AssemblyCatalog(typeof(Program).Assembly);
+            CompositionContainer _container = new CompositionContainer(catalog);
+            _container.ComposeParts(this);
+
+        }
+
+        [Import("ToUpper")]
+        public Func<string,string> Convert { get; private set; }
+
+    }
+
+    public class TextUty {
+
+        [Export("ToUpper",typeof(Func<string,string>))]
+        public string ToUpper(string s) {
+            return s.ToUpper();
+        }
+    }
+}
+
+このサンプルでは、クラスではなく、メソッドにExport属性を付加しています。こ
+の属性に名前とデリゲートの型を指定しています。
+Importする側では、Export時に付加した名前を指定しています。このようにしてお
+けば、Convertを特定のクラスに結びつけることなく、ロジックを変更することが可
+能になります。
+例えば、高速版、省メモリ版、安定版で結果比較をするとか、実行環境毎にメソッ
+ドを差し替えるとかがTextProcessor側を修正することなく可能になります。
+
+ここでも、No931で説明したオープンクローズド原則が守られていますね。
+
+
+-----
+
+次回はMEF編の最終回です。.NET 4.5 で追加された属性を使わない方法について
+見ていきます。
+
+─────────────────────────────────────
+『C#プログラミングレッスン』  (ほぼ週刊）
+☆皆さまからの感想をお待ちしています。http://gushwell.ifdef.jp/mail.html
+─────────────────────────────────────
+Published by Gushwell.
+Copyright (C) 2014 Gushwell All rights reserved.
+Microsoft MVP for Visual C#(Apr 2005 - Mar 2015)
+
+■Gushwell's Page
+facebook Page                     : http://www.facebook.com/CSharpLesson
+Gushwell's C# Dev Notes           : http://gushwell.ldblog.jp/
+Gushwell's C# Programming Page    : http://gushwell.ifdef.jp/
+気ままな読書ノート                : http://gwbooks.hatenablog.com/
+Twitterアカウント                 : @gushwell
+─────────────────────────────────────

@@ -1,0 +1,100 @@
+┏━┳━━━━━━━━━━━━━━━━━━━━━━━━━┳━┳━┳━┓
+┃☆┃ C#プログラミングレッスン                         ┃＿┃□┃×┃
+┣━┻━━━━━━━━━━━━━━━━━━━━━━━━━┻━┻━┻━┫
+┃ Process(1)                                                 No.140┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+Trace のお話が一通り終わったので、今回は、プロセス、スレッドの第一回目
+として、exe ファイルの起動について説明します。
+
+■──────────────────────────────────
+■ exeプログラムの起動
+
+public partial class Form1 : Form {
+    public Form1() {
+        InitializeComponent();
+    }
+
+    private void button1_Click(object sender, EventArgs e) {
+        RunNotepad();
+    }
+
+    private  void RunNotepad() {
+        string path = @"%SystemRoot%\system32\notepad.exe";
+        string fullpath = Environment.ExpandEnvironmentVariables(path);
+        Process.Start(fullpath);
+    }
+}
+
+「メモ帳」を起動するコードです。
+System.Diagnostics 名前空間にある Process クラスの static メソッドであ
+る Start メソッドを使い、「メモ帳」を起動しています。
+このコードでは、起動したら、起動しっぱなしで、このプログラムが「メモ帳」
+の終了を知ることは出来ません。
+
+■──────────────────────────────────
+■ プログラムの終了を待つ
+
+通常、この方法で問題ないかと思いますが、時には、プログラムが終了するま
+で待っていたいという場合もあります。
+
+それを実現するには、WaitForExitメソッドを使います。
+
+private  void RunNotepad() {
+    label1.Text = "";
+    string path = @"%SystemRoot%\system32\notepad.exe";
+    string fullpath = Environment.ExpandEnvironmentVariables(path);
+    Process p = Process.Start(fullpath);
+    p.WaitForExit();
+    label1.Text = "終了";
+}
+
+Start メソッドは、Process クラスのインスタンスを返しますので、このイン
+スタンスに対して、WaitForExit() を呼び出すことで、終了を待つことが可能
+です。しかし、このプログラムを動かしていただければわかるように、「メモ
+帳」が終了するまで、当プログラムのフォームの操作がブロックされてしまい
+ます。
+
+■──────────────────────────────────
+■ ブロックを回避する。
+
+このブロックを回避するコードを示します。
+
+private  void RunNotepad() {
+    label1.Text = "";
+    string path = @"%SystemRoot%\system32\notepad.exe";
+    string fullpath = Environment.ExpandEnvironmentVariables(path);
+    Process p = Process.Start(fullpath);
+    p.EnableRaisingEvents = true;
+    p.Exited += delegate(object sender, EventArgs e) {
+        this.Invoke((MethodInvoker)delegate {
+            label1.Text = "終了;
+        });
+    };
+}
+
+Process.Start までは同じですが、その後、WaitForExit() で待つのではなく、
+EnableRaisingEvents プロパティを true にし、プロセスが終了したときに、
+Exited イベントを発生させるようにします。Exited イベント内で、終了した
+時の処理を書きます。
+今回のコードでは、匿名メソッドを使っています。匿名メソッドについては、
+バックナンバー No092～ No095 をご覧ください。
+
+なお、Exited イベントハンドラは、別スレッドで動作しますので、Control.
+Invoke を使い、Label への表示を行っています。
+
+┌─┬─────────────────────────┬─┬─┬─┐
+│☆│ C#プログラミングレッスン  (ぼぼ週刊）            │＿│□│×│
+├─┴─────────────────────────┴─┴─┴─┤
+│ Published by Gushwell.                                           │
+│ Copyright (C) 2004-2007 Gushwell All rights reserved.            │
+│ Microsoft MVP Visual Developer - Visual C#(Apr 2005 - Mar 2008)  │
+│-------------------- Gushwell's Page ---------------------------- │
+│ 窓際プログラマーの独り言  ：http://blog.livedoor.jp/gushwell/    │
+│ 窓際プログラマーの読書三昧：http://gushwell.jugem.jp/            │
+│ C#デザインパターン :                                             │
+│  『増補改訂版Java言語で学ぶデザインパターン入門 / 結城 浩(著)』  │
+│   のサンプルコードをC#に移植したものを掲載しています。           │
+│   移植後のコードの公開は、結城氏の了解を得ています。             │
+│   http://blog.livedoor.jp/gushwell/archives/50333227.html        │
+└─────────────────────────────────┘

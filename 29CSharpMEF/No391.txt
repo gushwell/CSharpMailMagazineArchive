@@ -1,0 +1,156 @@
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━━━ No.391 ━□
+
+「MEF編」-- オープン・クローズドの原則
+                                                           by Gushwell
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+前回は、TextConverterクラスをMEFを利用し呼び出す方法を示しましたが、その続
+きです。
+
+
+■□───────────────────────────────────
+■□ Interfaceを導入する
+
+この TextConverterクラスの機能の一部を変更したいとしましょう。
+TextConverterクラスは、与えられた文字列を大文字に変換する機能を提供していま
+したが、今度は、文字列の前後に、[ ] を付加する機能にしたいと思います。
+
+TextConverterを書き換えても実現できますが、ここではこれまでのTextConverter
+は残しておきたいとします。
+そして、このような機能変更が、今後ともあると予想されたとします。
+
+TextConverterをコピーし、TextConverter2 という新しいクラスを作成すると、
+これを呼び出しているProgramクラスまで直さないといけません。できれば、
+Programクラスは直したくありません。
+
+このような要求にあうように、前回のプログラムを書きかえてみます。
+なお、ITextConverterインターフェースを導入し、そこから TextUpper を実装しま
+す。
+
+    --- ITextConverter.cs ---
+    namespace MEFSample {
+        public interface ITextConverter {
+            string Convert(string s);
+        }
+    }
+
+    --- TextUpper.cs ---
+    using System.ComponentModel.Composition;
+
+    namespace MEFSample {
+
+        [Export(typeof(ITextConverter))]
+        public class TextUpper : ITextConverter {
+            public string Convert(string s) {
+                return s.ToUpper();
+            }
+        }
+    }
+
+
+
+なお、ITextConverter と TextUpper はそれぞれ別のソースファイルに分割してお
+きます。
+System.ComponentModel.Composition を usingするのを忘れずに。
+
+では、Programクラスもこれに併せて変更します。
+
+    --- program.cs ---
+    using System;
+    using System.ComponentModel.Composition.Hosting;
+
+    namespace MEFSample {
+        class Program {
+            static void Main(string[] args) {
+                var catalog = new AssemblyCatalog(typeof(Program).Assembly);
+                var container = new CompositionContainer(catalog);
+                var obj = container.GetExportedValue<ITextConverter>();
+                string str = obj.Convert("hello world!");
+                Console.WriteLine(str);
+                Console.ReadLine();
+            }
+        }
+    }
+
+
+Programクラスでは、あくまでも、ITextConverterに対して、プログラミングしてい
+るという点に注目してください。具体的なTextUpper というクラス名はどこにも出
+てきません。
+つまり、Programクラスは具象クラスの TextUpper に依存していないということで
+す。
+
+実行すると、以下の表示が得られます。
+
+ HELLO WORLD!
+
+
+■□───────────────────────────────────
+■□ 機能を差し替える
+
+ここまで来れば、文字列の前後に、[ ] を付加する機能と差し替えるのは簡単で
+すね。
+ITextConverterを実装した、Addbrackets クラスを定義します。もちろん、
+Addbrackets.cs ファイルを新たに追加し、そこにAddbracketsクラスを定義してく
+ださい。
+
+    --- Addbrackets.cs ---
+    using System.ComponentModel.Composition;
+
+    namespace MEFSample {
+        [Export(typeof(ITextConverter))]
+        public class Addbrackets : ITextConverter {
+            public string Convert(string s) {
+                return "[" + s + "]";
+            }
+        }
+    }
+
+
+こうしたら、TextUpperクラスは、プロジェクトから除外します。
+[Export(typeof(ITextConverter))]の行をコメントアウトしておくだけでもかまい
+ません。
+
+Programクラスには手を加えません。
+これでビルドして実行してみましょう。
+たしかに、
+
+ [hello world!]
+
+と表示され、Addbrackets クラスの機能の置き換わったことが確認できました。
+
+
+■□───────────────────────────────────
+■□ オープン・クローズドの原則とは
+
+このプログラムの構造は、オープン・クローズドの原則が適用されています。
+どういうことかというと、新たなITextConverterを実装したクラスを適宜すれば、
+機能を拡張（差し替え）ができます。そして、Program.csには、一切手を加えてい
+ません。つまり、機能追加に対してはオープンであり、修正に対して閉じていると
+いうことです。
+
+MEFを使わなくても、こういった機能を実現することはできますが、設計者によって、
+その方法が大きく異なる可能性があります。しかし、MEFを使えば、統一的な方法で、
+こういったことが可能になるというのはすばらしいことだと思います。
+
+しかし、今回示した方法は、TextUpper クラスをコメントアウトして除外するなど、
+既存のコードに手を入れないといけないため、オープン・クローズドの原則が完全
+には実現できていません。
+
+次回は、既存のコードには一切手を入れることなく、機能を入れ替える方法を示し
+たいと思います。
+
+─────────────────────────────────────
+『C#プログラミングレッスン』  (ほぼ週刊）
+☆皆さまからの感想をお待ちしています。http://gushwell.ifdef.jp/mail.html
+─────────────────────────────────────
+Published by Gushwell.
+Copyright (C) 2014 Gushwell All rights reserved.
+Microsoft MVP for Visual C#(Apr 2005 - Mar 2015)
+
+■Gushwell's Page
+facebook Page                     : http://www.facebook.com/CSharpLesson
+Gushwell's C# Dev Notes           : http://gushwell.ldblog.jp/
+Gushwell's C# Programming Page    : http://gushwell.ifdef.jp/
+気ままな読書ノート                : http://gwbooks.hatenablog.com/
+Twitterアカウント                 : @gushwell
+─────────────────────────────────────

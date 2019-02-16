@@ -1,0 +1,148 @@
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━━━ No.289 ━□
+  
+ 「.NET Framework4 編」-- 並列処理
+                                                             by Gushwell  
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+「.NET Framewrok4 編」は、今回が最後となりました。
+最後の話題にふさわしい「並列処理クラス」についてその基礎を説明します。
+
+■□───────────────────────────────────
+■□ Parallel.For
+
+  private void Work(int n) {
+      Thread.SpinWait(5000000);
+      Console.Write("[{0}]",n);
+  }
+
+というメソッドに対して、引数に、0 から 99 までを与えて、繰り返し呼び出す
+ことを考えましょう。
+
+for文を使えば、
+
+  for (int i = 0; i < 100; i++) {
+      Work(i);
+  }
+
+となります。これを .NET Framework4で追加された Parallel クラスを使い、
+並列処理させるには、Parallec.Forメソッドを使い、以下のように記述できます。
+
+  Parallel.For(0, 100, (i) => Work(i) );
+
+第1引数には、開始値、第2引数には終了値（指定した値の直前まで処理されます）、
+第3引数には、反復処理されるデリゲートを指定します。
+
+並列処理されるために、実行される順番は不定ですが、すべての処理が終わるま
+での実行時間は、私のPC（2Core）では、約半分に短縮されます。
+
+
+■□───────────────────────────────────
+■□ Parallel.ForEach
+
+ForEachメソッドも用意されています。List<T>に保存されている値を引数に渡して
+処理をしたい場合には、このForEachメソッドを使います。
+上記コードを、ForEachメソッドを使うと
+
+ List<int> list = Enumerable.Range(0, 100).ToList();
+ Parallel.ForEach(list, (i) => Work(i));
+
+と記述できます。
+Therad や デリゲートの非同期呼び出しのコードを書いたことのある方は、
+Parallelクラスによる並列処理がとても簡単に書けることがお分かりになると思い
+ます。
+
+また、AsParallelメソッドを使い、 ParallelQuery<T> に変換すれば、以下のよう
+に書き換えることもできます。
+
+ var list = Enumerable.Range(0, 100).AsParallel();
+ list.ForAll((i) => Work(i));
+
+なお、並列処理を途中でキャンセルさせる方法については、以下のURLを参照して
+ください。
+ 方法: Parallel.For または ForEach ループを取り消す
+ http://msdn.microsoft.com/ja-jp/library/ee256691.aspx
+
+■□───────────────────────────────────
+■□ Taskクラス
+
+Taskクラスは、非同期操作を行うために導入されたクラスであり、Parallelクラス
+よりも、細かな制御が行えます。
+
+Taskを使った簡単な、非同期処理のコードをお見せします。
+
+  Task task1 = new Task(() => Work(10));
+  Task task2 = Task.Factory.StartNew(() => Work(20));
+  task1.Start();
+  task1.Wait();
+  task2.Wait();
+
+Task.FactoryのStartNew メソッドを使うのが一般的なコードのようです。しかし、
+Taskの作成とTaskの起動のコードを分離させたい場合もあります。その時には、
+コンストラクタでインスタンスを生成し、Startメソッドでタスクを起動します。
+
+Parallelクラスの説明時に利用した並列処理をTask クラスを使って書き直してみ
+ます。
+
+  var tasks = new List<Task>();
+  for (int i = 0; i < 100; i++) {
+      tasks.Add(Task.Factory.StartNew((o) => Work((int)o), i));
+  }
+  Task.WaitAll(tasks.ToArray());
+
+
+Task.Factory.StartNew でタスクを複数起動し、すべての終了を待つのに、Task.
+WaitAllメソッドを利用しています。
+そのため、StartNewメソッドの戻り値を List<Task>に保存しています。
+
+
+■□───────────────────────────────────
+■□ Taskジェネリッククラス
+
+Taskのジェネリッククラスを使うと、各並列処理の結果を扱うことが可能になりま
+す。以下に、Workメソッドを３つ並行で走らせ、その結果の合計を求めるコードを
+示します。
+
+  private static int Work(int n) {
+      Thread.SpinWait(5000000);
+      return n * 2;
+  }
+
+     var tasks = new Task<double>[] {
+        Task<double>.Factory.StartNew(() => Work(2)),
+        Task<double>.Factory.StartNew(() => Work(3)),
+        Task<double>.Factory.StartNew(() => Work(4)),
+     };
+     Task<double>.WaitAll(tasks);   // (*)
+     var sum = tasks.Sum(t => t.Result);
+     Console.WriteLine(sum);
+     Console.ReadLine();
+
+なお、(*)の行は省略できます。Resultプロパティへのアクセスは、その値が使用
+可能になるまで、スレッドをブロックしますので、待機のコードを明示的に書かな
+くても大丈夫です。
+
+─────────────────────────────────────
+今回で、「.NET Framework4編」は終了です。
+
+さて、次号からは、「正規表現編」を開始します。
+「正規表現編」の趣旨は、ずばり、「Regexクラスを使いこなす」です。正規表現
+そのものについての解説もしますが、Regexクラスの使い方をかなり突っ込んで解
+説できればと考えています。
+ご期待ください。
+連休明けの週に開始する予定です。
+
+─────────────────────────────────────
+『C#プログラミングレッスン』  (ぼぼ週刊）                                 
+ ☆皆さまからの感想をお待ちしています。http://gushwell.ifdef.jp/mail.html 
+─────────────────────────────────────
+ Published by Gushwell.                                                   
+   Copyright (C) 2011 Gushwell All rights reserved.                       
+   Microsoft MVP for Visual C#(Apr 2005 - Mar 2012)                       
+                                                                          
+ ■Gushwell's Page                                                        
+ Gushwell's C# Dev Notes           : http://gushwell.ldblog.jp/           
+ Gushwell's C# Programming Page    : http://gushwell.ifdef.jp/            
+ Gushwell's F# Programming Diary   : http://techbank.jp/gushwell/         
+ Gushwellの読書ノート              : http://gushwell.jugem.jp/            
+─────────────────────────────────────
+

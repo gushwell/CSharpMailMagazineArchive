@@ -1,0 +1,126 @@
+┏━┳━━━━━━━━━━━━━━━━━━━━━━━━━┳━┳━┳━┓
+┃☆┃ C#プログラミングレッスン                         ┃＿┃□┃×┃
+┣━┻━━━━━━━━━━━━━━━━━━━━━━━━━┻━┻━┻━┫
+┃メソッドのオーバーロード                                   No.026 ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+■──────────────────────────────────
+■ オーバーロードとは
+
+.NET Framework を使っていると、 メソッド名が同じにも関わらず、引数の数
+や、引数の型が異なるメソッドがあるのに気が付きます。
+例えば、
+ MessageBox.Show("Hello world!");
+
+ MessageBox.Show("Hello world!", "HelloDialog");
+
+のように、同じ、Showメソッドでも、引数の数が異なっています。これをメソ
+ッドのオーバーロードと言います。日本語だと多重定義と訳されることが多い
+ようです。
+もし、このオーバーロード機能がないと、プログラマは、多くのメソッド名を
+使い分けなければなりません。これは結構大変です。
+
+また、クラスを作る側も、全てのメソッドを別の名前にする必要が出てくるた
+め、名前を考えるのがとても大変です。
+
+オーバーロード機能があることで、クラスを使う側も作る側も楽ができること
+になります。
+
+
+■──────────────────────────────────
+■ メソッドをオーバーロードする
+
+では、このオーバーロード機能を自分が作成したクラスにも実装するにはどう
+すればよいのでしょうか。
+
+これは、ものすごく簡単です。
+実際の例を見て見ましょう。
+
+class SampleClass {
+    public int MaxNumber(int x, int y) {
+        return x > y ? x : y;
+    }
+    public int MaxNumber(int x, int y, int z) {
+        if (x > y)
+            return x > z ? x : z;
+        else
+            return y > z ? y : z;
+    }
+    public int MaxNumber(int[] nums) {
+        int m = nums[0];
+        for (int i = 1; i < nums.Length; i++)
+            m = MaxNumber(m, nums[i]);
+        return m;
+    }
+}
+
+   ※ 「MaxNumberメソッドは、static にすべきだろう」、と突っ込みが入り
+      そうですが、まだ、static の説明をしていないので、ご容赦を。
+
+この例では、 ３つのMaxNumberメソッドを定義しています。それぞれ、引数の
+部分が異なっていることに注意してください。
+このように、単に、同じ名前で引数の異なるメソッドを定義するだけでメソッ
+ドをオーバーロードすることができます。
+
+使う側は、
+
+    SampleClass sc = new SampleClass();
+    Console.WriteLine(sc.MaxNumber(10, 20));
+    Console.WriteLine(sc.MaxNumber(10, 20, 30));
+    int[] nums = { 10, 5, 40, 8, 30, 10 };
+    Console.WriteLine(sc.MaxNumber(nums));
+
+のように書けば、対応するメソッドが呼び出されます。
+
+なお、以下のように、戻り値だけが異なるメソッドをオーバーロードすること
+は出来ませんので、注意してください。
+
+   public int ToNumber(string s) { ... }
+   public float ToNumber(string s) { ... }
+
+-----------------------------------------------------------------------
+
+最後に、全体のソースを掲載します。
+
+using System;
+
+class Program {
+    static void Main(string[] args) {
+        SampleClass sc = new SampleClass();
+        Console.WriteLine(sc.MaxNumber(10, 20));
+        Console.WriteLine(sc.MaxNumber(10, 20, 30));
+        int[] nums = { 10, 5, 40, 8, 30, 10 };
+        Console.WriteLine(sc.MaxNumber(nums));
+    }
+}
+
+class SampleClass {
+    public int MaxNumber(int x, int y) {
+        return x > y ? x : y;
+    }
+    public int MaxNumber(int x, int y, int z) {
+        if (x > y)
+            return x > z ? x : z;
+        else
+            return y > z ? y : z;
+    }
+    public int MaxNumber(int[] nums) {
+        int m = nums[0];
+        for (int i = 1; i < nums.Length; i++)
+            m = MaxNumber(m, nums[i]);
+        return m;
+    }
+}
+
+
+┌─┬─────────────────────────┬─┬─┬─┐
+│☆│ C#プログラミングレッスン                         │＿│□│×│
+├─┴─────────────────────────┴─┴─┴─┤
+│ Published by GushWell                                            │
+│ Copyright (C) 2004-2005 GushWell All rights reserved.            │
+│-------------------- GushWell's Page ---------------------------- │
+│ 窓際プログラマーの独り言  ：http://blog.livedoor.jp/gushwell/    │
+│ 窓際プログラマーの読書三昧：http://gushwell.jugem.jp/            │
+│             よろしかったらアクセスしてみてください！             │
+└─────────────────────────────────┘
+

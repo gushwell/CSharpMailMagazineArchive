@@ -1,0 +1,96 @@
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━ No.224 ━□
+  
+ 「FxCopに学ぶ編」 -- CA1025: 
+                      Replace repetitive arguments with params array
+
+                                                         by Gushwell  
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+■□─────────────────────────────────
+■□ CA1025: Replace repetitive arguments with params array
+
+以下のコードを見てください。同じ型の引数がたくさん連なっていますね。
+
+ public class SampleClass {
+     public void Hoge(string s1, string s2, string s3, string s4) {
+         Console.WriteLine(s1 + s2 + s3 + s4);
+     }
+     public void Hoge(string s1, string s2, string s3, string s4,
+                      string s5) {
+         Console.WriteLine(s1 + s2 + s3 + s4 + s5);
+     }
+     public void Hoge(string s1, string s2, string s3, string s4, 
+                      string s5, string s6) {
+         Console.WriteLine(s1 + s2 + s3 + s4 + s5 + s6);
+     }
+ }
+
+FxCopでは、こういったコードに出会うと、
+「Replace repetitive arguments with params array」という警告が出ます。
+厳密には、パブリック型のパブリックメソッドまたはプロテクト メソッドに、
+4つ以上のパラメータがあり、最後の3 つのパラメータが同じ型の時に、この
+警告が出ます。
+
+警告メッセージのとおり、parmsキーワードを使い、引数の数を可変にする
+のがベターです。
+paramsを使って書き換えたのが以下のコードになります。
+
+ public class SampleClass {
+     public void Hoge(params string[] strs) {
+         string s = "";
+         foreach (var x in strs)
+             s += x;
+         Console.WriteLine(s);
+     }
+ }
+
+このHogeメソッドの使い方は、最初のものと代わりがありません。
+
+ SampleClass sc = new SampleClass();
+ sc.Hoge("one","two",Three","four");
+
+などと書けます。
+
+なお、引数が、3以下のときと、7以上の時にもこのメソッドは動作しますので、
+大抵の場合は、最初に示したものよりは、使い道が広がっていると思います。
+引数の数を制限したい場合でも、paramsを使い、strs.Length で引数の数をチ
+ェックすればよいでしょう。
+     
+直接関係ありませんが、LINQを使えば、こんな風に書けます。
+     
+ public void Moge(params string[] strs) {
+     string str = strs.Aggregate("", (s, r) => s + r);
+     Console.WriteLine(str);
+ }
+
+
+■ 参照MSDNページ
+
+CA1025:繰り返しの引数をパラメータ配列で置換します
+http://msdn.microsoft.com/ja-jp/library/ms182167.aspx
+
+
+───────────────────────────────────
+『C#プログラミングレッスン』  (ぼぼ週刊）
+───────────────────────────────────
+ Published by Gushwell.
+  Copyright (C) 2004-2009 Gushwell All rights reserved.
+  Microsoft MVP - Visual C#(Apr 2005 - Mar 2010)
+
+ <<■ Gushwell's Page ■>>
+ 窓際プログラマ─の独り言  ：http://gushwell.ldblog.jp/
+ 窓際プログラマ─の読書三昧：http://gushwell.jugem.jp/
+ Gushwell's F# Programming Diary : http://techbank.jp/gushwell/
+ Gushwell's C# Programming Page  ：http://gushwell.ifdef.jp/
+  C#デザインパタ─ン : http://gushwell.ifdef.jp/dp/csdpindex.html
+
+ ☆メールマガジンの感想お待ちしています☆
+  http://gushwell.ifdef.jp/mail.html
+
+ <<■ コミュニティtechbank.jp (http://techbank.jp/Community/) ■>>
+ Gushwellが参加している技術系コミュニティです。
+ マイクロソフト系テクノロジー＆製品に特化したコミュニティで、Webサイト
+ では、VB、C#、VC++、SQL Server, BizTalk Server などの技術情報を公開し
+ ています。皆さんの参加をお待ちしています。
+ ブロガーさんも募集中です。
+───────────────────────────────────

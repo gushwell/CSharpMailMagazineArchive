@@ -1,0 +1,134 @@
+┏━┳━━━━━━━━━━━━━━━━━━━━━━━━━┳━┳━┳━┓
+┃☆┃ C#プログラミングレッスン                         ┃＿┃□┃×┃
+┣━┻━━━━━━━━━━━━━━━━━━━━━━━━━┻━┻━┻━┫
+┃リフレクション-応用(3) プラグイン その２                    No.191┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+読者の皆さん、いよいよ年の瀬ですね。
+今年の最後の「C#プログラミングレッスン」は、前回の続いて、プラグインに
+ついての説明です。
+
+■──────────────────────────────────
+■プラグインの開発
+
+プラグインの開発は、前回定義した IPluginを実装したpublicなクラスを
+定義するだけです。
+IPluginを定義したアセンブリを SamplePluginIntf.dllとすると、このアセン
+ブリをプロジェクトの参照の追加で追加してから、コードを記述します。
+
+例を２つ載せましょう。この２つは、別々のクラスライブラリとして作成して
+ください。
+
+例１
+ public class PluginA : IPlugin {
+     public string Name {
+         get { return "PluginA"; }
+     }
+
+     public bool Execute() {
+         Console.WriteLine(
+               "+----------------------------------------+");
+         Console.WriteLine(
+               "| PluginAクラスの Executeが呼ばれました。|");
+         Console.WriteLine(
+               "+----------------------------------------+");
+         return true;
+     }
+ }
+
+例２
+ public class PluginB : IPlugin {
+     public string Name {
+         get { return "PluginB"; }
+     }
+
+     public bool Execute() {
+         Console.WriteLine("PluginBクラスの Executeが呼ばれました。");
+         return true;
+     }
+ }
+ 
+これらのアセンブリを、先ほど作成した本体プログラムと同じフォルダ（実行
+ファイルがあるフォルダ）に入れ、本体プログラムを実行すれば、
+
+ PluginA
+ +----------------------------------------+
+ | PluginAクラスの Executeが呼ばれました。|
+ +----------------------------------------+
+ PluginB
+ PluginBクラスの Executeが呼ばれました。
+
+と表示されるはずです。
+
+構成ファイルを
+
+ <?xml version="1.0" encoding="utf-8" ?>
+ <configuration>
+  <appSettings>
+   <add key="sampleB" value="PluginSample.PluginB, PluginBSampleLib"/>
+  </appSettings>
+ </configuration>
+
+と変更すれば、
+
+ PluginB
+ PluginBクラスの Executeが呼ばれました。
+
+となります。
+
+
+■最後に
+
+重要なのは、本体のプログラムを定義したプロジェクトは、一度ビルドしただ
+けで、変更していないということです。この状態で、PluginA,PluginBを本体
+プログラムに組み込めるということです。
+
+今回は、構成ファイルに定義することで、プラグインモジュールであることを
+明示しましたが、特定のPlugin専用のフォルダにあるdllを読み込み、IPlugin
+インターフェースを持っているクラスが定義されているかを調べ、IPluginイ
+ンターフェースを実装していれば、プラグインモジュールだと判断し、それぞ
+れの機能を呼び出すようなプログラムにすることも、リフレクションの機能を
+使えば、可能だと思います。
+興味のある方は、是非チャレンジしてみてください。
+
+
+■──────────────────────────────────
+■ 来年の「C#プログラミングレッスン」
+
+次回は、2009年1月7日(水)に発行予定です。「リフレクション」の最後の話題
+として、「リフレクションとLINQとの組み合わせ」について説明する予定です。
+
+その後、2,3週間お休みをいただき、
+
+「LINQ to XML編」
+    LINQ to XMLを使うと、XMLの操作が如何に簡単になるかを解説します。
+
+「FxCopに学ぶ編」
+    Visual Studio Team Systemに付属する「静的コード分析ツール」の    
+    出力メッセージから、Microsoftがどういったコードを推奨している
+    のかを解説します。
+    なお、このツールは、Visual Studio Team Systemにしか付属していませ
+    んが、当メルマガでは、ツールの使い方ではなく、そのメッセージから、
+    どういったコードを書くのが良いのかを説明する内容としますので、
+    Express Editionをお使いの方も、役に立つ内容となるはずです。
+        
+と続けて行く予定です。
+来年もどうぞよろしくお願いします。
+では、皆さん、良いお年を。
+
+┌─┬─────────────────────────┬─┬─┬─┐
+│☆│ C#プログラミングレッスン  (ぼぼ週刊）            │＿│□│×│
+├─┴─────────────────────────┴─┴─┴─┤
+│ Published by Gushwell.                                           │
+│ Copyright (C) 2004-2008 Gushwell All rights reserved.            │
+│ Microsoft MVP Visual Developer - Visual C#(Apr 2005 - Mar 2009)  │
+│-------------------- Gushwell's Page ---------------------------- │
+│ 窓際プログラマーの独り言  ：http://blog.livedoor.jp/gushwell/    │
+│ 窓際プログラマーの読書三昧：http://gushwell.jugem.jp/            │
+│ Gushwell's C# Programing Page：http://gushwell.ifdef.jp/         │
+│ C#デザインパターン :                                             │
+│  『増補改訂版Java言語で学ぶデザインパターン入門 / 結城 浩(著)』  │
+│   のサンプルコードをC#に移植したものを掲載しています。           │
+│   移植後のコードの公開は、結城氏の了解を得ています。             │
+│   http://gushwell.ifdef.jp/dp/csdpindex.html                     │
+└─────────────────────────────────┘

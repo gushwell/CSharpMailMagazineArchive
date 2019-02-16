@@ -1,0 +1,155 @@
+┏━┳━━━━━━━━━━━━━━━━━━━━━━━━━┳━┳━┳━┓
+┃☆┃ C#プログラミングレッスン                         ┃＿┃□┃×┃
+┣━┻━━━━━━━━━━━━━━━━━━━━━━━━━┻━┻━┻━┫
+┃System.Array クラス (1)                                     No.084┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+今回は、System.Arrayが提供しているメソッド、プロパティについて解説しま
+す。
+
+■──────────────────────────────────
+■ System.Arrayクラスとは
+
+Arrayクラスとは、int[] や string[] などの配列の基底クラスです。
+すべての配列は、暗黙のうちに、System.Arrayクラスから派生しています。
+
+System.Arrayには、staticメンバーと、インスタンスメンバーが定義されて
+いますので、配列を扱う際は、これらのメンバー(メソッド、プロパティ）を
+利用することができます。
+
+
+■──────────────────────────────────
+■ インスタンスプロパティ
+
+・Rank
+  配列の次元数を取得します。 
+
+    int[] x  = new int[4];
+    int[,] y = new int[5,3]; 
+
+  の場合は、x.Rank は、1、y.Rank は、2 となります。
+
+・Length
+  配列のすべての要素数を取得します。 
+  上記の x,y の場合、
+  x.Length は、4 、y.Length は、15 となります。
+
+
+■──────────────────────────────────
+■ インスタンスメソッド
+
+・GetLengthメソッド
+
+  指定した次元にある要素の数を取得します。 
+
+    int[,] y = new int[5,3]; 
+    Console.WriteLine(y.GetLength(0));
+    Console.WriteLine(y.GetLength(1));
+
+    の場合
+     5 と 3 が出力されます。
+
+・Cloneメソッド
+  配列の簡易コピーを作成します。 
+
+   int[] a = { 1, 2, 3, 4, 5 };
+   int[] b = (int[])a.Clone();
+   for ( int i = 0; i < b.Length; i++ )
+       Console.WriteLine(b[i]);
+
+   b には、a のコピーが作成されます。
+   なお、
+
+   int[] c = a;
+
+  は、c に 参照が代入されるだけす。この違いが分からない方は、以下のコードを
+  動かして、その違いを確認してください。
+
+   int[] a = { 1, 2, 3, 4, 5 };
+   int[] b = (int[])a.Clone();
+   int[] c = a;
+
+   a[0] = 10;
+   for ( int i = 0; i < b.Length; i++ )
+       Console.WriteLine(b[i]);
+   Console.WriteLine("---");
+   for ( int i = 0; i < c.Length; i++ )
+       Console.WriteLine(c[i]);
+
+・CopyToメソッド
+  
+  1次元 Array のすべての要素を、引数で指定したコピー先の Arrayにコピーします。
+  なお、第２引数は、コピー先の配列の開始位置です。
+
+   int[] a = { 1, 2, 3, 4, 5 };
+   int[] b = new int[8];
+   for ( int i = 0; i < b.Length; i++ )
+       b[i] = -1;
+   a.CopyTo(b, 3);
+   for ( int i = 0; i < b.Length; i++ )
+       Console.WriteLine(b[i]);
+
+  の結果は、以下のようになります。
+
+   -1
+   -1
+   -1
+   1
+   2
+   3
+   4
+   5
+
+
+■──────────────────────────────────
+■ staticメソッド
+
+・Clearメソッド
+
+  Array 内の要素を、要素の型に応じて、0 (ゼロ)、false、または null 
+  に設定します。 
+  以下のコードは、配列 a のすべての要素を 0 クリアする例です。
+  第２引数は、開始位置、第３引数は、クリアする数を指定します。
+
+   int[] a = { 1, 2, 3, 4, 5 };
+   Array.Clear(a, 0, a.Length);
+   for ( int i = 0; i < a.Length; i++ )
+      Console.WriteLine(a[i]);
+
+
+・Reverse
+  Array の範囲内の要素の順序を反転させます。 
+
+   int[] a = { 1, 2, 3, 4, 5 };
+   Array.Reverse(a);
+   for ( int i = 0; i < a.Length; i++ )
+       Console.WriteLine(a[i]);
+
+  結果は、5,4,3,2,1 と逆順に出力されます。
+
+・IndexOfメソッド
+  
+  指定したオブジェクトを検索し、1 次元の Array 全体でそのオブジェクトが
+  最初に見つかった位置のインデックス番号を返します。 
+
+   int[] a = { 1, 2, 3, 4, 5 };
+   int index = Array.IndexOf(a, 4);
+   Console.WriteLine(index);
+
+   3 が出力されます。
+  
+  ※ 最後に見つかった位置のインデックス番号を返す、LastIndexOf メソッド
+     も存在します。
+
+
+┌─┬─────────────────────────┬─┬─┬─┐
+│☆│ C#プログラミングレッスン  (ぼぼ週刊）            │＿│□│×│
+├─┴─────────────────────────┴─┴─┴─┤
+│ Published by Gushwell.                                           │
+│ Copyright (C) 2004-2006 Gushwell All rights reserved.            │
+│ Microsoft MVP Visual Developer - Visual C#(Apr 2006 - Mar 2006)  │
+│-------------------- Gushwell's Page ---------------------------- │
+│ 窓際プログラマーの独り言  ：http://blog.livedoor.jp/gushwell/    │
+│ 窓際プログラマーの読書三昧：http://gushwell.jugem.jp/            │
+│             よろしかったらアクセスしてみてください！             │
+└─────────────────────────────────┘

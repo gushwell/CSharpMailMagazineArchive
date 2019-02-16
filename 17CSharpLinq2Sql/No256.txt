@@ -1,0 +1,172 @@
+
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━━━ No.256 ━□
+  
+ 「LINQ to SQL編」-- Logプロパティ
+                                                             by Gushwell  
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+皆さんこんにちは。
+僕が参加しているコミュニティtechbank.jpのメンバーが執筆した書籍
+『はじめての VisualStudio 2010』
+が、発売されました。
+Visual Studio 2010 の操作と.NETアプリケーション開発の基礎を学ぶことができ
+ます。WindowsForms, WPF, ASP.NET, Silverlight, Azure など幅広い .NETテクノ
+ロジを紹介しています。また、ビルドとデバッグ、コーディング支援、テスト機能、
+アーキテクチャ設計支援機能など、Visual Studio を使いこなす上で欠かせない機
+能も説明しています。
+僕も、20ページほど執筆しています。興味のある方は、是非、手にとってみてくだ
+さい。
+
+書籍名： はじめてのVisual Studio 2010 (TECHNICAL MASTER)
+著者  ： techbank.jp
+出版社： 秀和システム
+定価  ： 3150円 
+http://www.amazon.co.jp/exec/obidos/ASIN/4798026662/gaius-22/
+
+
+■□───────────────────────────────────
+■□ Visual Studio Expressで、O/R Designerの複数形化を有効にする
+
+Logプロパティの話に入る前に、Visual Studio 2008/2010 Express を利用されて
+いる方へのTIPS情報です。
+
+このシリーズの最初で、Express Edition の場合、O/R Designerの複数形化を有効
+にする設定がありません、と書きましたが、レジストリに値を追加することで、こ
+の設定を[無効]から[有効]にできることが分かりました。
+
+regedit プログラムを使い、
+----
+[HKEY_CURRENT_USER\Software\Microsoft\VCSExpress\10.0\DialogPage\
+Microsoft.VisualStudio.ORDesigner.DslPackage.ORDesignerOptionPage]
+"EnablePluralization"="False"
+----
+
+の設定をしてください。
+※ 桁数の関係で、レジストリのキーを途中で改行していますのでご注意ください。
+
+※ Visual Studio 2008 Express をご利用の方は、レジストリのキーの バージョ
+   ンを表す 10.0 を 9.0 に読み替えてください。
+
+※ Visual Web Developer Express をご利用の方は、レジストリキーの"
+   VCSExpress" を "VWDExpress" に読み替えてください。
+
+この設定をすることで、Visual Studio 2008/2010 Express においても、SQL エン
+ティティ・クラスの名前が、複数形から単数形に変更されるようになります。
+
+regeditの使い方が分からない方は、SkyDriveにアップされた regファイル
+"ORDesigner.reg" をダブルクリックし、レジストリに値を追加してください。
+
+http://cid-f8f9e7f8eca2eab0.skydrive.live.com/home.aspx?sa=680113216&lc=1041
+
+この URL から [公開]- [C#プログラミングレッスン] と辿っていただき、
+"ORDesigner.reg" をダウンロードしてください。
+
+※ 当 reg ファイルは、Visual C# 2010 Express 用です。
+  ・Visual Studio 2008 Express では、レジストリーキーの "10.0" の部分を 
+    "9.0" に書き換えてから実行してください。
+  ・Visual Web Developer Express では、レジストリキーの"VCSExpress" を 
+    "VWDExpress" に書き換えてから実行してください。
+
+
+■□───────────────────────────────────
+■□ Logプロパティ
+
+
+LINQのクエリ式がどういったSQL文に変換され発行されているのかを確認する簡単
+な方法があります。
+
+例えば、
+
+ using (var db = new NorthwindDataContext()) {
+     var maxprice = db.Products.Select(p => p.UnitPrice).Max();
+     Console.WriteLine("{0}", maxprice);
+ }
+
+というコードの場合は、
+
+ db.Log = Console.Out;
+
+という行を、NorthwindDataContext()を生成した直後に書いておくだけです。
+
+  using (var db = new NorthwindDataContext()) {
+      db.Log = Console.Out;
+      var maxprice = db.Products.Select(p => p.ListPrice).Max();
+      Console.WriteLine("{0}", maxprice);
+  }
+
+実際にやってみてください。
+
+SELECT MAX([t0].[UnitPrice]) AS [value]
+FROM [dbo].[Products] AS [t0]
+
+というSQLが発行されているのを確認できます。
+
+ var query = (from product in db.Products
+              orderby product.UnitsInStock descending
+              select product).Take(10);
+
+というlクエリの場合は、
+
+SELECT TOP (10)
+       [t0].[ProductID], [t0].[ProductName], [t0].[SupplierID],
+       [t0].[CategoryID], [t0].[QuantityPerUnit], [t0].[UnitPrice], 
+       [t0].[UnitsInStock], [t0].[UnitsOnOrder], [t0].[ReorderLevel],
+       [t0].[Discontinued]
+FROM [dbo].[Products] AS [t0]
+ORDER BY [t0].[UnitsInStock] DESC
+
+というSQLが発行されます。
+
+
+■□───────────────────────────────────
+■□ SQLの発行LOGをファイルに書き出す。
+
+Logプロパティの型は、System.IO.TextWriterクラスですので、発行されたSQLを
+ファイルに書き出すこともできます。
+
+ TextWriter textwriter = new StreamWriter("log.txt");
+ using (NorthwindDataContext db = new NorthwindDataContext()) {
+     db.Log = textwriter;
+     var query = from product in db.Products
+                 where product.CategoryID == 5
+                 select new {
+                     product.ProductID,
+                     product.CategoryID,
+                     product.ProductName,
+                     product.UnitPrice
+                 };
+     foreach (var p in query)
+         Console.WriteLine("{0} | {1} | {2} | {3}",
+             p.ProductID, p.ProductName, p.UnitPrice, p.CategoryID);
+ }
+ textwriter.Close();
+
+というコードを実行すれば、log.txt ファイルに、以下の情報が出力されます。
+
+ SELECT [t0].[ProductID], [t0].[CategoryID], [t0].[ProductName],
+        [t0].[UnitPrice]
+ FROM [dbo].[Products] AS [t0]
+ WHERE [t0].[CategoryID] = @p0
+ -- @p0: Input Int (Size = -1; Prec = 0; Scale = 0) [5]
+ -- Context: SqlProvider(Sql2008) Model: AttributedMetaModel Build: 4.0.30319.1
+
+
+
+─────────────────────────────────────
+『C#プログラミングレッスン』  (ぼぼ週刊）                                 
+ ☆皆さまからの感想をお待ちしています。http://gushwell.ifdef.jp/mail.html 
+─────────────────────────────────────
+ Published by Gushwell.                                                   
+   Copyright (C) 2004-2010 Gushwell All rights reserved.                  
+   Microsoft MVP for Visual C#(Apr 2005 - Mar 2011)                       
+                                                                          
+ ■Gushwell's Page                                                        
+ 窓際プログラマ─の独り言        : http://gushwell.ldblog.jp/             
+ Gushwell's C# Programming Page  : http://gushwell.ifdef.jp/              
+ Gushwell's F# Programming Diary : http://techbank.jp/gushwell/           
+ Gushwellの読書ノート            : http://gushwell.jugem.jp/              
+                                                                          
+ ■コミュニティtechbank.jp (http://techbank.jp/Community/blogs/)          
+ Gushwellが参加している技術系コミュニティです。                           
+ 有志メンバーによるBlogでの技術情報発信も行っています。
+─────────────────────────────────────

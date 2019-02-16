@@ -1,0 +1,153 @@
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━━━ No.309 ━□
+
+「レシピ編」-- 数値の扱い (1)
+                                                           by Gushwell  
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+今日のコード
+
+1. コレクションの要素の合計を求めるには
+2. コレクションの中から最大値、最小値を求めるには
+3. ランダムな数値を生成するには
+4. 文字列を数値に変換するには
+5. 整数値のビット操作をするには
+
+
+■□───────────────────────────────────
+■□ コレクションの要素の合計を求めるには
+
+このレシピを「数値の扱い」のカテゴリにいれるべきか迷うところですが、数値を
+扱うことには間違いないので、深くは考えないことにします（笑）。
+
+さっそくそのコードを示します。
+
+int[] nums = { 10, 3, 6, 4, 5, 8, 7, 1, 2, 9 };
+int sum = 0;
+foreach (var n in nums)
+    sum += n;
+
+さすがに、このメールマガジンの読者の方々には、不要な問題かもしれませね。
+LINQを使えば、Sumメソッドを呼び出すだけです。
+
+int[] nums = { 10, 3, 6, 4, 5, 8, 7, 1, 2, 9 };
+int sum = nums.Sum();
+
+
+■□───────────────────────────────────
+■□ コレクションの中から最大値、最小値を求めるには
+
+まずは、LINQを使わないオーソドックスなコードを示します。
+
+int[] nums = { 10, 3, 6, 4, 5, 8, 7, 1, 2, 9 };
+
+// 最大値を求める
+int maxnum = nums[0];
+foreach (var n in nums)
+    maxnum = Math.Max(maxnum, n);
+
+// 最小値を求める
+int minnum = nums[0];
+foreach (var n in nums)
+    minnum = Math.Min(minnum, n);
+
+上記コードで、maxnum, minnum に最大値、最小値が格納されます。
+繰り返しは、インデックスの 1 から始めたほうが良いとは思いますが、わざわざそ
+のためのコードを追加するのならば、一回比較が多くなってもよいのではというの
+が私の見解です。
+for文を使えば、インデックスの操作が必要になりますので、コードが煩雑になりま
+す。
+また、Skip(1)メソッドで、最初の要素を除外すれば、比較の無駄は省けますが、
+LINQのメソッドを使うのならば、LINQの Max, Min メソッドを使ったほうが簡単で
+す。
+
+そのコードを以下に示します。
+
+int[] nums = { 10, 3, 6, 4, 5, 8, 7, 1, 2, 9 };
+int maxnum = nums.Max();
+int minnum = nums.Min();
+
+
+■□───────────────────────────────────
+■□ ランダムな数値を生成するには
+
+1から10までの範囲で、ランダムな整数を表示するコードを示します。
+
+Random rnd = new Random();
+for (int i = 0; i < 10; i++)
+    Console.WriteLine(rnd.Next(1, 11));
+
+Nextメソッドでは、引数でその生成する値の範囲を示すことができます。第１引数
+以上、第２引数未満のint型の値が生成されます。
+
+次は、double型の値を生成する例です。
+
+Random rnd = new Random();
+for (int i = 0; i < 10; i++)
+    Console.WriteLine(rnd.NextDouble());
+
+NextDoubleメソッドでは範囲を指定することができません。0.0 以上 1.0 未満の倍
+精度浮動小数点数が得られます。
+
+■□───────────────────────────────────
+■□ 文字列を数値に変換するには
+
+ここでは、"12345.678" という文字列を、decimal型に変換するコードを示します。
+
+ string s = "12345.678";
+ decimal number;
+ if (decimal.TryParse(s, out number))
+     Console.WriteLine(number);
+ else
+     Console.WriteLine("変換失敗");
+
+数値文字列を数値に変換するには、TryParseメソッドを利用します。
+int, double にも TryParse メソッドが用意されています。
+
+Parseメソッドを使った場合には、数値に変換できないと例外が発生しますので
+扱いには注意が必要です。
+
+
+■□───────────────────────────────────
+■□ 数値を文字列に変換するには
+
+数値を文字列に変換するには、ToStringメソッドを呼び出すだけです。
+
+ decimal number = 98765.4321m;
+ string s = number.ToString();
+
+文字列 s には、"98765.4321" が格納されます。
+
+
+■□───────────────────────────────────
+■□ 整数値のビット操作をするには
+
+& | ^ 演算子を使うことで、ビット単位の AND, OR, XOR の操作が可能です。
+
+int n1 = 1;  // 0001
+int n2 = 2;  // 0010
+int n3 = 5;  // 0101
+Console.WriteLine(n1 & n3);  // 0001
+Console.WriteLine(n1 | n2);  // 0011
+Console.WriteLine(n1 ^ n3);  // 0100
+
+結果は、
+
+1
+3
+4
+
+が表示されます。
+
+─────────────────────────────────────
+『C#プログラミングレッスン』  (ほぼ週刊）                                 
+☆皆さまからの感想をお待ちしています。http://gushwell.ifdef.jp/mail.html  
+─────────────────────────────────────
+Published by Gushwell.                                                    
+ Copyright (C) 2011 Gushwell All rights reserved.                        
+ Microsoft MVP for Visual C#(Apr 2005 - Mar 2012)                        
+
+■Gushwell's Page                                                         
+Gushwell's C# Dev Notes           : http://gushwell.ldblog.jp/            
+Gushwell's C# Programming Page    : http://gushwell.ifdef.jp/             
+Gushwellの読書ノート              : http://gushwell.jugem.jp/             
+─────────────────────────────────────

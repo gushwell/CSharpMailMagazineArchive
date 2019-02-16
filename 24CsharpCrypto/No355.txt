@@ -1,0 +1,143 @@
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━━━ No.355 ━□
+
+「暗号化編」-- ハッシュ値
+                                                            by Gushwell  
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+ハッシュ値は厳密には暗号化とは異なりますが、セキュリティという観点からみる
+と暗号化と深い関係があります。今回は、そのハッシュ値とハッシュ関数について
+見ていきます。。
+
+■□───────────────────────────────────
+■□ ハッシュ値とは
+
+ハッシュ値とは、あるデータから導き出せる固定長のデータで、元のデータを要約
+した値です。
+このハッシュ値を導き出す関数をハッシュ関数と言います。
+
+代表的なハッシュ関数としては、以下のようなものがあります。
+  MD5          128bit
+  SHA-1        160bit
+  SAH256       256bit
+  RIPEMD-160   160bit
+
+
+このハッシュ値はどんな利用法があるのでしょうか。同じハッシュ値を持つ異なる
+データを作成することは極めて困難です。そのため、ある利用経路（ネットワーク
+に限らない）の両端でデータのハッシュ値を求め、その違いを調べれば、データが
+通信途中で改ざんされているかどうかを調べることができます。ユーザ認証、デジ
+タル署名に応用されています。
+
+■□───────────────────────────────────
+■□ MD5でハッシュ値を求める
+
+では、ハッシュ値を求めるコードを示します。
+
+ using System.Security.Cryptography;
+ ...
+
+  string s = "この文字列データのハッシュ値を求めます。" + 
+             "ハッシュ値を求めるコードはとても簡単です";
+  HashAlgorithm ha = new MD5CryptoServiceProvider();
+  byte[] hash = ha.ComputeHash(Encoding.UTF8.GetBytes(s));
+
+  Console.WriteLine("ハッシュのサイズ : {0}byte ({1}bit)", 
+                     hash.Length, hash.Length * 8);
+  foreach (var by in hash)
+      Console.Write("{0:X2} ", by);
+  Console.WriteLine();
+
+このコードでは、MD5ハッシュアルゴリズムでハッシュ値を求めています。
+ハッシュ値は byte配列として得られるため、ここでは、16進表示にしてハッシュ値
+を表示しています。
+
+この結果は、以下の通りです。
+
+ ハッシュのサイズ : 16byte (128bit)
+ FC 24 F9 40 B0 3D 3A 99 02 EA 18 C0 89 D5 FF 81
+
+128ビットのハッシュ値が得られているのがわかります。
+
+なお、MD5CryptoServiceProvider のインスタンス生成の行は、以下のように書くこ
+ともできます。
+
+  HashAlgorithm ha = MD5.Create();
+
+※ MD5CryptoServiceProviderは、MD5 クラスから派生しています。
+
+
+■□───────────────────────────────────
+■□ SHA512でハッシュ値を求める
+
+SHA512 アルゴリズムを使ったコードも示します。
+
+ using System.Security.Cryptography;
+
+ namespace HashSample {
+ ...
+
+  string s = "この文字列データのハッシュ値を求めます。" + 
+             "ハッシュ値を求めるコードはとても簡単です";
+   HashAlgorithm ha = SHA512.Create();
+   byte[] hash = ha.ComputeHash(Encoding.UTF8.GetBytes(s));
+   Console.WriteLine("ハッシュのサイズ : {0}byte ({1}bit)", 
+                      hash.Length, hash.Length*8);
+   foreach (var by in hash)
+       Console.Write("{0:X2} ", by);
+   Console.WriteLine();
+
+結果を以下に示します。
+
+ ハッシュのサイズ : 64byte (512bit)
+ 2D 47 BE DD 41 37 E0 28 CF E0 05 09 6B 87 BA 1B 18 22 93 27 21 FC 0C 89 C8 7F 2A
+ 50 CD C8 C5 85 A4 FC A7 91 EA 1B 38 5A 9A F1 32 6B BB 93 89 72 C6 85 78 63 7B E3
+ FE FA EA 1E 89 D2 E7 CD 3E E2
+
+512ビットのハッシュ値が得られているのを確認できます。
+
+■□───────────────────────────────────
+■□ ハッシュ値を使いデータを検証する
+
+最後に、求めたハッシュ値を使い、元データが破損していないかを確認するコード
+を示します。
+
+ static void Main(string[] args) {
+     string s = "この文字列データのハッシュ値を求めます。" + 
+                "ハッシュ値を求めるコードはとても簡単です";
+     HashAlgorithm ha = new SHA512CryptoServiceProvider();
+     byte[] hash = ha.ComputeHash(Encoding.UTF8.GetBytes(s));
+
+     var b = VerifyString<SHA512CryptoServiceProvider>(s, hash);
+     Console.WriteLine(b);
+ }
+
+ // original の文字列が改ざんされていないかを hash値をもとに確認する
+ private static bool VerifyString<T>(string original, byte[] hash) 
+         where T : HashAlgorithm,new() {
+     HashAlgorithm ha = new T();
+     byte[] bs = ha.ComputeHash(Encoding.UTF8.GetBytes(original));
+     return bs.SequenceEqual(hash);
+ }
+
+意味もなく、ジェネリックメソッドにしてみました。
+
+なお、MD5CryptoServiceProvider のインスタンス生成の行は、以下のように書く
+こともできます。
+
+ HashAlgorithm ha = MD5.Create();
+
+─────────────────────────────────────
+『C#プログラミングレッスン』  (ほぼ週刊）                                 
+☆皆さまからの感想をお待ちしています。http://gushwell.ifdef.jp/mail.html  
+─────────────────────────────────────
+Published by Gushwell.                                                    
+Copyright (C) 2013 Gushwell All rights reserved.                          
+Microsoft MVP for Visual C#(Apr 2005 - Mar 2013)                          
+                                                                          
+■Gushwell's Page                                                         
+facebook Page                     : http://www.facebook.com/CSharpLesson  
+Gushwell's C# Dev Notes           : http://gushwell.ldblog.jp/            
+Gushwell's C# Programming Page    : http://gushwell.ifdef.jp/             
+Gushwellの読書ノート              : http://gushwell.jugem.jp/             
+Twitterアカウント                 : @gushwell                             
+─────────────────────────────────────

@@ -1,0 +1,105 @@
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━ No.232 ━□
+  
+ 「FxCopに学ぶ編」 -- CA2214: 
+                      Do not call overridable methods in constructors
+                                                         by Gushwell  
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+
+■□─────────────────────────────────
+■□ CA2214: Do not call overridable methods in constructors
+
+以下のようなコードを書くと FxCopは、CA2214の警告を表示します。
+このコードは何が悪いのでしょうか？
+
+ public class BaseClass {
+     public BaseClass() {
+         Console.WriteLine("Base:ctor");
+         Hoge();
+     }
+
+     public virtual void Hoge() {
+         Console.WriteLine("Base:Hoge");
+     }
+ }
+
+
+それは、BaseClassの中で、virtualなメソッドを呼びだしている点です。
+別にこれだけでは問題は表面化しませんが、ここから新たなクラスを派生させ
+た時に問題が発生します。この BaseClassを継承した、DelivedClassを定義し
+てみます。
+
+  public class DelivedClass : BaseClass {
+      public DelivedClass() : base() {
+          Console.WriteLine("Delived:ctor");
+      }
+
+      public override void Hoge() {
+          Console.WriteLine("Delived:Hoge");
+      }
+  }
+
+このDelivedClassでは、Hogeメソッドをoverrideしています。
+そして、
+
+ DelivedClass dc = new DelivedClass();
+
+を実行します。
+結果はどうなるでしょうか。
+
+ Base:ctor
+ Delived:Hoge
+ Delived:ctor
+
+となります。よく見てください。
+このDelivedClassの作者の意図した動きでしょうか？
+
+問題は、Delived:Hogeと表示されている点です。
+DelivedClassオブジェクト生成時に、Hogeメソッドが呼ばれるのは、
+DelivedClassの作者にとって、予期していない動作の可能性が大です。
+つまり何らかの不都合が起こる危険があります。
+
+そして、何よりも問題なのはその呼び出し順番です。
+はじめに、Baseのコンストラクタが呼ばれます。これは良いですね。そして、
+Baseコンストラクタの中では、virtualなHogeメソッドを呼んでいます。する
+と、overrideされたHogeメソッドが呼ばれるのですが、なんと、
+
+”DelivedClassのコンストラクタが呼び出されないうちに、DelivedClassの
+Hoge()メソッドが呼び出されてしまいます。”
+
+これは、明らかにおかしな動きです。もし、Hogeメソッドの中で、フィールド
+にアクセスしていたとしたら、初期化されていないフィールドにアクセスする
+ことになってしまいます。
+
+このように、コンストラクタの中で、仮想メソッドを呼び出すことは大変危険
+なコードです。
+
+■ 参照MSDNページ
+  CA2214: オーバーライドできるメソッドをコンストラクタで呼び出さないで
+          ください
+  http://msdn.microsoft.com/ja-jp/library/ms182331.aspx
+
+───────────────────────────────────
+『C#プログラミングレッスン』  (ぼぼ週刊）
+───────────────────────────────────
+ Published by Gushwell.
+  Copyright (C) 2004-2009 Gushwell All rights reserved.
+  Microsoft MVP - Visual C#(Apr 2005 - Mar 2010)
+
+ <<■ Gushwell's Page ■>>
+ 窓際プログラマ─の独り言  ：http://gushwell.ldblog.jp/
+ 窓際プログラマ─の読書三昧：http://gushwell.jugem.jp/
+ Gushwell's F# Programming Diary : http://techbank.jp/gushwell/
+ Gushwell's C# Programming Page  ：http://gushwell.ifdef.jp/
+  C#デザインパタ─ン : http://gushwell.ifdef.jp/dp/csdpindex.html
+
+ ☆メールマガジンの感想お待ちしています☆
+  http://gushwell.ifdef.jp/mail.html
+
+ <<■ コミュニティtechbank.jp (http://techbank.jp/Community/) ■>>
+ Gushwellが参加している技術系コミュニティです。
+ マイクロソフト系テクノロジー＆製品に特化したコミュニティで、Webサイト
+ では、VB、C#、VC++、SQL Server, BizTalk Server などの技術情報を公開し
+ ています。皆さんの参加をお待ちしています。
+ ブロガーさんも募集中です。
+───────────────────────────────────

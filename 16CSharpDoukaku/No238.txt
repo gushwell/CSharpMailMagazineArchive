@@ -1,0 +1,108 @@
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━━━ No.238 ━□
+  
+ 「どう書く？org編」-- クリップボードへの転送
+                                                             by Gushwell  
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+
+
+■□───────────────────────────────────
+■□ お題:クリップボードへの転送
+
+クリップボードへテキストを転送するコードを書いてください。
+併せて、クリップボードのテキストデータを取り出すコードも書いてください。
+
+ URL: http://ja.doukaku.org/188/
+
+
+
+■□───────────────────────────────────
+■□ 解答コード
+
+ private void button1_Click(object sender, EventArgs e) {
+     Clipboard.SetText(textBox1.Text);
+     textBox2.Text = Clipboard.GetText();
+ }
+
+
+■□───────────────────────────────────
+■□ 解説
+
+Clipboardクラスには、クリップボードにデータをセットするメソッドとクリップ
+ボードからデータを取得するメソッドが用意されています。共にstaticメソッドで
+す。
+
+お題では、テキストを転送するということなので、Clipboard.SetText, 
+Clipboard.GetTextメソッドを使っています。
+注意しなければいけないのは、あくまでもクリップボードへの転送と取得の機能で
+あって、コピーと貼り付けそのものの機能ではありません。
+それには、独自にコードを追加する必要があります。
+
+この例では、
+
+     textBox2.Text = Clipboard.GetText();
+
+と、textBox2.Textに代入することで、貼り付けの機能を実現しています。
+
+
+■□───────────────────────────────────
+■□ 発展
+
+これではあまりにも簡単なコードなので、もうひとつ例を示します。
+
+ private void button1_Click(object sender, EventArgs e) {
+     var bitmap = Clipboard.GetImage();
+     if (bitmap != null) {
+         pictureBox1.Image = bitmap;
+     }
+ }
+
+このコードは、クリップボードにコピーされたビットマップイメージをpictureBox
+に貼り付けるコードとなります。
+例えば、ペイントソフトやブラウザの表示された画像をクリップボードにコピーす
+れば、その画像をpictureBoxに貼り付けることができます。
+
+
+■□───────────────────────────────────
+■□ 今日のポイント
+
+クリップボードへのデータ転送とデータ取得は、Clipboardクラスに用意された
+staticメソッドを使います。
+データの種類により呼び出すメソッドが異なります。
+クリップボードからデータを取得しただけでは、「貼り付け」はできません。貼り
+付けのためのコードはアプリケーション独自で実装する必要があります。
+
+
+■□───────────────────────────────────
+■□ 次回のお題：与えられた数字のケタ数
+
+与えられた正の整数の桁数と、最大桁の位を求めてください。
+数字が2469なら4桁で最大桁は1000の位です。
+600なら3と100、1なら1と1です。
+
+ URL:http://ja.doukaku.org/40/
+
+─────────────────────────────────────
+『C#プログラミングレッスン』  (ぼぼ週刊）                                 
+─────────────────────────────────────
+ ☆メールマガジンの感想お待ちしています☆                                 
+   http://gushwell.ifdef.jp/mail.html                                     
+
+ Published by Gushwell.                                                   
+   Copyright (C) 2004-2009 Gushwell All rights reserved.                  
+   Microsoft MVP for Visual C#(Apr 2005 - Mar 2011)                       
+                                                                          
+ <<■ Gushwell's Page ■>>                                                
+ 窓際プログラマ─の独り言  ：http://gushwell.ldblog.jp/                   
+ 窓際プログラマ―の読書三昧：http://gushwell.jugem.jp/                    
+ Gushwell's F# Programming Diary : http://techbank.jp/gushwell/           
+ Gushwell's C# Programming Page  ：http://gushwell.ifdef.jp/              
+   C#デザインパタ―ン : http://gushwell.ifdef.jp/dp/csdpindex.html        
+                                                                          
+ <<■ コミュニティtechbank.jp (http://techbank.jp/Community/) ■>>        
+ Gushwellが参加している技術系コミュニティです。                           
+ マイクロソフト系テクノロジー＆製品に特化したコミュニティです。Webサイトで
+ は、VB、C#、VC++、SQL Server, BizTalk Server などの技術情報を公開していま
+ す。皆さんの参加をお待ちしています。                                     
+ ブロガーさんも募集中です。                                               
+─────────────────────────────────────

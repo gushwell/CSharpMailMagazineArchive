@@ -1,0 +1,157 @@
+┏━┳━━━━━━━━━━━━━━━━━━━━━━━━━┳━┳━┳━┓
+┃☆┃ C#プログラミングレッスン                         ┃＿┃□┃×┃
+┣━┻━━━━━━━━━━━━━━━━━━━━━━━━━┻━┻━┻━┫
+┃protected                                                  No.035 ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+■──────────────────────────────────
+■ protected
+
+以下のとても似たクラスがあったとします。
+
+class Triangle {
+    private double x;
+    private double y;
+    public Triangle(double width, double height) {
+        x = width;
+        y = height;
+    }
+    public double GetArea() {
+        return x * y / 2;
+    }
+}
+
+class Rectangle {
+    private double x;
+    private double y;
+    public Rectangle(double width, double height) {
+        x = width;
+        y = height;
+    }
+    public double GetArea() {
+        return x * y;
+    }
+}
+
+ ※ 三角形は、頂点の位置を示していないので、クラスとしては中度半端なも
+    のですが、ご容赦を。
+
+この２つのクラスとても似ていますから、前々回にお話した継承を使えば、共
+通化できそうです。
+では、早速やってみましょう。
+親クラスとして、Shapeクラスを導入してみます。
+
+class Shape {
+    private double x;
+    private double y;
+    public Shape(double width, double height) {
+        x = width;
+        y = height;
+    }
+}
+
+x と y は、親クラスである Shapeで持つ事とします。また、その初期化は、
+コンストラクタで行う事とします。
+コンストラクタは、new した時に呼び出される特別なメソッドでしたね。
+このShapeクラスから、 Triangle, Rectangle の２つのクラスを以下のように
+派生させます。
+
+class Triangle : Shape {
+    public Triangle(double width, double height)
+         : base(width,height) {
+    }
+    public double GetArea() {
+        return x * y / 2;
+    }
+}
+class Rectangle : Shape {
+    public Rectangle(double width, double height)
+         : base(width,height) {
+    }
+    public double GetArea() {
+        return x * y;
+    }
+}
+
+   ※ コンストラクタについては、前回お話しましたので、省略します。
+
+これで、コンパイルしてみると..... あれ、以下のメッセージが表示されて、
+コンパイルできませんね。
+
+「x は、アクセスできない保護レベルになっています。」
+「y は、アクセスできない保護レベルになっています。」
+
+xと y は、 Shapeクラスで privateと指定しているので、 Triangle クラスや
+Rectangleクラスからはアクセスできないというエラーです。
+これを解決するには、一つは、x と y を publicにするという方法があります
+が、これだと情報隠蔽の原則に反しますので、避けたいところです。
+２つめの方法が、もう一つのメンバ アクセス修飾子である protected を使う
+方法です。
+
+    class Shape {
+        protected double x;
+        protected double y;
+        ... 以下、省略 ...
+
+protectedは、
+「自分自身と、派生したクラスのみアクセスを許可する」
+という指定です。
+身内にだけ公開することで、安全性を高めているわけですね。
+
+これにより、 x と y は、派生クラスである、Triangle と Rectangle から参
+照できるようになりました。
+
+なお、 protectedは、フィールドだけでなく、メソッド、プロパティなど全て
+のメンバーに適用できます。
+
+
+■──────────────────────────────────
+■ protectedは、継承関係のあるクラスの結びつきを強くする
+
+フィールドをprotectedにするということは、 親クラスと子クラスの結びつき
+が強くなるので、使わないで済むのならば使わない方が良いかもしれません。
+親クラスのフィールドの定義を修正したくても、子クラスに影響を与えてしま
+う危険があり、修正が困難になる場合があるからです。
+
+では、どうやって解決するかというと、今回の例だと、多分、x，ｙ の値を取
+得するプロパティを定義することになると思います。
+
+  # Shapeクラスを導入した時点で、本当ならば、X, Y というプロパティを
+  # 用意するのが普通ですが、protected の説明をするために、プロパティの
+  # 導入を後回しにしました。
+
+    class Shape {
+        private double x;
+        private double y;
+        public Shape(double width, double height) {
+            x = width;
+            y = height;
+        }
+        public double X {       // 追加
+            get { return x; }
+        }
+        public double Y {       // 追加
+            get { return y; }
+        }
+    }
+
+    class Triangle : Shape {
+        public Triangle(double width, double height) : base(width,height) {
+        }
+        public double GetArea() {
+            return X * Y / 2;
+        }
+    }
+
+次回は、継承関係のある変数の代入について考えてみたいと思います。
+
+┌─┬─────────────────────────┬─┬─┬─┐
+│☆│ C#プログラミングレッスン                         │＿│□│×│
+├─┴─────────────────────────┴─┴─┴─┤
+│ Published by GushWell                                            │
+│ Copyright (C) 2004-2005 GushWell All rights reserved.            │
+│-------------------- GushWell's Page ---------------------------- │
+│ 窓際プログラマーの独り言  ：http://blog.livedoor.jp/gushwell/    │
+│ 窓際プログラマーの読書三昧：http://gushwell.jugem.jp/            │
+│             よろしかったらアクセスしてみてください！             │
+└─────────────────────────────────┘

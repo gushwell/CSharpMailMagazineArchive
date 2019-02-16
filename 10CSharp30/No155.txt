@@ -1,0 +1,120 @@
+┏━┳━━━━━━━━━━━━━━━━━━━━━━━━━┳━┳━┳━┓
+┃☆┃ C#プログラミングレッスン                         ┃＿┃□┃×┃
+┣━┻━━━━━━━━━━━━━━━━━━━━━━━━━┻━┻━┻━┫
+┃ C#3.0-オブジェクト初期化子　　　　　　                     No.155┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+メルマがのNo153,No154は、「C#3.0-Implicitly typed local variables 」な
+どと英語表記のタイトルをつけていましたが、今回から日本語のタイトルに変
+更します。
+
+■──────────────────────────────────
+■ オブジェクト初期化子とは
+
+ public class Product {
+     public string ProductName { get; set; }
+     public int UnitPrice { get; set; }
+ }
+
+というクラスがあった場合、オブジェクトを初期化するには、C#2.0だと、
+
+ Product product = new Product();
+ product.ProductName = "Calender";
+ product.UnitPrice = 1280;
+
+と書く必要がありました。
+C#3.0では、
+
+ var product = new Product {
+     ProductName = "Calender",
+     UnitPrice = 1280,
+ };
+
+と書くことができます。この方が、オブジェクトの初期化であることを明示で
+きますので、より可読性が高まると思われます。
+また、中かっこ内では、Visual Studio 2008のインテリセンスが有効に働くた
+め、メンバーの初期化漏れなども、防ぐことができます。
+
+■──────────────────────────────────
+■ 構造化された初期化
+
+Productが以下のように、別のクラスをメンバーに持っていた場合にも、初期
+化構文が利用できます。
+
+ public class Product {
+     public string ProductName { get; set; }
+     public int UnitPrice { get; set; }
+     public Category Category { get; set; }
+ }
+
+ public class Category {
+     public string Name { get: set; }
+     public int Id { get; set; }
+ }
+
+上記、クラスの場合は、
+
+ var product = new Product {
+     ProductName = "Calender",
+     UnitPrice = 1280,
+     Category = new Category { 
+        Id = 13, 
+        Name = "雑貨"
+     }
+ };
+
+と書けます。
+
+では、Productクラスが、コンストラクタで、以下のようにCategoryのインス
+タンスを割り当てていたらどうでしょうか？
+
+ public class Product {
+     public string ProductName { get; set; }
+     public int UnitPrice { get; set; }
+     public Category Category { get; set; }
+     public Product() {
+         Category = new Category();
+     }
+ }
+
+この場合は、
+
+var product = new Product {
+    ProductName = "Calender",
+    UnitPrice = 1280,
+    Category =  { Id = 13, Name = "雑貨" }
+};
+
+と書くことができます。Categoryのnew は不要です。
+
+この構文では、新たにCategoryインスタンスが生成されることはありません。
+Productコンストラクタで確保したインスタンスの初期化がおこなわれること
+になります。
+
+当然、Productコンストラクタ内で、Categoryのインスタンスを割り当ててい
+ないにも関らず、
+
+ var product = new Product {
+     ProductName = "Calender",
+     UnitPrice = 1280,
+     Category =  { Id = 13, Name = "雑貨" }
+ };
+
+のように書いた場合は、実行時例外となりますので注意しましょう。
+
+┌─┬─────────────────────────┬─┬─┬─┐
+│☆│ C#プログラミングレッスン  (ぼぼ週刊）            │＿│□│×│
+├─┴─────────────────────────┴─┴─┴─┤
+│ Published by Gushwell.                                           │
+│ Copyright (C) 2004-2007 Gushwell All rights reserved.            │
+│ Microsoft MVP Visual Developer - Visual C#(Apr 2005 - Mar 2008)  │
+│-------------------- Gushwell's Page ---------------------------- │
+│ 窓際プログラマーの独り言  ：http://blog.livedoor.jp/gushwell/    │
+│ 窓際プログラマーの読書三昧：http://gushwell.jugem.jp/            │
+│ Gushwell's C# Programing Page：http://gushwell.ifdef.jp/         │
+│ C#デザインパターン :                                             │
+│  『増補改訂版Java言語で学ぶデザインパターン入門 / 結城 浩(著)』  │
+│   のサンプルコードをC#に移植したものを掲載しています。           │
+│   移植後のコードの公開は、結城氏の了解を得ています。             │
+│   http://blog.livedoor.jp/gushwell/archives/50333227.html        │
+└─────────────────────────────────┘

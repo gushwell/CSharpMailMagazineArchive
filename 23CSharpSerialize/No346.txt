@@ -1,0 +1,116 @@
+
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━━━ No.346 ━□
+
+「シリアライズ編」-- XMLシリアル化(3)
+                                                           by Gushwell  
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+
+■□───────────────────────────────────
+■□ 異なるバージョン間でのシリアル化、逆シリアル化
+
+バイナリシリアル化のところでも異なるバージョン間でのシリアル化について説明
+しましたが、XMLシリアル化の場合はどうなるのでしょうか。
+
+結論から言うと、クラスに定義してあるフィールドが、XMLファイルに存在してい
+なければ、初期化する値が無いということで、フィールドは通常通り初期化され
+ます。
+逆に、クラスに定義していないフィールドが、XMLファイルに存在していた場合は、
+XMLファイルの値は無視されることになります。
+
+つまり、バージョンが上がり、クラスのフィールドが追加、削除されても、例外
+が発生することなく、逆シリアル化が行えるということになります。
+
+次の簡単なXMLで見ていきましょう。
+
+ <?xml version="1.0"?>
+ <MyObject xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+           xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+   <n1>10</n1>
+   <n2>123</n2>
+ </MyObject>
+
+このXMLを下記のMyObjectクラスへ逆シリアル化することとします。
+
+ public class MyObject {
+     public int n1 = 0;
+     public int n2 = 0;
+     public int n3 = 0;
+
+     public MyObject() {
+         n3 = 987;
+     }
+ }
+
+
+この場合、フィールド、n1,n2 はそれぞれ、10,123に設定されますが、フィールド
+n3 は、コンストラクタで設定された値がそのまま有効になります。
+
+以下に、その確認コードを示します。
+
+ public class MyObject {
+     public int n1 = 0;
+     public int n2 = 0;
+     public int n3 = 0;
+
+     public MyObject() {
+         n3 = 987;
+     }
+ }
+ ...
+
+   XmlSerializer serializer = new XmlSerializer(typeof(MyObject));
+   MyObject obj = null;
+   using (Stream stream = new FileStream("sample.xml", FileMode.Open,
+                                                       FileAccess.Read)) {
+       obj = (MyObject)serializer.Deserialize(stream);
+   }
+   Console.WriteLine("n1 = {0}", obj.n1);
+   Console.WriteLine("n2 = {0}", obj.n2);
+   Console.WriteLine("n3= {0}", obj.N3);
+
+
+以下、その実行結果です。
+
+ n1 = 10
+ n2 = 123
+ n3= 987
+
+
+■□───────────────────────────────────
+■□ [XmlIgnore]属性
+
+バイナリシリアル化では、NonSerialized属性をフィールドに設定することで、シ
+リアル化の対象から除外することができましたが、XMLシリアル化では、
+XmlIgnore 属性をフィールドあるいはプロパティに付加することでシリアル化の
+対象から除外することができます。
+例えば、以下のようにクラスを定義した場合は、N3プロパティは、XMLファイルに
+出力されなくなります。
+
+ public class MyObject {
+     public int n1 = 0;
+     public int n2 = 0;
+     private int n3 = 0;
+     [XmlIgnore]
+     public int N3 {
+         get { return n3; }
+         set { n3 = value; }
+     }
+ }
+
+
+─────────────────────────────────────
+『C#プログラミングレッスン』  (ほぼ週刊）                                 
+☆皆さまからの感想をお待ちしています。http://gushwell.ifdef.jp/mail.html  
+─────────────────────────────────────
+Published by Gushwell.                                                    
+Copyright (C) 2012 Gushwell All rights reserved.                          
+Microsoft MVP for Visual C#(Apr 2005 - Mar 2013)                          
+                                                                          
+■Gushwell's Page                                                         
+facebook Page                     : http://www.facebook.com/CSharpLesson  
+Gushwell's C# Dev Notes           : http://gushwell.ldblog.jp/            
+Gushwell's C# Programming Page    : http://gushwell.ifdef.jp/             
+Gushwellの読書ノート              : http://gushwell.jugem.jp/             
+Twitterアカウント                 : @gushwell                             
+─────────────────────────────────────

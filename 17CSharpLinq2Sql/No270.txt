@@ -1,0 +1,179 @@
+
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━━━ No.270 ━□
+  
+ 「LINQ to SQL編」-- リレーションのある更新(2)
+                                                             by Gushwell  
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+
+■□───────────────────────────────────
+■□ １対多のリレーションシップ（データの更新）
+
+前回は、CategoryテーブルとProductテーブルのデータ更新について説明しました。
+この２つのテーブルの関係は、１対多の関係がありますが、「多」側である
+Productテーブル側から、関連を設定しました。
+
+
+ Product product = new Product() {
+     ProductName = "Sample",
+     CategoryID = cat.CategoryID  // ★
+ };
+
+
+の★の行がそれに当たります。
+
+今度は、「１」側からの操作で、関連付けする方法を見ていきます。
+利用するテーブルは、CustomersテーブルとOrdersテーブルです。
+
+
+ using (var db = new NorthwindDataContext()) {
+     var cust = db.Customers.Single(c => c.CustomerID == "ALFKI");
+
+     // 新しい Order オブジェクトを作成し、Orders コレクションに追加します。
+     Order ord = new Order { OrderDate = DateTime.Now };
+     cust.Orders.Add(ord);
+
+     // DataContext を使用してすべての変更を保存します。
+     db.SubmitChanges();
+ }
+
+
+Addメソッドで Orderオブジェクトを追加しています。InsertOnSubmitメソッドを
+呼び出していないことに注目です。
+
+この方法の良いところは、「コレクションにオブジェクトを追加する」という通常
+のオブジェクトの操作と同じ感覚でコードが書けるということです。
+
+
+ using (var db = new NorthwindDataContext()) {
+     var cust = db.Customers.Single(c => c.CustomerID == "ALFKI");
+     foreach (var o in cust.Orders) {
+         Console.WriteLine(o.OrderDate);
+     }
+ }
+
+
+として確かめてみると、今追加したOrderも一覧の中に表示されるはずです。
+
+
+■□───────────────────────────────────
+■□ ２つのテーブルに行を挿入
+
+次に、Category とProductを同時に挿入するコードを示します。
+
+
+ using (var db = new NorthwindDataContext()) {
+     Category cat = new Category() {
+         CategoryName = "new category"
+     };
+     Product product = new Product {
+         ProductName = "Sample",
+         Category = cat
+     };
+     db.Products.InsertOnSubmit(product);
+     db.SubmitChanges();
+ }
+
+
+２つのテーブルに行を追加していますが、InsertOnSubmitを呼び出すのは、
+productテーブルに対してのみです。
+InsertOnSubmit(cat) とする必要はありません。
+このように、LINQ to SQLでは、オブジェクト指向的なプログラミングができるよ
+うに設計されています。
+
+
+■□───────────────────────────────────
+■□ 行の削除
+
+注文を削除する場合を考えてみましょう。先ほどのAddメソッドを使った挿入と同
+じ感覚で、Removeメソッドを使うとどうなるでしょうか？
+
+
+ using (var db = new NorthwindDataContext()) {
+     Customer cust = db.Customers.Single(c => c.CustomerID == "ALFKI");
+     Order ord = cust.Orders.First();    // 見つかった最初の注文を取り出します。
+     cust.Orders.Remove(ord);
+     db.SubmitChanges();
+ }
+
+
+このコードでは、関連が外れているだけで、テーブルからレコードが削除されて
+いるわけではありません。これは注意が必要です。
+
+このコードを実行後にOrdersテーブルの中身を見てみると、該当するレコードは
+そのまま存在し、CustomerIDカラムの値が NULLになっていることが確認できます。
+
+これをコードで確かめるとすると、以下のようなコードになるでしょうか。
+
+
+ using (var db = new NorthwindDataContext()) {
+     Customer cust = db.Customers.Single(c => c.CustomerID == "ALFKI");
+     // 最初の注文を取り出します。
+     Order ord = cust.Orders.First();
+     // 最初の注文を取り除く
+     cust.Orders.Remove(ord);
+     db.SubmitChanges();
+ }
+ using (var db = new NorthwindDataContext()) {
+     // 取り除いたOrderのOrderIDに位置するOrderを取得する。
+     var query = db.Orders.Where(o => o.OrderID == ord.OrderID);
+     foreach (var o in query) {
+         Console.WriteLine("{0} {1}",o.OrderDate, o.CustomerID == null);
+     }
+ }
+
+
+実際に、テーブルから該当する行を削除するには、以下のようなコードを書く必要
+があります。
+
+ using (var db = new NorthwindDataContext()) {
+     Customer cust = db.Customers.Single(c => c.CustomerID == "ALFKI");
+     Order ord = cust.Orders.Last();
+     db.Order_Details.DeleteAllOnSubmit(ord.Order_Details);
+     db.Orders.DeleteOnSubmit(ord); 
+     db.SubmitChanges();
+ }
+
+
+※ 関連するOrder_Detailsが存在していた場合を考慮し、Order_Details.
+   DeleteAllOnSubmitを呼び出し、注文明細も削除しています。
+
+
+■□───────────────────────────────────
+■□ 注文を移動する
+
+あまりないシチュエーションだと思いますが、顧客間で注文を移動するコードも
+オブジェクト指向的なコードで実現できます。
+
+
+ using (var db = new NorthwindDataContext()) {
+     Customer cust1 = db.Customers.Single(c => c.CustomerID == "ALFKI");
+     Customer cust2 = db.Customers.Single(c => c.CustomerID == "FOLKO");
+     // 最初の注文を取り出します。
+     Order o = cust1.Orders.First();
+     // 顧客１から注文を削除し、その注文を別の顧客２に追加します。
+     cust1.Orders.Remove(o);
+     cust2.Orders.Add(o);
+     db.SubmitChanges();
+ }
+
+
+─────────────────────────────────────
+『C#プログラミングレッスン』  (ぼぼ週刊）                                 
+ ☆皆さまからの感想をお待ちしています。http://gushwell.ifdef.jp/mail.html 
+─────────────────────────────────────
+ Published by Gushwell.                                                   
+   Copyright (C) 2004-2010 Gushwell All rights reserved.                  
+   Microsoft MVP for Visual C#(Apr 2005 - Mar 2011)                       
+                                                                          
+ ■Gushwell's Page                                                        
+ 窓際プログラマ─の独り言 - C#の話題を中心に: http://gushwell.ldblog.jp/  
+ Gushwell's C# Programming Page             : http://gushwell.ifdef.jp/   
+ Gushwell's F# Programming Diary            : http://techbank.jp/gushwell/
+ Gushwellの読書ノート                       : http://gushwell.jugem.jp/   
+                                                                          
+ ■コミュニティtechbank.jp (http://techbank.jp/)                          
+ Gushwellが参加している技術系コミュニティです。                           
+ 有志メンバーによるBlogでの技術情報発信も行っています。                   
+─────────────────────────────────────
+

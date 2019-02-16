@@ -1,0 +1,150 @@
+
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━━━ No.268 ━□
+  
+ 「LINQ to SQL編」-- 行の挿入・削除
+                                                             by Gushwell  
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+前回、データベースの行の更新については、説明しましたので、今回は、行の挿入、
+削除の例を示します。
+
+■□───────────────────────────────────
+■□ 行の挿入
+
+行をデータベースに挿入するには、以下の手順を踏みます。
+
+ 1.送信する列データを含む新しいオブジェクトを作成します。
+
+ 2.データベース内の挿入先テーブルに関連付けられた LINQ to SQL Table コレク
+   ションに新しいオブジェクトを追加します。
+
+ 3 .データベースに変更内容を送信します。
+
+以下に簡単なサンプルコードを示します。
+
+
+ using (var db = new NorthwindDataContext()) {
+     Category cat = new Category {
+         CategoryName = "Side Dish",
+         Description = "salad, croquette, tempura, cooked beans",
+     };
+     db.Categories.InsertOnSubmit(cat);
+     db.SubmitChanges();
+ }
+
+
+InsertOnSubmitメソッドという名前から分かるように、SubmitChangesメソッドを
+呼び出して、初めてデータベースにデータが挿入されます。
+なお、CategoryテーブルのCategoryIDは、IDENTITYの指定がされていますので、
+Categoryクラスのインスタンスを生成するときに、CategoryIDに値を設定する必要
+はありません。
+
+複数の行をまとめて挿入したい場合には、InsertAllOnSubmitメソッドを使います。
+
+
+ using (var db = new NorthwindDataContext()) {
+     Category[] categories = new Category[] {
+         new Category { CategoryName = "Side Dish", 
+                        Description = "salad, croquette, tempura, cooked beans" },
+         new Category { CategoryName = "Retort Pack", 
+                        Description = "noodles, curry, stew, cooked rice" },
+     };
+     db.Categories.InsertAllOnSubmit(categories);
+     db.SubmitChanges();
+ }
+
+
+ここでは、InsertAllOnSubmitに配列を渡すコードを示しましたが、
+InsertAllOnSubmitメソッドは、System.Collections.IEnumerableを受け取ります
+ので、List<T>なども渡すことができます。
+
+
+■□───────────────────────────────────
+■□ 行の削除
+
+次は、行の削除です。
+削除するには、以下に示すように、いったんテーブルから該当する行を取得し、そ
+の後、DeleteOnSubmitメソッドを呼び出します。
+
+
+ using (var db = new NorthwindDataContext()) {
+     var category = (from c in db.Categories
+                     where c.CategoryID == 9
+                     select c).Single();
+     db.Categories.DeleteOnSubmit(category);
+     db.SubmitChanges();
+ }
+
+
+一括して複数の行を削除するには、DeleteAllOnSubmit()メソッドを使います。
+
+
+ using (var db = new NorthwindDataContext()) {
+     var categories = from c in db.Categories
+                      where c.CategoryID >= 9
+                      select c;
+     db.Categories.DeleteAllOnSubmit(categories);
+     db.SubmitChanges();
+ }
+
+取得していないオブジェクト（行）を削除することも可能ですが、その場合、原
+則として内容を完全に一致させておく必要があります。NText, Text, Image、
+xml など一部の型のカラムは対象外です。
+
+また、Attach()メソッドで、このオブジェクトをDataContextに関連付けしておか
+なければなりません。理由は、LINQ to SQLは、メモリ内に読み込んだデータベー
+スのレプリカに対する変更を元に更新、挿入、削除のSQLを組み立てるためです。
+
+ using (var db = new NorthwindDataContext()) {
+     db.Log = Console.Out;
+     Category category = new Category {
+         CategoryID = 9,
+         CategoryName = "Side Dish",
+     };
+     db.Categories.Attach(category);
+     db.Categories.DeleteOnSubmit(category);
+     db.SubmitChanges();
+ }
+
+Attachを呼び出さないで、DeleteOnSubmit を呼び出した場合、例外 System.
+InvalidOperationException が発生します。
+
+このときの例外メッセージは、
+ "アタッチされていないエンティティを削除できません。" 
+です。
+
+クエリ式で読み込んだオブジェクトは、自動的にアタッチされていますので、
+Attachメソッドの呼び出しは不要です。
+
+
+なお、CategoryのDescription, Pictureカラムの型は、それぞれ NText, Imageな
+ので、値を設定する必要はありません。
+
+発行されるSQLは、以下の通りです。
+
+ DELETE FROM [dbo].[Categories] 
+        WHERE ([CategoryID] = @p0) 
+          AND ([CategoryName] = @p1)
+
+このSQLから、LINQ to SQLは、オプティミスティック同時実行制御を行っている
+ことが分かります。これについてはまた別の機会に説明できればと考えています。
+
+─────────────────────────────────────
+『C#プログラミングレッスン』  (ぼぼ週刊）                                 
+ ☆皆さまからの感想をお待ちしています。http://gushwell.ifdef.jp/mail.html 
+─────────────────────────────────────
+ Published by Gushwell.                                                   
+   Copyright (C) 2004-2010 Gushwell All rights reserved.                  
+   Microsoft MVP for Visual C#(Apr 2005 - Mar 2011)                       
+                                                                          
+ ■Gushwell's Page                                                        
+ 窓際プログラマ─の独り言        : http://gushwell.ldblog.jp/             
+ Gushwell's C# Programming Page  : http://gushwell.ifdef.jp/              
+ Gushwell's F# Programming Diary : http://techbank.jp/gushwell/           
+ Gushwellの読書ノート            : http://gushwell.jugem.jp/              
+                                                                          
+ ■コミュニティtechbank.jp (http://techbank.jp/)                          
+ Gushwellが参加している技術系コミュニティです。                           
+ 有志メンバーによるBlogでの技術情報発信も行っています。                   
+─────────────────────────────────────
+

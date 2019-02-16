@@ -1,0 +1,100 @@
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━━━ No.318 ━□
+
+「レシピ編」-- ファイル・ディレクトリの操作 (3)
+                                                           by Gushwell  
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+
+今日のコード
+
+1. 特殊フィルダのパスを得るには
+2. 現在のディレクトリを得るには
+3. 指定フォルダにあるファイルの一覧を得るには
+4. 指定フォルダにあるディレクトリの一覧を得るには
+
+
+■□───────────────────────────────────
+■□ 特殊フィルダのパスを得るには
+
+Environment.GetFolderPathメソッドを利用することで、デスクトップなどの特殊フ
+ォルダのパスを取得することができます。
+ここでは、いくつかの代表的な特殊フォルダを取得するコードをお見せします。
+
+string desktopFolder =
+         Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+
+string myDocumentsFolder =
+        Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+
+string programFilesFolder = 
+        Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
+
+string windowsFolder =
+        Environment.GetFolderPath(Environment.SpecialFolder.Windows);
+
+string systemFolder =
+        Environment.GetFolderPath(Environment.SpecialFolder.System); 
+
+上から順に、デスクトップフォルダ、マイドキュメントフォルダ、プログラムファ
+イルフォルダ、Windowsフォルダ、システムフォルダが取得できます
+
+Environment.SpecialFolderは列挙型です。どのような列挙定数が定義されているの
+かは、MSDNライブラリをご覧ください。
+http://msdn.microsoft.com/ja-jp/library/system.environment.specialfolder(v=VS.100).aspx
+
+
+■□───────────────────────────────────
+■□ 現在のディレクトリを得るには
+
+現在のディレクトの絶対パスを取得するコードを示します。
+
+string currentDir = Environment.CurrentDirectory;
+Console.WriteLine(currentDir);
+
+
+■□───────────────────────────────────
+■□ 指定フォルダにあるファイルの一覧を得るには
+
+ここでは、カレントフォルダにある拡張子が txt であるファイルの一覧を取得して
+います。EnumerateFiles メソッドの第３引数は、検索操作に現在のディレクトリの
+みを含めるのか、またはすべてのサブディレクトリを含めるのかを指定します。こ
+こでは、AllDirectories列挙定数を指定することで、すべてのサブディレクトリを
+対象としています。既定値は TopDirectoryOnly です。
+
+
+string currentDir = Environment.CurrentDirectory;
+foreach (var s in Directory.EnumerateFiles(currentDir, "*.txt",
+                                           SearchOption.AllDirectories)) {
+    Console.WriteLine(s);
+}
+
+
+■□───────────────────────────────────
+■□ 指定フォルダにあるディレクトリの一覧を得るには
+
+カレントフォルダの直下にあるディレクトリの一覧を取得するコードを示します。
+Directory.EnumerateFilesメソッドと同様、第３引数で、検索操作に現在のディレ
+クトリのみを対象とするのか、またはすべてのサブディレクトリを含めるのかを指
+定します。
+
+string currentDir = Environment.CurrentDirectory;
+foreach (var s in Directory.EnumerateDirectories(currentDir, "*", 
+                                         SearchOption.TopDirectoryOnly)) {
+    Console.WriteLine(s);
+}
+
+
+─────────────────────────────────────
+『C#プログラミングレッスン』  (ほぼ週刊）                                 
+☆皆さまからの感想をお待ちしています。http://gushwell.ifdef.jp/mail.html  
+─────────────────────────────────────
+Published by Gushwell.                                                    
+ Copyright (C) 2012 Gushwell All rights reserved.                        
+ Microsoft MVP for Visual C#(Apr 2005 - Mar 2012)                        
+
+■Gushwell's Page                                                         
+facebook Page                     : http://www.facebook.com/CSharpLesson  
+Gushwell's C# Dev Notes           : http://gushwell.ldblog.jp/            
+Gushwell's C# Programming Page    : http://gushwell.ifdef.jp/             
+Gushwellの読書ノート              : http://gushwell.jugem.jp/             
+─────────────────────────────────────

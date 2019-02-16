@@ -1,0 +1,106 @@
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━━━ No.363 ━□
+
+「HTTPクライアント編」-- WebClientでファイルをダウンロード
+                                                           by Gushwell  
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+今回は、ファイルをダウンロードするプログラムの説明です。
+
+■□───────────────────────────────────
+■□ DownloadFileメソッド
+
+前回使用したWebClientクラスを使うことで、Httpプロトコルを使いファイルをダ
+ウンロードすることができます。
+
+ダウンロードするには、WebClientのインスタンスを生成し、DownloadFileメソッ
+ドを呼び出すだけです。
+第１引数にはダウンロードするファイルのURL、第２引数に保存するファイルパス
+を渡します。
+
+using System;
+using System.Net;
+
+namespace DownloadFile {
+    class Program {
+        static void Main(string[] args) {
+            WebClient wc = new WebClient();
+            string url = @"http://gushwell.ifdef.jp/mailmag/CSharpEntry.zip";
+            string filename = @"D:\temp\CSharpEntry.zip";
+            wc.DownloadFile(url, filename);
+            Console.ReadLine();
+        }
+    }
+}
+
+
+この例では、zipファイルをダウンロードする例を示しましたが、同等のコードで、
+htmlをファイルに保存することも、画像ファイルをファイルに保存することもで
+きます。
+
+
+■□───────────────────────────────────
+■□ DownloadFileAsyncメソッドによる非同期処理
+
+小さなファイルでは上記コードでなんら問題はありませんが、大きなファイルを
+ダウンロードする際は、非同期にファイルをダウンロードする必要があります。
+非同期にファイルをダウンロードするには、DownloadFileAsyncメソッドを使います。
+そのコードを示します。
+
+using System;
+using System.Net;
+
+namespace DownloadFile {
+    class Program {
+        static void Main(string[] args) {
+            WebClient wc = new WebClient();
+            Uri url = new Uri(@"http://exsample.com/sample.exe");
+            string filename = @"D:\temp\exsample.exe";
+            wc.DownloadProgressChanged += wc_DownloadProgressChanged;
+            wc.DownloadFileCompleted += wc_DownloadFileCompleted;
+            wc.DownloadFileAsync(url, filename);
+            Console.ReadLine();
+        }
+
+        static void wc_DownloadProgressChanged(object sender, 
+                                    DownloadProgressChangedEventArgs e) {
+            Console.WriteLine("{0}% {0}/{1}",e.ProgressPercentage,
+                e.BytesReceived, e.TotalBytesToReceive);
+        }
+
+        static void wc_DownloadFileCompleted(object sender, 
+                       System.ComponentModel.AsyncCompletedEventArgs e) {
+            Console.WriteLine("ダウンロード完了");
+        }
+    }
+}
+
+DownloadProgressChangedイベントは、ダウンロードの進捗状況が変更した時に発
+生するイベントです。ダウンロードが完了した場合には、
+DownloadFileCompletedイベントが発生しますので、そのイベントハンドラを定義
+しています。
+ここでは、ダウンロードのキャンセル処理は記述していませんが、CancelAsyncメ
+ソッドを呼び出すことで、ダウンロードのキャンセルが行えます。
+キャンセルさいれた場合は、DownloadFileCompletedイベントハンドラの引数の
+AsyncCompletedEventArgs.Cancelledプロパティを見ることで、キャンセルされた
+かどうかがわかるようになっています。
+
+--------------------------------------------------------------------------
+■補足
+.NET Framework4以降は、System.Net.Http.HtpClientという新しいクラスが提供さ
+れています。当連載でもそのうちHtpClientクラスについても触れたいと思います。
+
+─────────────────────────────────────
+『C#プログラミングレッスン』  (ほぼ週刊）                                 
+☆皆さまからの感想をお待ちしています。http://gushwell.ifdef.jp/mail.html  
+─────────────────────────────────────
+Published by Gushwell.                                                    
+Copyright (C) 2013 Gushwell All rights reserved.                          
+Microsoft MVP for Visual C#(Apr 2005 - Mar 2014)                          
+
+■Gushwell's Page                                                         
+facebook Page                     : http://www.facebook.com/CSharpLesson  
+Gushwell's C# Dev Notes           : http://gushwell.ldblog.jp/            
+Gushwell's C# Programming Page    : http://gushwell.ifdef.jp/             
+Gushwellの読書ノート              : http://gushwell.jugem.jp/             
+Twitterアカウント                 : @gushwell                             
+─────────────────────────────────────

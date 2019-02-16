@@ -1,0 +1,115 @@
+
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━━━ No.348 ━□
+
+「シリアライズ編」-- XMLシリアル化(5)
+                                                           by Gushwell  
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+
+■□───────────────────────────────────
+■□ 配列を要素に持ったクラスのシリアル化
+
+今回は、配列を要素に持ったクラスのシリアル化について考えてみましょう。
+
+  public class Books {
+      public Book[] items;
+  }
+
+  public class Book {
+      public string title;
+      public string author;
+      public int price;
+  }
+
+シリアル化のコードを示します。
+
+  Books books = new Books();
+  books.items = new Book[2];
+  books.items[0] = new Book {
+      title = "銀河鉄道の夜",
+      author = "宮沢賢治",
+      price = 450
+  };
+  books.items[1] = new Book {
+      title = "細雪",
+      author = "谷崎潤一郎",
+      price = 480
+  };
+  XmlSerializer serializer = new XmlSerializer(typeof(Books));
+  using (Stream stream = new FileStream("books.xml", FileMode.Create, 
+                                                     FileAccess.Write)) {
+      serializer.Serialize(stream, books);
+  }
+
+出力されるXMLは次の通りです。
+
+ <?xml version="1.0"?>
+ <Books xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+        xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+   <items>
+     <Book>
+       <title>銀河鉄道の夜</title>
+       <author>宮沢賢治</author>
+       <price>450</price>
+     </Book>
+     <Book>
+       <title>細雪</title>
+       <author>谷崎潤一郎</author>
+       <price>480</price>
+     </Book>
+   </items>
+ </Books>
+
+ここで、XMLファイルの Books と items という要素名を BookLibrary と Books に
+変更したいとします。
+
+ Books → BookLibrary
+ items → Books
+
+前回説明したXmlRoot属性と、今回説明するXmlArray属性を使うことで、それを実
+現することができます。
+
+
+    [XmlRoot("BookLibrary")]
+    public class Books {
+        [XmlArray("Books")]
+        public Book[] items;
+    }
+
+出力するコードは、前述のまま変更はありません。
+
+結果を示します。
+
+ <?xml version="1.0"?>
+ <BookLibrary xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+              xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+   <Books>
+     <Book>
+       <BookTitle>銀河鉄道の夜</BookTitle>
+       <author>宮沢賢治</author>
+       <price>450</price>
+     </Book>
+     <Book>
+       <BookTitle>細雪</BookTitle>
+       <author>谷崎潤一郎</author>
+       <price>480</price>
+     </Book>
+   </Books>
+ </BookLibrary>
+
+─────────────────────────────────────
+『C#プログラミングレッスン』  (ほぼ週刊）                                 
+☆皆さまからの感想をお待ちしています。http://gushwell.ifdef.jp/mail.html  
+─────────────────────────────────────
+Published by Gushwell.                                                    
+Copyright (C) 2012 Gushwell All rights reserved.                          
+Microsoft MVP for Visual C#(Apr 2005 - Mar 2013)                          
+                                                                          
+■Gushwell's Page                                                         
+facebook Page                     : http://www.facebook.com/CSharpLesson  
+Gushwell's C# Dev Notes           : http://gushwell.ldblog.jp/            
+Gushwell's C# Programming Page    : http://gushwell.ifdef.jp/             
+Gushwellの読書ノート              : http://gushwell.jugem.jp/             
+Twitterアカウント                 : @gushwell                             
+─────────────────────────────────────
+

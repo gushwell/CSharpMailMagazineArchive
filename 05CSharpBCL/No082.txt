@@ -1,0 +1,120 @@
+┏━┳━━━━━━━━━━━━━━━━━━━━━━━━━┳━┳━┳━┓
+┃☆┃ C#プログラミングレッスン                         ┃＿┃□┃×┃
+┣━┻━━━━━━━━━━━━━━━━━━━━━━━━━┻━┻━┻━┫
+┃System.Environmentクラス                                    No.082┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+■──────────────────────────────────
+■ Environmentクラスとは
+
+System.Environmentクラスは、現在の実行環境やプラットフォームに関する情
+報を取得(一部設定）するための機能を提供しています。
+このクラスは、sealed クラスとなっていますので、継承できません。
+なお、このクラスが提供するメソッド、プロパティは、すべて staticとなって
+います。
+
+では、具体的なコードをみていきましょう。
+
+■──────────────────────────────────
+■ 現在のディレクトリを取得、変更する
+
+現在のディレクトリを取得する
+
+  string curdir = Environment.CurrentDirectory;
+  Console.WriteLine(curdir);
+
+  ※ 取得したディレクトリがルートディレクトリ以外の場合には、末尾に
+     \ 記号は付加されません。
+
+現在のディレクトリを変更する
+
+  Environment.CurrentDirectory = @"C:\Windows";
+
+
+
+■──────────────────────────────────
+■ システム ディレクトリを取得する。
+
+システム ディレクトリの絶対パスを取得します。
+
+  string sysdir = Environment.SystemDirectory;
+  Console.WriteLine(sysdir);
+
+
+■──────────────────────────────────
+■ 特殊フォルダを取得する。
+
+GetFolderPath メソッドの引数に SpecialFolder の列挙定数を指定することで
+システムの固定フォルダへのパスを取得します。
+
+  string desktopdir = 
+       Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+  Console.WriteLine(desktopdir);
+  
+  string docdir = 
+       Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+  Console.WriteLine(docdir);
+
+
+  ※ SpecialFolder には、
+     ProgramFiles、ApplicationData、StartMenu、MyMusic、MyPictures など
+     が定義されています。
+
+
+■──────────────────────────────────
+■ 論理ドライブの名前を列挙する
+
+論理ドライブの名前を格納している文字列の配列を取得します。
+
+  string[] drvs = Environment.GetLogicalDrives();
+  foreach ( string d in drvs )
+  Console.WriteLine(d);
+
+
+■──────────────────────────────────
+■ ローカルコンピュータのマシン名を取得する
+
+ローカル コンピュータの NetBIOS 名を取得します。
+
+  string machineName = System.Environment.MachineName;
+  Console.WriteLine(machineName);
+
+
+■──────────────────────────────────
+■ ドメイン名を取得する
+
+現在のユーザーに関連付けられているネットワーク ドメイン名を取得します。
+
+  string domainName = Environment.UserDomainName;
+  Console.WriteLine(domainName);
+
+
+■──────────────────────────────────
+■ CLR, ＯＳのバージョンを取得する。
+
+共通言語ランタイムのバージョン情報を取得します。
+
+  Version ver = Environment.Version;
+  Console.WriteLine(ver.ToString());
+  Console.WriteLine(ver.Major);
+  Console.WriteLine(ver.Minor);
+  Console.WriteLine(ver.Build);
+  Console.WriteLine(ver.Revision);
+
+ＯＳのバージョン情報を取得します。
+
+  OperatingSystem osver = Environment.OSVersion;
+  Console.WriteLine(osver.Platform.ToString());
+  Console.WriteLine(osver.Version.ToString());
+
+
+┌─┬─────────────────────────┬─┬─┬─┐
+│☆│ C#プログラミングレッスン  (ぼぼ週刊）            │＿│□│×│
+├─┴─────────────────────────┴─┴─┴─┤
+│ Published by Gushwell  (Microsoft MVP for Visual C#)             │
+│ Copyright (C) 2004-2006 Gushwell All rights reserved.            │
+│-------------------- Gushwell's Page ---------------------------- │
+│ 窓際プログラマーの独り言  ：http://blog.livedoor.jp/gushwell/    │
+│ 窓際プログラマーの読書三昧：http://gushwell.jugem.jp/            │
+│             よろしかったらアクセスしてみてください！             │
+└─────────────────────────────────┘

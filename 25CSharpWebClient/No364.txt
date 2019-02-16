@@ -1,0 +1,106 @@
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━━━ No.364 ━□
+
+「HTTPクライアント編」-- RSSファイルの取得
+                                                           by Gushwell  
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+今回から、より具体的な例を示すために、実際に呼び出すことにできるWeb APIを使
+ったサンプルを掲載して行きます。
+まずは、RSSファイルの取得から。これを Web APIと呼ぶのはちょっと違うかなと思
+いますが、まあ、具体例の最初として大目にみてください。
+
+■□───────────────────────────────────
+■□ RSSファイルの取得
+
+RSSファイルの取得のサンプルとして、Yahooが提供している天気予報のRSSを取得
+したいと思います。
+以下のページにアクセスし、取得したい地名をクリックするとRSS情報が見られます。
+
+ http://weather.yahoo.co.jp/weather/rss/
+
+試しに、神奈川県の横浜をクリックしてみます。すると以下のURLに飛び、ブラウザ
+上に、RSSの情報が表示されます。
+
+ http://rss.weather.yahoo.co.jp/rss/days/4610.xml
+
+XML形式なので、ここから必要な情報を取得すれば、簡単な天気予報アプリが作成で
+きます。今回は、このXMLをプログラムから取得してみます。
+
+取得したXMLからtitle要素だけを取得してみました。
+以下、プログラムコードです。
+
+using System;
+using System.Collections.Generic;
+using System.Net;
+using System.Xml.Linq;
+
+namespace YahooTenki {
+    class Program {
+        static void Main(string[] args) {
+            var results = GetWeatherReportFromYahoo(4610);
+            foreach (var s in results)
+                Console.WriteLine(s);
+            Console.ReadLine();
+        }
+
+        private static IEnumerable<string> GetWeatherReportFromYahoo(int cityCode) {
+            WebClient wc = new WebClient();
+            wc.Headers.Add("Content-type", "charset=UTF-8");  // ★
+            string uriString = string.Format(
+                  @"http://rss.weather.yahoo.co.jp/rss/days/{0}.xml", cityCode);
+            Uri url = new Uri(uriString);
+            string result = wc.DownloadString(url);
+            //Console.WriteLine(result);
+
+            XDocument xdoc = XDocument.Parse(result);
+            var nodes = xdoc.Root.Descendants("title");
+            foreach (var node in nodes) {
+                if (node.Value.StartsWith("[PR]") == false) {
+                    string s = node.Value.Replace(" - Yahoo!天気・災害", "");
+                    yield return s;
+                }
+            }
+        }
+    }
+}
+
+★で示した行で、エンコーディング形式を指定しているところがミソです。これが
+ないと取得したXMLが文字化けしてしまいます。
+当連載の第一回目では、byte配列で受け取り、それをUTF-8の文字列にデコードして
+いましたが、DownloadStringメソッドで文字列を取得する際は、WebClientの
+Headers プロパティに、WebClient が要求で送信するヘッダー情報のContent-type
+に、charsetの値を設定してあげます。
+
+以下、実行結果です。
+
+------------------------------------------------------------------------
+
+Yahoo!天気・災害 - 東部（横浜）の天気
+【 21日（火） 東部（横浜） 】 曇り - 27℃/19℃
+【 22日（水） 東部（横浜） 】 晴時々曇 - 27℃/17℃
+【 23日（木） 東部（横浜） 】 晴時々曇 - 25℃/17℃
+【 24日（金） 東部（横浜） 】 曇時々晴 - 24℃/16℃
+【 25日（土） 東部（横浜） 】 曇時々晴 - 23℃/16℃
+【 26日（日） 東部（横浜） 】 曇時々晴 - 24℃/16℃
+【 27日（月） 東部（横浜） 】 曇時々晴 - 24℃/16℃
+【 28日（火） 東部（横浜） 】 曇り - 22℃/16℃
+【 横浜・川崎 】警報・注意報はありません
+【 湘南 】警報・注意報はありません
+【 三浦半島 】警報・注意報はありません
+
+
+─────────────────────────────────────
+『C#プログラミングレッスン』  (ほぼ週刊）                                 
+☆皆さまからの感想をお待ちしています。http://gushwell.ifdef.jp/mail.html  
+─────────────────────────────────────
+Published by Gushwell.                                                    
+Copyright (C) 2013 Gushwell All rights reserved.                          
+Microsoft MVP for Visual C#(Apr 2005 - Mar 2014)                          
+
+■Gushwell's Page                                                         
+facebook Page                     : http://www.facebook.com/CSharpLesson  
+Gushwell's C# Dev Notes           : http://gushwell.ldblog.jp/            
+Gushwell's C# Programming Page    : http://gushwell.ifdef.jp/             
+Gushwellの読書ノート              : http://gushwell.jugem.jp/             
+Twitterアカウント                 : @gushwell                             
+─────────────────────────────────────

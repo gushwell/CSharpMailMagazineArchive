@@ -1,0 +1,173 @@
+┏━┳━━━━━━━━━━━━━━━━━━━━━━━━━┳━┳━┳━┓
+┃☆┃ C#プログラミングレッスン                         ┃＿┃□┃×┃
+┣━┻━━━━━━━━━━━━━━━━━━━━━━━━━┻━┻━┻━┫
+┃抽象クラス、抽象メソッド                                   No.038 ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+■──────────────────────────────────
+■ abstract
+
+さて、前回のShapeクラスを再度、見て見ましょう。
+
+    class Shape {
+        private double x;
+        private double y;
+        public Shape(double width, double height) {
+            x = width;
+            y = height;
+        }
+        public double X {
+            get { return x; }
+        }
+        public double Y {
+            get { return y; }
+        }
+        public virtual double GetArea() {
+            return -1;
+        }
+    }
+
+Shapeクラスは、Triangle, Rectangleクラスの共通部分を抜き出したクラスで
+すから、GetAreaというメソッドは、 どういった面積の計算をすれば良いのか
+がわかりません。このため、-1 を返すようにしています。
+でも、これって、もうちょっと良いやり方はないのでしょうか。そもそも、
+Shapeクラスに、GetAreaがあっても、使わないのだから、無駄ですよね。しか
+し、前回説明した、ポリモーフィズムを使うには、ShapeクラスにGetAreaが必
+要です。矛盾していますね。
+この矛盾を解決するのが、abstractというキーワードです。このキーワードを
+使い、書き変えたShapeクラスを示します。
+
+    abstract class Shape {       // ここを変更
+        private double x;
+        private double y;
+        public Shape(double width, double height) {
+            x = width;
+            y = height;
+        }
+        public double X {
+            get { return x; }
+        }
+        public double Y {
+            get { return y; }
+        }
+        public abstract double GetArea();  // ここを変更
+    }
+
+class の先頭と、 GetArea メソッドで、abstract というキーワードを付加し
+ています。
+メソッドに abstract キーワードを付加すると、メソッドの中身を書く必要が
+なくなります。
+このabstractは、「抽象」と訳されており、それぞれ、抽象クラス、抽象メソ
+ッドと言います。
+
+■──────────────────────────────────
+■ 抽象クラス , 抽象メソッド
+
+抽象クラスとは
+  抽象クラスとは、インスタンスが作成できない（作成しても意味がない）ク
+  ラスです。
+
+     ※ 逆に、インスタンスを生成できるクラス（ここでは、Triangle、
+        Rectangle）は、具象クラスと呼ばれることがあります。
+
+  この例も、 Shapeクラスのインスタンスを生成することはなく、実際には、
+  その派生クラス(Triangle, Rectangle)のインスタンスを生成しています。
+  このように、インスタンスを生成する意味がないクラスは、abstractキーワ
+  ードを使い、抽象クラスとします。
+
+  試しに、
+
+    Shape shape = new Shape(10,20);
+
+  とすると、抽象クラスのインスタンスは作成できない」といった旨のメッセ
+  ージが出て、コンパイルエラーとなります。
+
+  なお、抽象クラスには、たいていの場合、次に説明する抽象メソッドが存在
+  します。
+  インスタンスが生成できないクラスに何の意味があるのだろう、と思うかも
+  しれませんが、それは、前回説明した、ポリモーフィズムを利用するためだ
+  と考えて良いと思います。
+
+抽象メソッド
+  抽象メソッドは、 実装がなく、宣言だけが存在するメソッドです。今回の
+  GetAreaも中身を書く必要がない（書きたくても何を書いたら良いかわから
+  ない）メソッドは抽象メソッドにします。
+
+  なお、抽象メソッドは、名前、戻り値、引数を規定し、派生クラスでは、そ
+  の定められた通りに、メソッドを実装します。
+  派生クラスでは、この抽象メソッドをoverrideし、中身を実装する必要があ
+  ります。もし、overrideしないと、コンパイルエラーになります。
+
+  これも、 試しに、Triangle の GetAreaメソッドをコメントにしてコンパイ
+  ルすると、
+    「継承メンバー GetArea()を実装しません」
+  というエラーメッセージが表示されます。
+  このエラーを取るには、GetAreaをoverrideし、中身を実装するか、
+  abstractキーワードを使い、Triangleクラスも抽象クラスにするかのどちら
+  かです。
+  もちろん、Triangleクラスを抽象クラスにしてしまうと、Triangleのインス
+  タンスを生成できないので、本当の解決にはなりませんが...
+
+
+最後に、プログラム全体を掲載します。
+
+using System;
+
+namespace Gushwell.Sample {
+    class Program {
+        static void Main(string[] args) {
+            Shape[] shapes = new Shape[4];
+            shapes[0] = new Triangle(8, 6);
+            shapes[1] = new Triangle(10, 5);
+            shapes[2] = new Rectangle(5, 3);
+            shapes[3] = new Rectangle(8, 5);
+            for ( int i = 0; i < shapes.Length; i++ ) {
+                Shape shape = shapes[i];
+                Console.WriteLine(shape.GetArea());
+            }
+        }
+    }
+
+    abstract class Shape {
+        private double x;
+        private double y;
+        public Shape(double width, double height) {
+            x = width;
+            y = height;
+        }
+        public double X {
+            get { return x; }
+        }
+        public double Y {
+            get { return y; }
+        }
+        public abstract double GetArea();
+    }
+
+    class Triangle : Shape {
+        public Triangle(double width, double height) : base(width,height) {
+        }
+        public override double GetArea() {
+            return X * Y / 2;
+        }
+    }
+
+    class Rectangle : Shape {
+        public Rectangle(double width, double height) : base(width,height) {
+        }
+        public override double GetArea() {
+            return X * Y;
+        }
+    }
+}
+
+┌─┬─────────────────────────┬─┬─┬─┐
+│☆│ C#プログラミングレッスン  (ぼぼ週刊）            │＿│□│×│
+├─┴─────────────────────────┴─┴─┴─┤
+│ Published by GushWell  (Microsoft MVP for Visual C#)             │
+│ Copyright (C) 2004-2005 GushWell All rights reserved.            │
+│-------------------- GushWell's Page ---------------------------- │
+│ 窓際プログラマーの独り言  ：http://blog.livedoor.jp/gushwell/    │
+│ 窓際プログラマーの読書三昧：http://gushwell.jugem.jp/            │
+│             よろしかったらアクセスしてみてください！             │
+└─────────────────────────────────┘

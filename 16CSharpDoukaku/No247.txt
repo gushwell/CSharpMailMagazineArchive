@@ -1,0 +1,187 @@
+   ■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━━━ No.247 ━□
+  
+ 「どう書く？org編」-- 最初の文字を大文字に
+                                                             by Gushwell  
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+みなさん、こんにちは。
+このメールマガジンをご購読されている方には、ご存知の方も多いと思いますが、
+私のサイト「Gushwell's C# Programming Page：http://gushwell.ifdef.jp/」に
+「C#プログラム小品集」というコーナーがあります。
+このコーナーでは、Gushwellが練習、学習、腕試しのために作ったプログラムのソ
+ースコードを公開しています。このコーナーで、様々なアルゴリズムを示せればい
+いな考えています。
+特に、再帰処理、バックトラッキングに興味ある方は、是非覗いてみてください。
+これから、さらに掲載数を増やしてゆく予定ですので、よろしくお願いします。
+
+
+■□───────────────────────────────────
+■□ お題： 最初の文字を大文字に (http://ja.doukaku.org/196/)
+
+文字列に含まれる単語について、それぞれの単語の最初の文字を大文字にしてくだ
+さい。
+
+たとえば、"LL future" と与えられたときは "LL Future" と出力する。"LL day 
+and night" と与えられたときは "LL Day And Night" と出力する。
+
+与えられる文字列はリテラルで表記する、標準入力で与えられる、引数で与えられ
+るなどは自由とします。
+
+ 出題者：高野光弘様
+
+
+■□───────────────────────────────────
+■□ 解答
+
+using System;
+using System.Text;
+using System.Threading;
+using System.Globalization;
+
+namespace Sample {
+    class Program {
+        static void Main(string[] args) {
+            Console.WriteLine(ToUpper1St("Microsoft   windows  vista."));
+            Console.WriteLine(ToUpper1St("hello, i am a cat"));
+            Console.WriteLine(ToUpper1St("日本語abc漢字"));
+            Console.WriteLine(ToUpper1St("ａｂｃ"));
+            Console.WriteLine(ToUpper1St("αβγ"));
+            Console.WriteLine(ToUpper1St("a=b+c"));
+        }
+
+        static string ToUpper1St(string s) {
+            string[] words = s.Split(' ');
+            StringBuilder sb = new StringBuilder();
+            foreach (var word in words) {
+                sb.Append(ToTitleCase(word) + " ");
+            }
+            return sb.ToString().TrimEnd(' ');
+        }
+
+        static string ToTitleCase(string s) {
+            CultureInfo cultureInfo = Thread.CurrentThread.CurrentCulture;
+            return cultureInfo.TextInfo.ToTitleCase(s);
+        }
+    }
+}
+
+
+結果は、
+
+Microsoft   Windows  Vista.
+Hello, I Am A Cat
+日本語abc漢字
+Αβγ
+Αｂｃ
+A=B+C
+
+となります。全角のアルファベットにも対応しています。
+
+
+■□───────────────────────────────────
+■□ 解説
+
+まず、ToTitleCaseメソッドです。
+このメソッドは、与えられた文字列の先頭一文字を大文字に変換します。先頭一文
+字を大文字にするのに、TextInfoクラスのToTitleCaseメソッドを使っています。
+TextInfoクラスのオブジェクトを得るのに、CultureInfoクラスのTextInfoプロパ
+ティを使います。CultureInfoを求めてからでないと、TextInfoのオブジェクトを
+得られないのがちょっと面倒ですね。
+
+ static string ToTitleCase(string s) {
+     return Char.ToUpper(s[0]).ToString() + s.Substring(1);
+ }
+
+と、Char.ToUpperメソッドを使ってもいいのですが、文字列操作が煩雑になってし
+まいますので、どっちもどっちといった感があります。まあ、これは好みの問題な
+ので、お好きなほうをどうぞ。
+
+その上位メソッドである ToUpper1Stメソッドが、このお題の中心となるメソッド
+です。
+Splitメソッドを使い、引数で与えた文字を区切り文字として文字列を分解します。
+Splitメソッドの癖が幸いし、空白が連続していても、対応できています。
+その後、分解した文字列をひとつづつ取り出し、ToTitleCaseメソッドを呼び出し、
+単語の先頭を大文字に変換しています。
+得られた文字列は、StringBuilderを使い、連結しています。
+最後に、余分な空白文字を取り除き、呼び出し元に返しています。
+
+StringBuilderは、文字列を連結するのに利用するクラスですが、この程度のプロ
+グラムならば、わざわざ StringBuilderを用いなくとも、 + 演算子で文字列を連
+結していっても良いと思います。
+
+
+■□───────────────────────────────────
+■□ 発展
+
+ToUpper1Stメソッドは、Regexクラスを使って、以下のように書き換えることもで
+きます。
+
+
+static string ToUpper1St(string s) {
+    var reg = new Regex(@"(\W*)(\w+)");
+    return reg.Replace(s, m => m.Groups[1] + ToTitleCase(m.Groups[2].Value));
+}
+
+正規表現の "(\\W*)(\\w+)" は、「単語で使用される文字」以外が０以上連続し、
+その後に、「単語で使用される文字」が１つ以上連続するという意味です。
+
+  \W : 単語に使用される文字以外の任意の文字と一致します。
+  \w : 単語に使用される任意の文字と一致します。
+
+Regex.Replaceメソッドで、この部分と一致する部分を見つけ、置き換えを実施し
+ています。
+Grpup[1]には、\W* の部分に一致した文字列が設定されていて、Grpup[2]には、\
+w+ の部分に一致した文字列が設定されています。
+つまり、Group[2]には、単語が入っていますので、この先頭を大文字にし、Grpup
+[1] に続ければ、題意の求める動きになります。
+
+Regexクラスを使ったコードは、わかりやすいとは言えませんが、かなり強力な武
+器になることはご理解いただけると思います。
+
+
+※ 機会があれば、「C#プログラミングレッスン - 正規表現編」なども連載してみ
+   たいと思います。
+
+
+■□───────────────────────────────────
+■□ 次回のお題： 条件を満たす行を取り除く (http://ja.doukaku.org/10/)
+
+ファイルから1行ずつ読み込み、"#"で始まる行だけを取り除いてファイルに出力す
+るコードを書いてください。
+
+・サンプル入力 
+
+hello!
+# remove this
+ # don't remove this
+bye!
+
+・サンプル出力 
+
+hello!
+ # don't remove this
+bye!
+
+─────────────────────────────────────
+『C#プログラミングレッスン』  (ぼぼ週刊）                                 
+─────────────────────────────────────
+ ☆メールマガジンの感想お待ちしています☆                                 
+   http://gushwell.ifdef.jp/mail.html                                     
+
+ Published by Gushwell.                                                   
+   Copyright (C) 2004-2010 Gushwell All rights reserved.                  
+   Microsoft MVP for Visual C#(Apr 2005 - Mar 2011)                       
+                                                                          
+ <<■ Gushwell's Page ■>>                                                
+ 窓際プログラマ─の独り言  ：http://gushwell.ldblog.jp/                   
+ 窓際プログラマ─の読書三昧：http://gushwell.jugem.jp/                    
+ Gushwell's F# Programming Diary : http://techbank.jp/gushwell/           
+ Gushwell's C# Programming Page  ：http://gushwell.ifdef.jp/              
+   C#デザインパタ─ン : http://gushwell.ifdef.jp/dp/csdpindex.html        
+                                                                          
+ <<■ コミュニティtechbank.jp (http://techbank.jp/Community/) ■>>        
+ Gushwellが参加している技術系コミュニティです。                           
+ マイクロソフト系テクノロジー＆製品に特化したコミュニティです。Webサイトで
+ は、VB、C#、VC++、SQL Server, BizTalk Server などの技術情報を公開していま
+ す。皆さんの参加をお待ちしています。
+─────────────────────────────────────

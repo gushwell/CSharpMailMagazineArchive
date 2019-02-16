@@ -1,0 +1,125 @@
+┏━┳━━━━━━━━━━━━━━━━━━━━━━━━━┳━┳━┳━┓
+┃☆┃ C#プログラミングレッスン                         ┃＿┃□┃×┃
+┣━┻━━━━━━━━━━━━━━━━━━━━━━━━━┻━┻━┻━┫
+┃const と readonly                                          No.048 ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+みなさん、こん○○は。
+さて、当メルマガでは、interface, delegate, event などC#の重要な部分に
+ついての説明をまだしていませんが、Ｃ＃の基本的な文法部分は、これまで
+の連載でほぼ説明できたと思います。  
+  # ちょっとしたプログラムならば、今までの知識で文法的には十分にプログ
+  # ラムが記述できると思います。もっとも、.NET Frameworkの知識がこれに
+  # 加わらないといけませんが...
+
+これからしばらくは、今までの連載で説明し残した部分を「落穂拾い」してい
+きたいと思います。かなり長い「落穂拾い」になりそうですが、お付き合いく
+ださい...(^ ^;
+なお、説明する順番も思いついたものからとなりそうです。かなり脈絡のない
+順番になるかも知れませんが、ご了承を(笑)
+
+では、今回は、const と readonlyです。
+
+■──────────────────────────────────
+■ const
+
+const については、既に説明しましたが、再度説明します。
+const キーワードを使うと、定数を定義することができます。定数とは、値が
+変更できない変数（フィールド、ローカル変数）のようなものです。
+ ※ 「値が変更できない変数」というのは、矛盾していますので、「ようなも
+    の」という表現を使っています。
+
+定数を定義するには、以下のように通常の変数の前に const キーワードを付
+けるだけです。
+
+  class MyClass {
+      private const int MaxNum = 255;
+      private const int MinNum = -256;
+      public void Foo() {
+          Console.WriteLine("MaxNum = " + MaxNum);
+          Console.WriteLine("MinNum = " + MinNum);
+      }
+  }
+
+重要なのは、必ず初期値を与えてあげることです。以下のように２つの文に分
+解することはできません。
+
+      const int MaxNum;
+      MaxNum = 255;
+
+あたり前ですよね。だって、定数って、値を変更できないんですから。
+
+なお、const は、暗黙的に static となります。つまり、インスタンスに属す
+るのではなく、クラスに属するものとなります。
+ですから、public にすれば、インスタンスを生成しなくても、
+
+    MyClass.MaxNum
+
+で、アクセスできるようになります。
+
+
+■──────────────────────────────────
+■ readonly
+
+readonlyは、読んで字のごとく、読み込み専用の変数に使います。
+
+  class MyClass {
+      private readonly int MaxNum = 255;
+      private readonly int MinNum = -256;
+      public void Foo() {
+          Console.WriteLine("MaxNum = " + MaxNum);
+          Console.WriteLine("MinNum = " + MinNum);
+      }
+  }
+
+const と同様、宣言後に、値を代入することはできません。
+ただし、フィールドを readonly にした場合、コンストラクタで値を設定する
+ことが可能です・
+
+  class ReadonlySample {
+      private readonly int MaxNum;
+      private readonly int MinNum;
+      public ReadonlySample() {
+          MaxNum = 255;
+          MinNum = -256;
+      }
+  }
+
+コンストラクタを使えば、ファイルやデータベースなどから、読み込んだ値を、
+readonlyの変数に設定することができますので、const よりも、より柔軟なコ
+ードを書くことが可能になります。
+
+※ ちなみに、僕は、readonlyはほとんど使っていません。
+   get {} だけのプロパティでも、同じことが実現できるので、僕は、プロパ
+   ティを使っています。
+
+
+■──────────────────────────────────
+■ constとreadonlyの違い
+
+constとreadonlyの違いは、以下の２点です。
+
+・constは、コンパイル時に値が決定するのに対し、readonlyは実行時に値が
+  決定する。
+・constは、クラスに属する変数だが、readonlyは、デフォルトでは、インス
+  タンスに属する変数となる。
+  もちろん、
+ 
+    private static readonly int MaxNum = 255;
+
+  と書けば、staticにすることも可能。
+
+このように、const と readonlyは、とてもよく似ていますが、同じものでは
+ありません。
+
+
+┌─┬─────────────────────────┬─┬─┬─┐
+│☆│ C#プログラミングレッスン  (ぼぼ週刊）            │＿│□│×│
+├─┴─────────────────────────┴─┴─┴─┤
+│ Published by Gushwell  (Microsoft MVP for Visual C#)             │
+│ Copyright (C) 2004-2005 Gushwell All rights reserved.            │
+│-------------------- Gushwell's Page ---------------------------- │
+│ 窓際プログラマーの独り言  ：http://blog.livedoor.jp/gushwell/    │
+│ 窓際プログラマーの読書三昧：http://gushwell.jugem.jp/            │
+│             よろしかったらアクセスしてみてください！             │
+└─────────────────────────────────┘

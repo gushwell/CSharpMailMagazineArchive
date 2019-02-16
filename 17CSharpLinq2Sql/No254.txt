@@ -1,0 +1,280 @@
+
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━━━ No.254 ━□
+  
+ 「LINQ to SQL編」-- はじめての LINQ to SQL
+                                                             by Gushwell  
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+前回、「次のシリーズは6月15日に発行」と予告しましたが、１週間遅れてしまい
+ました。「LINQ to SQL編」か「正規表現編」か迷いに迷ってしまい、原稿を書き
+始めたのが、遅れてしまったのが原因です。
+優柔不断はいけませんね...
+結局、「LINQ to SQL」を新しいシリーズの題材とすることにしました。
+Visual Studio 2010が出た今からやるなら、「LINQ to Entities」を扱ったほうが
+良いんじゃないのかとも思いましたが、「LINQ to SQL」はこれからも現役で使える
+素晴らしい技術であるとの思いから、LINQ to SQLを選択しました。
+
+では、「LINQ to SQL編」の始まりです。
+
+■□───────────────────────────────────
+■□ はじめに
+
+LINQ to SQL は、LINQ テクノロジを使用して、メモリ内コレクションへのアクセ
+スと同じように SQL データベースにアクセスできる技術です。
+
+LINQ to SQLはすでに多くのWebサイトなどで解説がなされていますが、多くはデー
+タを取得する表面的なクエリ式の解説ばかりで、更新処理まで含めた詳細な解説が
+あまりないのが現状です。
+
+そのため、当シリーズでは、データの更新も含めた LINQ to SQLの全容に迫ってい
+きたいと思います。
+
+ただし、LINQ to SQLで利用する標準クエリ演算子やクエリ式については、「LINQ
+to Object編」で取り上げているので、深くは説明しません。できるだけ LINQ to
+SQL特有の使い方に焦点を当ててゆくことにします。
+
+※ バックナンバー「LINQ to Object編」は、「http://gushwell.ifdef.jp/」から
+   ダウンロードできます。
+
+今回は、初回ということで、当シリーズを続けて行くのに必要なサンプルデータベ
+ース「Northwind」のインストールから説明を始めます。すでにNorthwindデータベ
+ースをインストール済みの方は、「準備：O/R Designerの複数形化を有効にする」
+からお読みください。
+
+
+■□───────────────────────────────────
+■□ SQL Server 2008 R2 Express Editionのインストール
+
+PCにSQL Server 2008 ファミリがインストールされていない場合は、
+
+http://www.microsoft.com/downloads/details.aspx?FamilyID=8B3695D9-415E-41F0-A079-25AB0412424B&displaylang=ja
+
+から、「Microsoft SQL Server 2008 R2 RTM - Express」をダウンロードし、イン
+ストールしてください。
+
+インストール手順は省略します。
+
+なお、インストールする前に、
+ ・Microsoft .Net Framework 3.5 SP1 のダウンロードとインストール
+ ・Windows インストーラ 4.5 のダウンロードとインストール
+が必要になる場合がありますので注意してください。
+
+
+■□───────────────────────────────────
+■□ Northwindt サンプルデータベースのインストール
+
+http://www.microsoft.com/downloads/details.aspx?FamilyId=06616212-0356-46A0-8DA2-EEBC53A68034&displaylang=en
+
+から、SQL2000SampleDb.msi を任意のフォルダにダウンロードします。
+このページには、「Northwind and pubs Sample Databases for SQL Server 2000」
+とありますが、SQL Server 2005, SQL Server 2008 でも利用できます。
+
+ダウンロードした、SQL2000SampleDb.msi をダブルクリックし、インストールを開
+始します、インストールが完了すると、
+  "C:\SQL Server 2000 Sample Databases"
+というフォルダが作成され、そこにNORTHWND.LDF, NORTHWND.MDF などのファイル
+が作成されます。
+
+
+■□───────────────────────────────────
+■□ 準備：O/R Designerの複数形化を有効にする
+
+設定手順を以下に示します。
+
+1. Visual Studio 2008/2010を起動し、[ツール] メニューの [オプション] を選
+   びます。
+
+2. [オプション] ダイアログ ボックスの [データベース ツール] を展開します。
+
+3. [O/R デザイナ] をクリックします。
+
+4. [名前の複数形化] で [有効] を [True] に設定し、[OK]ボタンをクリックし
+   ます。
+
+この手順により、O/Rデザイナに追加した際のオブジェクトのクラス名が単数形に
+変更されるようになります。すでに、O/Rデザイナーに存在するクラス名は変更さ
+れませんので、注意してください。
+
+☆☆重要☆☆
+Express Edition の場合、この設定がありません。[無効]の状態になっています。
+[無効]の状態のまま使っても問題はありませんが、このシリーズでは、「名前の複
+数形化」が有効であることを前提に進めます。
+そのため、Express Editionをお使いの方は、当メルマガに掲載したコードをその
+まま使うことができません。ビルド時にエラーになった場合は、手作業で、エラー
+になった識別名を単数形から複数形に変更してください。
+
+
+■□───────────────────────────────────
+■□ はじめての Linq to SQL
+
+準備は整いましたので、早速、LINQ to SQL を使ったプログラムを作成してみまし
+ょう。手順を以下に示します。
+
+ ※ 準備：O/R Designerの複数形化を有効にする で書いた設定は必ず行ってくだ
+    さい。
+
+■ プロジェクトの作成
+
+1. C#のプロジェクトの新規作成します。
+   WindowsFormsアプリケーションでも良いのですが、LINQ to SQLの機能にフォー
+   カスするために、ここではコンソールアプリケーションを作成します。
+
+■データソースの追加
+
+1. メニューから[データ(A)]-[新しいデータソースの追加(N)...]を選び、データ
+   ソース構成ウィザードを起動します。
+
+2. [データソース構成ウィザード]ダイアログが開きます。[アプリケーションのデ
+   ータの取得元」で「データベース」を選択し、[次へ]ボタンを押します。
+
+3. [データ接続の選択]画面に移動しますので、[新しい接続(C)...]ボタンを押し
+   ます。
+
+4. 「接続の追加」画面が開きます。[変更(C)...]ボタンを押し、データソースに
+   [Microsoft SQL Server データベース ファイル]を選択し、[OK]ボタンを押し
+   ます。
+
+5. [参照(B)...]ボタンを押し、先ほどインストールしたNORTHWND.MDFファイルを
+   選択します。
+   NORTHWND.MDF ファイルは、"C:\SQL Server 2000 Sample Databases" にありま
+   す。
+
+6.「接続の追加」画面の戻りますので、[OK]ボタンを押します。
+
+7. 「データソース構成ウィザード」画面に戻りますので、[次へ(N)]ボタンを押
+   します。
+
+8. ここで、
+     ----------
+     選択された接続は、現在のプロジェクトにはないローカル データ ファイル
+     を使用します。プロジェクトにファイルをコピーして接続を変更しますか?
+     ----------
+   というダイアログが現れますので、[はい]を選択します。
+
+9. しばらくするとウィザード画面が、「接続文字列をアプリケーション構成ファ
+   イルに保存する」に移りますので、[次へ(N)]ボタンを押します。
+
+10.ウィザード画面は、[データベース オブジェクトの選択]に移ります。DataSet
+   は使わないので、ここで、「キャンセル]を押します。[完了]ボタンは押さない
+   でください。
+
+11. Visual Studio の[表示][サーバーエクスプローラ]を選択し、サーバーエク
+    スプローラを表示させます。
+    Express Editionでは、[データベース エクスプローラー]を表示します。
+
+12. [データ接続]にNORTHWND.MDFが追加されていることを確認します
+
+
+■LINQ to SQLクラスの作成
+
+1. Visual Studio のメニュー[プロジェクト]-[新しい項目の追加]を選びます。
+
+2. 新しい項目の追加ダイアログが表示されますので、[LINQ to SQLクラス]を選
+   択し、ファイル名に"Northwind.dbml"と入力し、[追加]ボタンを押します。
+   後から名前を変えるのは厄介なので、必ず正しい名前を入力してください。
+
+3. プロジェクトに、"Northwind.dbml"が追加されたことを確認します。Visual
+   Studio の中央部には、空のデザイナー画面(以下、O/Rデザイナー画面と記し
+   ます)が表示されています。
+
+4. [サーバーエクスプローラ/データベース エクスプローラ]で[データ接続]-
+   [NORTHWND.MDF]-[テーブル]と展開します。
+
+5. Northwindデータベースの各テーブルの中から、ProductsテーブルをO/Rデザイ
+   ナー画面にDrag&Dropします。すると、O/Rデザイナー画面には、作成された
+   Productクラスが可視化されて表示されます。
+   なお、これで作成されたクラスを「LINQ to SQLエンティティクラス」と言いま
+   す。
+
+
+■ Productsテーブルの参照
+
+では、Productsテーブルからデータを取得してみましょう。
+プログラムでは、先ほど作成したProduct「LINQ to SQLエンティティクラス」を
+経由して、Productsテーブルの各カラムにアクセスすることになります。
+
+このProductsテーブルにアクセスするコードを書いてみましょう。
+
+ using System;
+ using System.Linq;
+
+ namespace ConsoleApplication1 {
+     class Program {
+         static void Main(string[] args) {
+             using (var db = new NorthwindDataContext()) {
+                 var query = from product in db.Products
+                             select product;
+                 foreach (Product p in query)
+                     Console.WriteLine("{0} | {1} | {2} | {3}",
+                         p.ProductID, p.ProductName, p.UnitPrice,
+                         p.QuantityPerUnit);
+                 Console.ReadLine();
+             }
+         }
+     }
+ }
+
+実行すると、
+
+ 1 | Chai | 18.0000 | 10 boxes x 20 bags 
+ 2 | Chang | 19.0000 | 24 - 12 oz bottles 
+ 3 | Aniseed Syrup | 10.0000 | 12 - 550 ml bottles 
+ 4 | Chef Anton's Cajun Seasoning | 22.0000 | 48 - 6 oz jars 
+ 5 | Chef Anton's Gumbo Mix | 21.3500 | 36 boxes
+ .
+ .
+ .
+
+
+と表示され、productテーブルからデータを取得できたことを確認できます。
+
+
+■ 簡単な説明
+
+NorthwindDataContext は、[LINQ to SQLクラス]の追加で自動生成されたクラスで、
+Northwind.designer.csで定義されています。
+LINQ to SQLでは、このDataContextクラスのインスタンスを生成することで、デー
+タベースにアクセスすることが可能になります。
+この例では、
+  new AdventureWorksDataContext()
+と new して得られるオブジェクトを利用する必要があります。この DataContext
+については、また別の回で取り上げるつもりです。
+テーブルにアクセスするには、このオブジェクトを経由することになります。
+
+クエリ式では、
+
+  var query = from product in db.Products
+              select product;
+
+と、Productsテーブルから全てのデータを取得しています。
+各カラムの値は、ADO. NET2.0と同様プロパティとしてアクセスできますでの、タ
+イプミスで実行時エラーになることはありません。
+
+なお、Productsテーブルを示すNorthwindDataContextオブジェクトのプロパティ名
+はProductsと複数形、一つのProductを示すクラス名は単数形になっている点に注
+目してください。
+
+
+─────────────────────────────────────
+『C#プログラミングレッスン』  (ぼぼ週刊）                                 
+ ☆皆さまからの感想をお待ちしています。http://gushwell.ifdef.jp/mail.html 
+─────────────────────────────────────
+ Published by Gushwell.                                                   
+   Copyright (C) 2004-2010 Gushwell All rights reserved.                  
+   Microsoft MVP for Visual C#(Apr 2005 - Mar 2011)                       
+                                                                          
+ ■Gushwell's Page                                                        
+ 窓際プログラマ─の独り言        : http://gushwell.ldblog.jp/             
+ Gushwell's C# Programming Page  : http://gushwell.ifdef.jp/              
+ Gushwell's F# Programming Diary : http://techbank.jp/gushwell/           
+ Gushwellの読書ノート            : http://gushwell.jugem.jp/              
+                                                                          
+ ■コミュニティtechbank.jp (http://techbank.jp/Community/blogs/)          
+ Gushwellが参加している技術系コミュニティです。                           
+ 有志メンバーによるBlogでの技術情報発信を行っています。                   
+─────────────────────────────────────
+
+
+
+
+

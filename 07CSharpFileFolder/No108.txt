@@ -1,0 +1,91 @@
+┏━┳━━━━━━━━━━━━━━━━━━━━━━━━━┳━┳━┳━┓
+┃☆┃ C#プログラミングレッスン                         ┃＿┃□┃×┃
+┣━┻━━━━━━━━━━━━━━━━━━━━━━━━━┻━┻━┻━┫
+┃ディレクトリの操作 (2)  DirectoryInfo                       No.108┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+今回も、前回に引き続き、DirectoryInfoの説明です。
+
+■──────────────────────────────────
+■ サブディレクトリを一覧を求める
+
+現在のディレクトリの下にあるサブディレクトリの一覧を求めるには、
+GetDirectories メソッドを使います。
+
+ DirectoryInfo di = new DirectoryInfo(@"C:\Gushwell");
+ DirectoryInfo[] subdirs = di.GetDirectories();
+ foreach ( DirectoryInfo dinfo in subdirs ) {
+     Console.WriteLine(dinfo.Name);
+ }
+
+このコードは、C:\Gushwell 直下のディレクトリをコンソールに出力するコー
+ドです。
+GetDirectoriesメソッドで、サブディレクトリのDirectoryInfoの配列が
+返りますので、foreachで一つずつ取り出しています。
+
+なお、
+
+ DirectoryInfo[] subdirs = di.GetDirectories("P*");
+
+とすれば、p で始まるディレクトリだけを取得できます。
+
+
+GetDirectoriesメソッドの、第2引数に、SearchOption.AllDirectories を指
+定すると、すべてのサブディレクトリを検索することができます。
+ただし、ディレクトリの数が多いときには、かなりの時間がかかりますので
+注意が必要です。
+
+
+■──────────────────────────────────
+■ ファイルの一覧を求める
+
+現在のディレクトリの下にあるファイルの一覧を求めるには、GetFiles メソ
+ッドを使います。
+
+ DirectoryInfo di = new DirectoryInfo(@"C:\Gushwell");
+ FileInfo[] files = di.GetFiles();
+ foreach ( FileInfo fi in files ) {
+     Console.WriteLine(fi.FullName);
+ }
+
+上記コードを見てもらえば分かるように、使い方は、GetDirectoriesとほとん
+ど同じです。
+
+ FileInfo[] files = di.GetFiles("test*");
+ FileInfo[] files = di.GetFiles("test*",SearchOption.AllDirectories);
+
+といった記述も可能です。
+
+
+■──────────────────────────────────
+■ ディレクトリとファイルの一覧を求める
+
+あるディレクトリ配下のディレクトリもファイルも一緒に取得したい場合も
+あります。そのような場合は、GetFileSystemInfos メソッドを使います。
+
+戻り値は、FileSystemInfoの配列です。
+FileSystemInfoは、FileInfoとDirectoryInfoのスーパークラスです。
+
+  FileSystemInfo[] infos = di.GetFileSystemInfos();
+  foreach ( FileSystemInfo info in infos ) {
+      Console.WriteLine(info.Name);  
+  }
+
+とすれば、ディレクトリとファイルのすべてを取得できます。
+例えば、ファイルの最終更新時刻をすべて同じにするといったことが可能です。
+
+┌─┬─────────────────────────┬─┬─┬─┐
+│☆│ C#プログラミングレッスン  (ぼぼ週刊）            │＿│□│×│
+├─┴─────────────────────────┴─┴─┴─┤
+│ Published by Gushwell.                                           │
+│ Copyright (C) 2004-2006 Gushwell All rights reserved.            │
+│ Microsoft MVP Visual Developer - Visual C#(Apr 2006 - Mar 2007)  │
+│-------------------- Gushwell's Page ---------------------------- │
+│ 窓際プログラマーの独り言  ：http://blog.livedoor.jp/gushwell/    │
+│ 窓際プログラマーの読書三昧：http://gushwell.jugem.jp/            │
+│ C#デザインパターン :                                             │
+│  『増補改訂版Java言語で学ぶデザインパターン入門 / 結城 浩(著)』  │
+│   のサンプルコードをC#に移植したものを掲載しています。           │
+│   移植後のコードの公開は、結城氏の了解を得ています。             │
+│   http://blog.livedoor.jp/gushwell/archives/50333227.html        │
+└─────────────────────────────────┘

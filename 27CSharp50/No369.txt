@@ -1,0 +1,125 @@
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━━━ No.369 ━□
+
+「C#5.0編」-- 非同期処理のおさらい
+                                                           by Gushwell
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+購読者の皆さん、おはようございます。
+暑い日が続きますが、皆さんはいかがお過ごしでしょうか。
+暑さに弱いGushwellですが、気合を入れて、メルマガ新連載をスタートしたいと
+思います。
+今号からC#5.0編と称して、C#5.0で新たに追加された機能の解説をしていく予定
+です。
+まずは、C#5.0でもっとも大きな機能追加である、非同期処理について複数回にわ
+たり解説します。
+
+■□───────────────────────────────────
+■□ 非同期処理とは
+
+C#5で追加された async awaitキーワードを利用すると、非同期処理を同期処理的
+に記述することが可能になります。
+
+例えば、デスクトップアプリケーションで時間のかかるI/O処理をした場合、UIが
+フリーズしないようにするには、I/O処理を非同期で処理する必要があります。
+このとき、多くのアプリケーションでは、I/O処理が終了したことをなんらかの形
+でUI側が認識する必要があります。この待ちの処理がC#5.0では比較的簡単に記述
+することが可能です。
+
+また、アプリケーションの応答性をよくするために、複数の処理を並列で動かし
+たい場合もあります。このときにすべての非同期処理を待つ場合も、C#5. 0では
+簡潔に記述することが可能です。
+
+まずは、これまでの非同期処理について簡単に復習をし、その後async awaitの説
+明に入る予定です。
+
+前置きが長くなりました(^^; それでは本題に入りましょう。
+
+
+今回は、ThreadとThreadPoolを使った非同期プログラミングについて復習します。
+
+■□───────────────────────────────────
+■□ Threadクラスを使ったバックグラウンド処理
+
+以下のようなプログラムを例に考えて見ましょう。
+
+  private void button1_Click(object sender, EventArgs e) {
+      Cursor = Cursors.WaitCursor;
+      Thread.Sleep(5000);
+      label1.Text = "Finish";
+      Cursor = Cursors.Arrow;
+  }
+
+このコードの問題点は、プログラムが5秒間フリーズしてしまうことです。この5
+秒間は、ウインドウを移動することも最小化することもできません。
+
+UIがフリーズしないよう、Threadクラスを使い書き換えてみましょう。
+
+  private void button1_Click(object sender, EventArgs e) {
+      Thread th = new Thread(DoSomething);
+      th.Start();
+  }
+
+  private void DoSomething() {
+      Thread.Sleep(4000);
+      label1.Invoke(new Action(() => {
+          label1.Text = "Finish";
+      }));
+  }
+
+Threadコンストラクタの引数部分で、ラムダ式を使えば、button1_Clickメソッド
+の中ですべてを記述できますが、僕は、メソッドとして分割するほうが好きです。
+その方がコードが複雑化するのを防ぐことができると考えているからです。
+
+この程度ならば、Threadクラスを使い慣れている人は、それほど苦にならないと
+は思いますが、それでも最初のコードよりは複雑です。
+
+
+■□───────────────────────────────────
+■□ ThreadPoolを使った非同期処理
+ 
+今度は、ThreadPoolを使った非同期処理です。
+スレッド プールを使用すると、システムで管理されるワーカー スレッドのプー
+ルをアプリケーションに提供することで、スレッドをより効率的に使用できます。
+
+  private void button1_Click(object sender, EventArgs e) {
+      ThreadPool.QueueUserWorkItem(DoSomething);
+
+  }
+
+  private void DoSomething(object obj) {
+      Thread.Sleep(4000);
+      label1.Invoke(new Action(() => {
+          label1.Text = "Finish";
+      }));
+  }
+
+QueueUserWorkItemメソッドを呼び出すと、引数のメソッドがキューに置かれます。
+メソッドは、スレッド プールのスレッドが使用可能になったときに実行されます。
+
+この例ではスレッドがひとつだけであり、記述が若干短くなった程度であまりメ
+リットは感じられませんが、スレッドを複数起動する際に、同時に起動するスレ
+ッド数を制限できたり、なかなか魅力的な機能を持っています。
+
+また、スレッドのキューの再使用を行ってくれるため、スレッドの作成と終了を
+繰り返すアプリケーションでは、タスクごとに新しいスレッドを作成するという
+負荷を避けることができます。
+
+ただし、複数のスレッドの終了を待つといったコードを書こうとすると、ちょと
+面倒だったりします。ここでは詳細は割愛させてもらいます。
+
+
+─────────────────────────────────────
+『C#プログラミングレッスン』  (ほぼ週刊）
+☆皆さまからの感想をお待ちしています。http://gushwell.ifdef.jp/mail.html
+─────────────────────────────────────
+Published by Gushwell.
+Copyright (C) 2013 Gushwell All rights reserved.
+Microsoft MVP for Visual C#(Apr 2005 - Mar 2014)
+
+■Gushwell's Page
+facebook Page                     : http://www.facebook.com/CSharpLesson
+Gushwell's C# Dev Notes           : http://gushwell.ldblog.jp/
+Gushwell's C# Programming Page    : http://gushwell.ifdef.jp/
+気ままな読書ノート                : http://gwbooks.hatenablog.com/
+Twitterアカウント                 : @gushwell
+─────────────────────────────────────

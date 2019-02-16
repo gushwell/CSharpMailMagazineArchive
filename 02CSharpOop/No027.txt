@@ -1,0 +1,179 @@
+┏━┳━━━━━━━━━━━━━━━━━━━━━━━━━┳━┳━┳━┓
+┃☆┃ C#プログラミングレッスン                         ┃＿┃□┃×┃
+┣━┻━━━━━━━━━━━━━━━━━━━━━━━━━┻━┻━┻━┫
+┃コンストラクタ                                             No.027 ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+■──────────────────────────────────
+■ コンストラクタとは
+
+コンストラクタとはクラスのインスタンスが生成される時に呼び出される特殊
+なメソッドです。
+
+  MyDate dt = new MyDate();
+
+とすると、コンストラクタという特別なメソッドが呼ばれています。MyDateク
+ラスでは、コンストラクタの定義をしていませんので、デフォルトのコンスト
+ラクタが呼ばれています。
+インスタンスが生成される時に独自の初期化を行いたい場合には、コンストラ
+クタを定義します。
+例えば、
+
+   MyDate dt = new MyDate(2005,2,24);
+
+のように、年、月、日を引数に与えて、MyDateインスタンスを初期化したいと
+きには、以下のようにコンストラクタを定義します。
+
+    class MyDate {
+        private int year;
+        private int month;
+        private int day;
+        // コンストラクタ
+        public MyDate(int y, int m, int d) {
+            year = y;
+            month = m;
+            day = d;
+        }
+        public void SetDate(int y, int m, int d) {
+            year = y;
+            month = m;
+            day = d;
+        }
+        public string Format() {
+            return string.Format("{0}年{1}月{2}日",
+                                     year, month, day);
+        }
+        public int Year {
+            get { return year; }
+        }
+        public int Month {
+            get { return month; }
+        }
+        public int Day {
+            get { return day; }
+        }
+    }
+
+コンストラクタの定義は、通常のメソッドとほぼ同じですが、名前が、そのク
+ラス名と同じであり、戻り値の指定がありません。
+
+なお、 見てお解かりのようにコンストラクタにも、public というアクセス修
+飾子を指定しています。これを
+
+        private MyDate(int y, int m, int d) {
+            year = y;
+            month = m;
+            day = d;
+        }
+
+としてしまうと、非公開のコンストラクタとなり、インスタンスを生成できな
+くなってしまいます。
+
+
+■──────────────────────────────────
+■ コンストラクタのオーバーロード
+
+この  MyDateクラスのように独自の引数を持ったコンストラクタを定義したク
+ラスでは、
+
+      MyDate dt = new MyDate();
+
+のように、デフォルトのコンストラクタを呼び出すことが出来なくなります。
+コンパイル時にエラーになることが確認できると思います。
+もし、引数無しでもnew したいのならば、
+
+        public MyDate() {
+            year = 1;
+            month = 1;
+            day = 1;
+        }
+
+と引数無しのコンストラクタも一緒に定義する必要があります。この時、メソ
+ッド名が同じMyDateですが、問題はありません。
+（前回、説明したメソッドのオーバーロードですね。）
+
+
+■──────────────────────────────────
+■ this キーワード
+
+上の例では、コンストラクタの引数に y, m, d という名前を使いましたが、
+
+     public MyDate(int year, int month, int day) {
+
+のように分かりやすい名前にしたいとします。
+しかし、困ったことが起こります。引数の year と フィールドの year が
+名前が重複してしまい、
+
+     public MyDate(int year, int month, int day) {
+         year = year;
+         month = momth;
+         day = day;
+     }
+
+と書くと、引数の year の値を引数 year に代入することになり、フィールド
+に正しく値をセットすることができなくなります。
+こういった時に、以下のように this キーワードを使います。
+
+     public MyDate(int year, int month, int day) {
+         this.year = year;
+         this.month = momth;
+         this.day = day;
+     }
+
+thisキーワードは、 クラスの現在のインスタンスを指します。
+thisキーワードは、コンストラクタやメソッド内でメンバ(フィールドやメソ
+ッド）にアクセスするために使用できます。
+
+ですから、例えば、Formatメソッドにおいても、
+
+     public string Format() {
+         return string.Format("{0}年{1}月{2}日",
+                                  this.year, this.month, this.day);
+     }
+
+と書けば、明示的に、フィールドの year, month, day を参照していることを
+示すことができます。
+
+
+───────────────────────────────────
+
+最後に、現時点での、MyDateクラスを掲載します。
+なお、SetDateメソッドは、コンストラクタを定義したことで、不要となりま
+したので、削除しています。
+
+  class MyDate {
+      private int year;
+      private int month;
+      private int day;
+      // コンストラクタ
+      public MyDate(int year, int month, int day) {
+          this.year = year;
+          this.month = month;
+          this.day = day;
+      }
+      public string Format() {
+          return string.Format("{0}年{1}月{2}日",
+                                   year, month, day);
+      }
+      public int Year {
+          get { return year; }
+      }
+      public int Month {
+          get { return month; }
+      }
+      public int Day {
+          get { return day; }
+      }
+  }
+
+┌─┬─────────────────────────┬─┬─┬─┐
+│☆│ C#プログラミングレッスン                         │＿│□│×│
+├─┴─────────────────────────┴─┴─┴─┤
+│ Published by GushWell                                            │
+│ Copyright (C) 2004-2005 GushWell All rights reserved.            │
+│-------------------- GushWell's Page ---------------------------- │
+│ 窓際プログラマーの独り言  ：http://blog.livedoor.jp/gushwell/    │
+│ 窓際プログラマーの読書三昧：http://gushwell.jugem.jp/            │
+│             よろしかったらアクセスしてみてください！             │
+└─────────────────────────────────┘
+

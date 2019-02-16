@@ -1,0 +1,125 @@
+┏━┳━━━━━━━━━━━━━━━━━━━━━━━━━┳━┳━┳━┓
+┃☆┃ C#プログラミングレッスン                         ┃＿┃□┃×┃
+┣━┻━━━━━━━━━━━━━━━━━━━━━━━━━┻━┻━┻━┫
+┃ Trace(6) カスタムTraceListener                             No.132┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+■──────────────────────────────────
+■ カスタムTraceListenerとは
+
+前回紹介した標準で用意されている TraceLisntener を使うだけでも、さまざ
+まな出力が可能になりますが、独自の TraceListener が欲しくなる場面もあり
+ます。
+そんなときに作成するのが、カスタムTraceListenerです。
+カスタム TraceListener は、TraceListener 抽象クラス、あるいはその派生ク
+ラスを継承して作成します。
+
+
+今回は、実行する日が変わるたびに、別のファイルにログを出力させるカスタ
+ム TraceListener を TextWriterTraceListener クラス から派生させ作成しま
+す。
+
+■──────────────────────────────────
+■ カスタムTraceListenerのコード例
+
+早速ですが、プログラムコードを示します。
+
+using System;
+using System.Collections.Generic;
+using System.Text;
+using System.Diagnostics;
+
+namespace Gushwell {
+    public class MyTraceListener : TextWriterTraceListener {
+        public MyTraceListener()
+            : base() {
+        }
+
+        public MyTraceListener(string format)
+            : base(GetFileName(format)) {
+        }
+
+        private static string GetFileName(string format) {
+            return string.Format(format, DateTime.Now);
+        }
+
+        public override void WriteLine(string message) {
+            base.WriteLine("*" + message);
+        }
+    }
+}
+
+コンストラクタでは、"TestFile{0:yyyyMMdd}.log" のような文字列を受け取る
+こととします。
+
+GetFileName メソッドで、ファイル名を組み立て、その結果を、親のコンスト
+ラクタに渡します。
+こうすることで、作成するファイル名に柔軟性を持たせることができます。"
+TestFile{0:yyyyMMddHH}.log" とすれば、時刻もファイル名に付加することも
+できます。
+
+WriteLine(string message) メソッドは、単に、メッセージの先頭に "*" を追
+加しているだけです。
+override することで、動作を変えられるということを示すために用意したもの
+なので、深い意味はありません。
+それ以外のメソッドは、すべて、TextWriterTraceListener と同じ動きとなり
+ます。
+
+※TraceListener 抽象クラスから派生させる場合は、TraceListener の作成は、
+  もう少し面倒ですが、MSMQ を使って他のコンピュータ／プロセスにトレース
+  情報を渡すとか、データベースにトレース情報を出力させるといったことが
+  可能になります。興味のある方は是非挑戦してみてください。
+
+
+■──────────────────────────────────
+■ 構成ファイル
+
+構成ファイルは、以下のようになります。
+
+<?xml version="1.0" encoding="utf-8" ?>
+<configuration>
+  <system.diagnostics>
+    <switches>
+      <add name="MyTraceLevel" value="4" />
+    </switches>
+    <trace autoflush="false" indentsize="4">
+      <listeners>
+        <add name="myListener"
+             type="Gushwell.MyTraceListener, TraceListenerTest"
+             initializeData="MyAppTrace{0:yyyyMMdd}.log" />
+      </listeners>
+    </trace>
+  </system.diagnostics>
+</configuration>
+
+
+この MyTraceListener を利用するコードは、これまで説明してきたプログラム
+コードとまったく同じです。
+参考までに、前々回と同じコードを掲載しておきます。
+
+  TraceSwitch mySwitch = 
+　　　　　new TraceSwitch("MyTraceLevel", "Sample of TraceSwitch");
+  if ( mySwitch.TraceError )
+      Trace.WriteLine("エラーです");
+  if ( mySwitch.TraceWarning )
+      Trace.WriteLine("ワーニングです。");
+  if ( mySwitch.TraceInfo )
+      Trace.WriteLine("情報です。");
+  if ( mySwitch.TraceVerbose )
+      Trace.WriteLine("おしゃべりです。");
+
+┌─┬─────────────────────────┬─┬─┬─┐
+│☆│ C#プログラミングレッスン  (ぼぼ週刊）            │＿│□│×│
+├─┴─────────────────────────┴─┴─┴─┤
+│ Published by Gushwell.                                           │
+│ Copyright (C) 2004-2007 Gushwell All rights reserved.            │
+│ Microsoft MVP Visual Developer - Visual C#(Apr 2005 - Mar 2008)  │
+│-------------------- Gushwell's Page ---------------------------- │
+│ 窓際プログラマーの独り言  ：http://blog.livedoor.jp/gushwell/    │
+│ 窓際プログラマーの読書三昧：http://gushwell.jugem.jp/            │
+│ C#デザインパターン :                                             │
+│  『増補改訂版Java言語で学ぶデザインパターン入門 / 結城 浩(著)』  │
+│   のサンプルコードをC#に移植したものを掲載しています。           │
+│   移植後のコードの公開は、結城氏の了解を得ています。             │
+│   http://blog.livedoor.jp/gushwell/archives/50333227.html        │
+└─────────────────────────────────┘

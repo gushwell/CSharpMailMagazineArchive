@@ -1,0 +1,98 @@
+
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━━━ No.293 ━□
+
+ 「正規表現編」-- 一致する文字列をすべて見つける
+                                                            by Gushwell
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+
+■□───────────────────────────────────
+■□ NextMatchメソッド
+
+前回は、最初に一致する部分文字列を見つけるコードを示しましたが、今度は、2
+番目、3番目...と検索を続けるコードをお見せします。
+
+
+ string text = "private List<string> results = new List<string>();";
+ Match m = Regex.Match(text,@"List<\w+>");
+ while (m.Success) {
+    Console.WriteLine("Index={0}, Length={1}, Value={2}",
+                      m.Index, m.Length, m.Value);
+    m = m.NextMatch();
+ }
+ Console.ReadLine();
+
+
+変更した箇所は、if文を while 文に変更したのと、NextMatchを呼び出すように
+した２点です。
+NextMatchメソッドは、見つかった位置 (最後に一致した文字の後ろの文字) から
+検索を開始して、次に一致した結果を Match に設定し返します。
+これを呼び出すことで、一致する全ての部分文字列を列挙することが出来ます。
+
+結果は、
+
+ Index=8, Length=12, Value=List<string>
+ Index=35, Length=12, Value=List<string>
+
+となります。
+
+
+■□───────────────────────────────────
+■□ Matches メソッド
+
+Regex.Matchesメソッドを利用すれば、一回の呼び出しで、指定した正規表現に一
+致する対象をすべて見つけることができます。
+
+ string text = "private List<string> results = new List<string>();";
+ MatchCollection mc = Regex.Matches(text, @"List<\w+>");
+ foreach (Match m in mc) {
+    Console.WriteLine("Index={0}, Length={1}, Value={2}",
+                       m.Index, m.Length, m.Value);
+ }
+
+
+Matchesメソッドが返す型は、MatchCollection 型です。この型は非ジェネリック
+なIEnumerable は実装していますが、IEnumerable<T>を実装していないため、
+次のように var を使えないのが難点ですね。
+
+ foreach (var m in mc) {
+    Console.WriteLine("Index={0}, Length={1}, Value={2}",
+                       m.Index, m.Length, m.Value);
+ }
+
+ちなみに、LINQ の OfType<>拡張メソッドを使うと、次のように記述することもで
+きます。
+
+ mc.OfType<Match>().ToList().ForEach(m =>
+     Console.WriteLine("Index={0}, Length={1}, Value={2}",
+                        m.Index, m.Length, m.Value)
+ );
+
+※ LINQ to Object に標準で、 ForEachメソッドが無いため、ToList() を間に挟
+  む必要があるで、わざわざこのように書く必要はないと思いますが...
+
+
+==========================================================================
+■ Gushwellの書籍
+
+『C#プログラミング入門』
+ http://www.amazon.co.jp/exec/obidos/ASIN/4777515982/gaius-22/
+
+目次は、こちらで確認できます。
+ http://www.kohgakusha.co.jp/books/detail/978-4-7775-1598-1
+
+
+─────────────────────────────────────
+『C#プログラミングレッスン』  (ぼぼ週刊）
+ ☆皆さまからの感想をお待ちしています。http://gushwell.ifdef.jp/mail.html
+─────────────────────────────────────
+ Published by Gushwell.
+  Copyright (C) 2011 Gushwell All rights reserved.
+  Microsoft MVP for Visual C#(Apr 2005 - Mar 2012)
+
+ ■Gushwell's Page
+ Gushwell's C# Dev Notes           : http://gushwell.ldblog.jp/
+ Gushwell's C# Programming Page    : http://gushwell.ifdef.jp/
+ Gushwell's F# Programming Diary   : http://techbank.jp/gushwell/
+ Gushwellの読書ノート              : http://gushwell.jugem.jp/
+─────────────────────────────────────

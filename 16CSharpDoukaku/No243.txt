@@ -1,0 +1,163 @@
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━━━ No.243 ━□
+  
+ 「どう書く？org編」-- 隣り合う二項の差
+                                                             by Gushwell  
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+■□───────────────────────────────────
+■□ お題：隣り合う二項の差  <http://ja.doukaku.org/49/>
+
+整数のリストがxsが与えられたときに、隣り合う2要素の差のリストを作る関数
+diffを作ってください。 
+
+サンプル入力
+[3, 1, 4, 1, 5, 9, 2, 6, 5]
+サンプル出力
+[-2, 3, -3, 4, 4, -7, 4, -1]
+
+
+■□───────────────────────────────────
+■□ 解答
+
+ using System;
+ using System.Collections.Generic;
+ using System.Linq;
+
+ namespace Sample {
+     class Program {
+         static void Main(string[] args) {
+             var nums = new List<int> { 3,1,4,1,5,9,2,6,5 };
+             foreach (var n in Diff(nums))
+                 Console.WriteLine(n);
+             Console.ReadLine();
+         }
+
+         static List<int> Diff(List<int> xs) {
+             List<int> result = new List<int>();
+             if (xs.Count > 0) {
+                 int prev = xs[0];
+                 for (int i = 1; i < xs.Count; i++) {
+                     result.Add(xs[i] - prev);
+                     prev = xs[i];
+                 }
+             }
+             return result;
+         }
+     }
+ }
+
+
+■□───────────────────────────────────
+■□ 解説
+
+ここでは、List<int> を受け取る Diffメソッドを書いてみました。このお題に対
+して多くのプログラマが書くコードだと思われます。
+やっていることは、
+
+ 1.先頭の要素を prev に入れて、２つ目の要素との差を求める。
+ 2.次に、２つ目の要素を prev に入れて、３つめの要素との差を求める。
+ 3.これを繰り返す。
+
+という処理を書いています。
+for 文の i 変数を 1 から始めているのがポイントです。
+
+また、リストが空の時に対応するために、
+ if (xs.Count > 0) {
+という判断をしています。
+
+お題では、リストを作る関数を作成することが求められているので、Mainメソッド
+で行っている表示については、編集せずに出力しています。
+
+なお、お題では、要素が１つ以下の場合の動作が示されていません。ここでは、
+空のリストを返すようにしています。
+
+■□───────────────────────────────────
+■□ 発展
+
+では、もうひとつのDiffメソッドをお見せします。
+配列でも、Listでも受け取れるようにしてみました。
+
+    static IEnumerable<int> Diff(IEnumerable<int> xs) {
+        var ite = xs.GetEnumerator();
+        if (!ite.MoveNext())
+            yield break;            
+        for (int prev = ite.Current; ite.MoveNext(); prev = ite.Current) {
+            yield return ite.Current - prev;                
+        }
+    }
+
+ ※ 当然ながら、呼び出し側（Mainメソッド）はそのまま利用できます。
+
+IEnumerableでは、インデックスによるアクセスが出来ないため、GetEnumeratorメ
+ソッドで、反復処理のための列挙子を取り出し、Currentプロパティと、MoveNext
+メソッドで繰り返し処理をしています。
+最初のコードよりもすっきりとしたコードになっていると思います。それと、
+List<int>に依存しないため、配列などの他のコレクションにも対応できています。
+
+IEnumerable<T> を実装したオブジェクトに格納された要素を順に処理する場合、
+foreachを使うのが常套句ですが、このように、GetEnumeratorメソッドで反復処理
+のための列挙子を取り出し、繰り返し処理を書くという方法を知っていると、問題
+に上手く対処できる場合もあります。
+例えば、ひとつのループ処理で２つのListを同時に扱いたい場合がそれに該当しま
+す。
+
+■□───────────────────────────────────
+■□ 今回のポイント
+
+・空のリストにも対応できるようにプログラムを書く必要がある。
+・リストの隣り合う要素を扱う場合には、ループの外側で先頭要素を取り出し、ル
+  ープでは、２番目の要素から処理するようにすると方法もある。
+・リスト、配列どちらでも引数で受け取れるようにするには、IEnumerable<T>を
+  受け取るようにする。
+・IEnumerable<T>を返すメソッドを作成すれば、呼び出し側では、foreach文を使
+  って要素を順番に処理できる。
+・IEnumerable<T>を返すメソッドでは、yield return を使い値を返す。
+  yield breakで、要素の列挙を強制終了する。
+
+
+■□───────────────────────────────────
+■□ 次回のお題： アレイのuniq  <http://ja.doukaku.org/16/>
+
+
+アレイ(複数の値が配列状になっているもの)xsが与えられたときに、同じ値が2回
+以上出現しないように、2回目以降の出現を取り除いたアレイを返すコードを書い
+てください。 
+よくある「ハッシュを使う」「集合オブジェクトを使う」などの方法は順番が乱れ
+てしまうので使えません。出現順序を守りつつ、2回目以降の出現だけを取り除い
+てください。
+
+例えば
+
+{ 3, 1, 4, 1, 5, 9, 2, 6, 5, 3, 5, 8, 9, 7, 9 }
+
+というデータの場合、
+
+{ 3, 1, 4, 5, 9, 2, 6, 8, 7 }
+
+という結果となります。
+
+
+
+─────────────────────────────────────
+『C#プログラミングレッスン』  (ぼぼ週刊）                                 
+─────────────────────────────────────
+ ☆メールマガジンの感想お待ちしています☆                                 
+   http://gushwell.ifdef.jp/mail.html                                     
+
+ Published by Gushwell.                                                   
+   Copyright (C) 2004-2009 Gushwell All rights reserved.                  
+   Microsoft MVP for Visual C#(Apr 2005 - Mar 2011)                       
+                                                                          
+ <<■ Gushwell's Page ■>>                                                
+ 窓際プログラマ─の独り言  ：http://gushwell.ldblog.jp/                   
+ 窓際プログラマ―の読書三昧：http://gushwell.jugem.jp/                    
+ Gushwell's F# Programming Diary : http://techbank.jp/gushwell/           
+ Gushwell's C# Programming Page  ：http://gushwell.ifdef.jp/              
+   C#デザインパタ―ン : http://gushwell.ifdef.jp/dp/csdpindex.html        
+                                                                          
+ <<■ コミュニティtechbank.jp (http://techbank.jp/Community/) ■>>        
+ Gushwellが参加している技術系コミュニティです。                           
+ マイクロソフト系テクノロジー＆製品に特化したコミュニティです。Webサイトで
+ は、VB、C#、VC++、SQL Server, BizTalk Server などの技術情報を公開していま
+ す。皆さんの参加をお待ちしています。
+─────────────────────────────────────

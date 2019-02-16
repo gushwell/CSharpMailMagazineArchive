@@ -1,0 +1,112 @@
+
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━━━ No.342 ━□
+
+「シリアライズ編」-- バイナリシリアル化(3)
+                                                           by Gushwell  
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+皆さん、おはようございます。
+facebook で、「C#プログラミングレッスン」のページを開設しています。
+facebookをご利用の方は、"いいね"をしていただけると嬉しいです。
+facebook Page : http://www.facebook.com/CSharpLesson 
+
+
+
+前回までは、すべてが、publicなフィールドでしたが、privateなフィールドは、
+シリアル化できるのでしょうか。
+今回は、それをちょっと試してみたいと思います。
+
+■□───────────────────────────────────
+■□ privateフィールドのシリアル化
+
+これまでは、すべてが、publicなフィールドでしたが、privateなフィールドはど
+うなるのでしょうか。
+ちょっと試してみましょう。
+
+MyObjectを以下のように変更します。
+
+ public class MyObject {
+     public int n1 = 0;
+     public int n2 = 0;
+     public double d1 = 0.0;
+     public String str = null;
+     public DateTime date;
+     private int n3 = 0;   // privateフィールド
+     public void SetPrivateVar(int x) {
+         n3 = x;
+     }
+     public void PrintPrivateVar() {
+         Console.WriteLine("n3 = {0}", n3);
+     }
+ }
+
+privateフィールド n3 を定義し、n3 にアクセスするための、メソッドを追加し
+ています。
+
+これをシリアル化するコードを示します。前回と違う箇所は、※ の部分です。
+
+ MyObject obj = new MyObject {
+     n1 = 10,
+     n2 = 123,
+     d1 = 987.6,
+     str = "sample string",
+     date = new DateTime(2012, 9, 10),
+     
+ };
+ obj.SetPrivateVar(67);   // ※
+ IFormatter formatter = new BinaryFormatter();
+ using (Stream stream = new FileStream("TestFile.dat", FileMode.Create, 
+                                                        FileAccess.Write)) {
+     formatter.Serialize(stream, obj);
+ }
+
+シリアル化する部分はまったく変更はありません。privateなフィールド n3 に値
+をセットするコードを追加しただけです。
+
+■□───────────────────────────────────
+■□ privateフィールドの逆シリアル化
+
+では、これを逆シリアル化するコードを見てみましょう。
+
+ IFormatter formatter = new BinaryFormatter();
+ MyObject obj = null;
+ using (Stream stream = new FileStream("TestFile.dat", FileMode.Open,
+                                                        FileAccess.Read)) {
+     obj = (MyObject)formatter.Deserialize(stream);
+ }
+ // 以下、内容を確認するコード
+ Console.WriteLine("n1 = {0}", obj.n1);
+ Console.WriteLine("n2 = {0}", obj.n2);
+ Console.WriteLine("d = {0}", obj.d1);
+ Console.WriteLine("str = {0}", obj.str);
+ Console.WriteLine("data = {0}", obj.date);
+ obj.PrintPrivateVar();
+
+これも、逆シリアル化する部分は前回のコードとまったく変更はありません。
+以下のような結果が得られます。
+
+ n1 = 10
+ n2 = 123
+ d = 987.6
+ str = sample string
+ data = 2012/09/10 0:00:00
+ n3 = 67
+
+逆シリアル化され、n3 もきちんと 67 の値になっていて、正しくシリアル化、逆
+シリアル化できることが確認できました。
+
+─────────────────────────────────────
+『C#プログラミングレッスン』  (ほぼ週刊）                                 
+☆皆さまからの感想をお待ちしています。http://gushwell.ifdef.jp/mail.html  
+─────────────────────────────────────
+Published by Gushwell.                                                    
+Copyright (C) 2012 Gushwell All rights reserved.                          
+Microsoft MVP for Visual C#(Apr 2005 - Mar 2013)                          
+                                                                          
+■Gushwell's Page                                                         
+facebook Page                     : http://www.facebook.com/CSharpLesson  
+Gushwell's C# Dev Notes           : http://gushwell.ldblog.jp/            
+Gushwell's C# Programming Page    : http://gushwell.ifdef.jp/             
+Gushwellの読書ノート              : http://gushwell.jugem.jp/             
+Twitterアカウント                 : @gushwell                             
+─────────────────────────────────────

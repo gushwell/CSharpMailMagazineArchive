@@ -1,0 +1,142 @@
+┏━┳━━━━━━━━━━━━━━━━━━━━━━━━━┳━┳━┳━┓
+┃☆┃ C#プログラミングレッスン                         ┃＿┃□┃×┃
+┣━┻━━━━━━━━━━━━━━━━━━━━━━━━━┻━┻━┻━┫
+┃ C#3.0-LINQ パーティション分割演算子                        No.170┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+今回は、パーティション分割演算子。なんか小難しい名前がついていますが、
+シーケンスを２つに分割し、分割されたどちらか一方を取り出す演算子です。
+良く利用するのは、Take演算子でしょうか。この演算子を使えば、先頭から 
+n 個だけを取り出すことができます。
+
+※ サンプルコードに出てくる NorthwindObjects.GetProducts() メソッドは、
+   http://gushwell.ifdef.jp/magArchive.html のページ右下からダウンロー
+   ドできます。
+
+■──────────────────────────────────
+■Take
+
+Take演算子は、シーケンスから先頭から指定した数だけ要素を取り出します。
+以下の例は、商品を単価順にソートし、安い順から１０個の商品を列挙します。
+拡張メソッド方式と、クエリ式方式の２つのコードを示しています。
+
+ var products = NorthwindObjects.GetProducts();
+ var result = products.OrderBy(p => p.UnitPrice)
+                      .Take(10);
+ foreach (var p in result) {
+     Console.WriteLine("{0} : {1}",p.ProductName, p.UnitPrice);
+ }
+
+ ----------
+
+ var products = NorthwindObjects.GetProducts();
+ var query = (from p in products
+              orderby p.UnitPrice
+              select new { p.ProductName, p.UnitPrice }
+             ).Take(10);
+ foreach (var p in query )
+     Console.WriteLine(p);
+
+
+SQL文の TOP句に該当するものですね。
+
+
+■──────────────────────────────────
+■Skip
+
+Skip演算子は、シーケンスの先頭から指定した要素分をスキップし、残りの部
+分を列挙します。
+以下のコードは、商品の単価の低い順に並べ、11個目から商品を列挙していま
+す。
+
+ var products = NorthwindObjects.GetProducts();
+ var result = products.OrderBy(p => p.UnitPrice).Skip(10);
+ foreach (var p in result) {
+     Console.WriteLine("{0} : {1}",p.ProductName, p.UnitPrice);
+ }
+
+次のクエリ式の例では、処理に必要な項目だけを匿名クラスとして取り出して
+います。
+
+ var products = NorthwindObjects.GetProducts();
+ var query = (from p in products
+              orderby p.UnitPrice
+              select new { p.ProductName, p.UnitPrice }
+             ).Skip(10);
+ foreach (var p in query)
+     Console.WriteLine(p);
+
+
+■──────────────────────────────────
+■Takewhile
+
+Takewhile演算子は、条件が成り立つ間だけ、シーケンスから要素を取得し、
+残りをスキップします。
+以下のコードは、単価が 20 未満の商品を列挙しています。
+
+ var products = NorthwindObjects.GetProducts();
+ var result = products.OrderBy(p => p.UnitPrice)
+                      .TakeWhile(p => p.UnitPrice < 20);
+ foreach (var p in result) {
+     Console.WriteLine("{0} : {1}",p.ProductName, p.UnitPrice);
+ }
+
+
+次の例は、クエリ式で処理に必要な項目だけを匿名クラスとして取り出し、
+そのクエリに対し、TakeWhileで単価が 20 未満のデータを取得しています。
+
+ var products = NorthwindObjects.GetProducts();
+ var query = (from p in products
+              orderby p.UnitPrice
+              select new { p.ProductName, p.UnitPrice }
+             ).TakeWhile(p => p.UnitPrice < 20);
+ foreach (var p in query)
+     Console.WriteLine(p);
+
+
+■──────────────────────────────────
+■SkipWhile
+
+SkipWhile演算子は、TakeWhileとは逆ですね。
+条件が成り立つ間はスキップし、それ以降の要素をシーケンスから返します。
+以下のコードは、単価が50未満の商品をスキップし、残り（50以上の商品）を
+列挙しています。
+
+ var products = NorthwindObjects.GetProducts();
+ var result = products.OrderBy(p => p.UnitPrice)
+                      .SkipWhile(p => p.UnitPrice < 50);
+ foreach (var p in result) {
+     Console.WriteLine("{0} : {1}", p.ProductName, p.UnitPrice);
+ }
+
+
+ ----------
+
+ var products = NorthwindObjects.GetProducts();
+ var query = (from p in products
+              orderby p.UnitPrice
+              select new { p.ProductName, p.UnitPrice }
+             ).SkipWhile(x => x.UnitPrice < 50);
+ foreach (var p in query)
+     Console.WriteLine(p);
+
+--------
+参考文献
+ http://www.microsoft.com/japan/msdn/net/bb394939.aspx
+
+┌─┬─────────────────────────┬─┬─┬─┐
+│☆│ C#プログラミングレッスン  (ぼぼ週刊）            │＿│□│×│
+├─┴─────────────────────────┴─┴─┴─┤
+│ Published by Gushwell.                                           │
+│ Copyright (C) 2004-2007 Gushwell All rights reserved.            │
+│ Microsoft MVP Visual Developer - Visual C#(Apr 2005 - Mar 2009)  │
+│-------------------- Gushwell's Page ---------------------------- │
+│ 窓際プログラマーの独り言  ：http://blog.livedoor.jp/gushwell/    │
+│ 窓際プログラマーの読書三昧：http://gushwell.jugem.jp/            │
+│ Gushwell's C# Programing Page：http://gushwell.ifdef.jp/         │
+│ C#デザインパターン :                                             │
+│  『増補改訂版Java言語で学ぶデザインパターン入門 / 結城 浩(著)』  │
+│   のサンプルコードをC#に移植したものを掲載しています。           │
+│   移植後のコードの公開は、結城氏の了解を得ています。             │
+│   http://blog.livedoor.jp/gushwell/archives/50333227.html        │
+└─────────────────────────────────┘

@@ -1,0 +1,186 @@
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━━━ No.405 ━□
+
+「続・アルゴリズム編」-- 木構造(2)
+                                                          by Gushwell
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+前回の続きです。
+再度、問題を掲載しておきます。
+
+■□───────────────────────────────────
+■□ 問題 （木構造）
+
+2分木が平衡がどうかを調べる関数を実装してください。平衡木とは、どのノードの
+2つの部分木も、その高さの差が1以下であるような木であると定義します。
+
+ 出展：『世界で闘うプログラミング力を鍛える150問』
+ http://www.amazon.co.jp/exec/obidos/ASIN/4839942390/gaius-22/
+
+
+■□───────────────────────────────────
+■□ 前回のおさらい
+
+前回は、ITreeNode<T>  NullNode<T> TreeNode<T> を実装しなのでしたね。
+
+前回までのコードも再度載せておきます。
+
+ public interface ITreeNode<T> {
+     ITreeNode<T> Left { get; set; }     // 左側の部分木
+     ITreeNode<T> Right { get; set; }    // 右側の部分木
+     T Value { get; set; }
+     int GetDepth();
+     bool IsBalance();
+ }
+
+ public class NullNode<T> : ITreeNode<T> {
+     public ITreeNode<T> Left { get; set; }
+     public ITreeNode<T> Right { get; set; }
+     public T Value { get; set; }
+     public int GetDepth() {
+         return 0;
+     }
+     public bool IsBalance() {
+         return true;
+     }
+ }
+
+ public class TreeNode<T> : ITreeNode<T> {
+     public ITreeNode<T> Left { get; set; }
+     public ITreeNode<T> Right { get; set; }
+     public T Value { get; set; }
+
+     public TreeNode() {
+         Right = new NullNode<T>();
+         Left = new NullNode<T>();
+     }
+
+     public int GetDepth() {
+         int depth1 = this.Left.GetDepth();
+         int depth2 = this.Right.GetDepth();
+         return Math.Max(depth1, depth2) + 1;
+     }
+
+     public bool IsBalance() { 
+         // これはまだ未実装 ... 
+     }
+ }
+
+ただ、この問題の一番肝心な TreeNode<T>の IsBalance メソッドの実装がまだでし
+た。今回は、そのIsBalance の実装をしていきます。
+
+■□───────────────────────────────────
+■□ 問題を解く
+
+くどいようですが、「平衡木とは、どのノードの2つの部分木も、その高さの差が1
+以下であるような木であると定義します」ということなので、IsBalanceメソッドは、
+左右それぞれの部分木の深さを求めて、その差が１以内でなかったら、falseを返し
+ます。これは良いですね。
+
+問題は、「どのノードの2つの部分木も」という点です。
+ルートから見て、左右の部分木の深さの差が１以内だからといって、trueを返すこ
+とはできません。
+左右どちらか（あるいは両方）の部分木が平衡でない可能性もあります。
+そのため、左の部分木も右の部分木も平衡であるかを調べる必要があります。
+
+つまり、左右の深さの差が１以下で、かつ両方の部分木が平衡ならば、そのTreeは
+平衡と判断する必要があるということです。
+これをコードに直したのが以下の IsBalanceメソッドです。
+
+ public bool IsBalance() {
+     // 左右の深さをそれぞれ求める。
+     int ldepth = this.Left.GetDepth();
+     int rdepth = this.Right.GetDepth();
+     //  差が1より大きければバランスが取れていない。
+     if (Math.Abs(ldepth - rdepth) > 1)
+         return false;
+     // 左側と右側のサブTreeのバランスを調べて、
+     // ともにバランスが取れていれば、OK
+     // ただし何回も何回もTreeを操作することになるので効率がわるい。
+     return Left.IsBalance() && Right.IsBalance();
+ }
+
+ここでも、再帰処理を使っています。短いコードですが、再帰処理になれていない
+人は分かったようで分からないコードかも知れませんが、これは慣れるしかないと
+思います。
+自分で、いろんな再帰のコードを書いてみるのがその早道ですね。
+
+
+このプログラムが動作するかいくつかのデータで確かめてみます。
+
+ TreeNode<int> root = new TreeNode<int> {
+     Right = new TreeNode<int>(),
+     Left = new TreeNode<int> {
+         Right = new TreeNode<int> {
+             Right = new TreeNode<int>(),
+             Left = new TreeNode<int>(),
+         },
+         Left = new TreeNode<int> {
+             Right = new NullNode<int>(),
+             Left = new TreeNode<int>(),
+         },
+
+     },
+ };
+ Console.WriteLine(root.IsBalance());
+
+これは、ルートから見ると、左の深さが１、右の深さが３となり、平衡ではありま
+せんのでfalseと表示されます。
+
+
+もうひとつの例で確認してみます。
+
+ TreeNode<int> root = new TreeNode<int>() {
+     Right = new TreeNode<int> {
+         Right = new TreeNode<int> {
+             Right = new TreeNode<int>(),
+             Left = new TreeNode<int>(),
+         },
+         Left = new TreeNode<int> {
+             Right = new NullNode<int>(),
+             Left = new TreeNode<int>(),
+         },
+
+     },
+     Left = new TreeNode<int> {
+         Right = new TreeNode<int> {
+             Right = new TreeNode<int>(),
+             Left = new TreeNode<int>(),
+         },
+         Left = new TreeNode<int> {
+             Right = new NullNode<int>(),
+             Left = new TreeNode<int>(),
+         },
+     },
+ };
+ Console.WriteLine(root.IsBalance());
+
+このTreeは、平衡ですので、trueが表示されます。
+
+
+■□───────────────────────────────────
+■□ 上記コードの問題点
+
+しかし、このメソッドは、コメントにも書いてあるとおり、IsBalanceが呼ばれるた
+びに、GetDepthが呼ばれますから、何回も何回もTreeを辿る操作を繰り返すことに
+なります。
+
+これは効率が悪いです。もうちょっと工夫しないと、大きめの Treeでは実用になら
+ない可能性がありそうです。頑張って改良してみようと思うのですが、メルマが一
+回分の分量（僕が勝手に決めた分量ですが(笑)）をオーバーしそうなので、続きは
+また次回ということにします。
+
+─────────────────────────────────────
+『C#プログラミングレッスン』  (ほぼ週刊）
+☆皆さまからの感想をお待ちしています。http://gushwell.ifdef.jp/mail.html
+─────────────────────────────────────
+Published by Gushwell.
+Copyright (C) 2014 Gushwell All rights reserved.
+Microsoft MVP for Visual C#(Apr 2005 - Mar 2015)
+
+■Gushwell's Page
+facebook Page                     : http://www.facebook.com/CSharpLesson
+Gushwell's C# Dev Notes           : http://gushwell.ldblog.jp/
+Gushwell's C# Programming Page    : http://gushwell.ifdef.jp/
+気ままな読書ノート                : http://gwbooks.hatenablog.com/
+Twitterアカウント                 : @gushwell
+─────────────────────────────────────

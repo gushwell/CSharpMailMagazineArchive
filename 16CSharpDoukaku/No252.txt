@@ -1,0 +1,188 @@
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━━━ No.252 ━□
+  
+ 「どう書く？org編」-- 変形Fizz-Buzz問題
+                                                             by Gushwell  
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+■□───────────────────────────────────
+■□ お題： 変形Fizz-Buzz問題 (http://ja.doukaku.org/77/)
+ 
+以下の仕様を満たす文字列を20行出力するプログラムを作成してください。
+
+1. 1行の出力は「<行番号> '：' <メッセージ>」であること。
+2. 行番号が 3の倍数であるとき、メッセージは「Fizz」であること
+3. 行番号が 5の倍数であるとき、メッセージは「Buzz」であること
+4. 行番号が 3の倍数かつ5の倍数であるとき、メッセージは「FizzBuzz」であるこ
+   と
+5. 上記に記した条件以外のメッセージについては「hoge」であること
+6. 条件分岐する場合、if文のみが使用でき、
+   かつ、論理式が成立した場合の処理のみが記述できます。
+
+というわけでこの問題はFizz-Buzz問題をelse無しならどう書く？という問題です。
+
+出力例：
+ 1:hoge
+ 2:hoge
+ 3:Fizz
+ 4:hoge
+ 5:Buzz
+ 6:Fizz
+ 7:hoge
+ 8:hoge
+ 9:Fizz
+10:Buzz
+11:hoge
+12:Fizz
+13:hoge
+14:hoge
+15:FizzBuzz
+16:hoge
+17:hoge
+18:Fizz
+19:hoge
+20:Buzz
+
+
+■□───────────────────────────────────
+■□ 解答
+
+    class Program {
+        static void Main(string[] args) {
+            FizzBuzz.AddRule(n => (n % 3 == 0 && n % 5 == 0), "FizzBuzz");
+            FizzBuzz.AddRule(n => n % 3 == 0, "Fizz");
+            FizzBuzz.AddRule(n => n % 5 == 0, "Buzz");
+            FizzBuzz.AddRule(n => true, "hoge");
+            for (int i = 1; i <= 20; i++) {
+                Console.WriteLine("{0,2}:{1}",i,i.YourText());
+            }
+        }
+    }
+
+    class Rule {
+        public Func<int, bool> Condition { get; set; }
+        public string Value { get; set; }
+    }
+
+    static class FizzBuzz { 
+        static List<Rule> rules = new List<Rule>();
+        public static void AddRule(Func<int, bool> func, string text) { 
+            rules.Add(new Rule { Condition = func, Value = text });
+        }
+        public static string YourText(this int n) {
+            var q = from r in rules
+                    where r.Condition(n) == true
+                    select r.Value;
+            return q.First();
+        } 
+    }
+
+■□───────────────────────────────────
+■□ 解答
+
+単に、お題の趣旨を満たすだけならば、このメルマガで取上げるまでもない簡単な
+ものなので、通常の解答のコードは省略し、いきなり「発展」のコードを示しまし
+た。
+ここは、ちょっと凝ってみて、ソースコードの見かけからは、elseに加え、if 文
+も無いコードとしました。
+
+まず、Mainメソッドから見てみましょう。
+
+ FizzBuzz.AddRule(n => (n % 3 == 0 && n % 5 == 0), "FizzBuzz");
+
+で、ルールを与えています。これは、
+
+「3の倍数かつ5の倍数であるとき、メッセージは「FizzBuzz」であること」
+
+を、"条件"（第1引数）と"条件に一致したときの文字列"（第2引数）に分け、記述
+しています。それ以降の２つも同じですね。
+条件のほうは、ラムダ式を使っています。
+
+最後の AddRuleである
+
+ FizzBuzz.AddRule(n => true, "hoge");
+
+は、「上記に記した条件以外のメッセージについては「hoge」であること」をコー
+ドで表しています。
+なお、このプログラムでは、ルールを与える順番はとても重要になってきます。こ
+れは、普通にこの問題を解くときも同じですね。if 文の順番が違うと、正しい結
+果が得られませんからね。
+
+では、このAddRuleメソッドの中身はどうなっているのでしょうか。AddRuleメソッ
+ドでは、
+
+ rules.Add(new Rule { Condition = func, Value = text });
+
+で、与えられた引数からRuleオブジェクトを生成し、Listに追加しています。
+Ruleクラスの、
+
+ Func<T,Result>
+
+は、System名前空間に定義済みのデリゲートで、
+
+・1 つのパラメータを受け取って 
+・TResult パラメータに指定された型の値を返す
+
+メソッドをカプセル化しています。ラムダ式を使うようになると、結構重宝するデ
+リゲートです。
+引数が２つ、３つのFuncデリゲートも定義されています。
+
+そして、もっとも重要なYourTextメソッドですが、ルールをひとつずつ取り出し、
+条件をCALLし、最初にTrueが返ってきた条件に対応する文字列を返しています。
+
+このYourTextメソッドは、
+
+ foreach (var rule in rules) { 
+     if (rule.Condition(n) ==  true) 
+         return rule.Value;
+ }
+ return ""; // ここには到達しないはず
+
+と本質的には同じです。
+
+なお、YourTextメソッドは
+
+ public static string YourText(this int n) {
+
+と、引数にthisをつけたstaticメソッドとして定義してあるので、拡張メソッドと
+なっています。
+これにより、Mainメソッドのforeach の中で
+
+ FizzBuzz.YourText(i)
+
+と書く代わりに、
+
+ i.YourText()
+
+のように書くことができます。
+
+
+■□───────────────────────────────────
+■□ 次回のお題： 年間カレンダー (http://ja.doukaku.org/119/)
+
+nを入力としてn年の年間カレンダーを返すプログラムを作ってください。
+少なくとも日曜日と土曜日が判別出来るようにしてください。
+出力は標準出力でもファイルでも構いません。
+デザインは各自のお好みで。
+
+
+─────────────────────────────────────
+『C#プログラミングレッスン』  (ぼぼ週刊）                                 
+ ☆皆さまからの感想をお待ちしています。http://gushwell.ifdef.jp/mail.html 
+─────────────────────────────────────
+ Published by Gushwell.                                                   
+   Copyright (C) 2004-2010 Gushwell All rights reserved.                  
+   Microsoft MVP for Visual C#(Apr 2005 - Mar 2011)                       
+                                                                          
+ ■Gushwell's Page                                                        
+ 窓際プログラマ─の独り言        : http://gushwell.ldblog.jp/             
+ Gushwellの読書ノート            : http://gushwell.jugem.jp/              
+ Gushwell's F# Programming Diary : http://techbank.jp/gushwell/           
+ Gushwell's C# Programming Page  : http://gushwell.ifdef.jp/              
+   C#デザインパタ―ン   : http://gushwell.ifdef.jp/dp/csdpindex.html      
+                                                                          
+ ■コミュニティtechbank.jp (http://techbank.jp/Community/blogs/)          
+ Gushwellが参加している技術系コミュニティです。                           
+ Webサイトにて、VB、C#、VC++、SQL Server, BizTalk Server などの技術情報を 
+ 公開しています。また、有志メンバーによるBlogでの技術情報発信も行っていま 
+ す。皆さんの参加をお待ちしています。                                     
+─────────────────────────────────────

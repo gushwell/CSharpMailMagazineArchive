@@ -1,0 +1,106 @@
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━━━ No.365 ━□
+
+「HTTPクライアント編」-- bit.lyを使ったURL短縮
+                                                           by Gushwell  
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+今回は、実際に呼び出すことにできるWeb APIを使ったサンプルの2つ目として、
+URL短縮サービスで有名な、Bit.ly のサービスを使い、URLを短縮してみましょう。
+
+
+■□───────────────────────────────────
+■□ bit.ly とは
+
+URLを短縮してくれるサイトの一つで、数多くあるURL短縮サイトの中でも、比較
+的有名なサイトです。twitterでよく利用されていたようですが、現在Twitterは
+URLを自動的に短縮URLに変換する機能 (t.co) を有しているので、Twitterにおい
+ては、もう bit.ly を使う意味は無くなっていると思われます。
+とはいえ、WebClientクラスのサンプルプログラムとしてちょうど良い題材なので、
+紹介することにします。
+
+■□───────────────────────────────────
+■□ bit.ly の利用の前に（準備）
+
+bit.ly のサービスをプログラムから利用するには、まずユーザ登録をし、
+OAuth のアクセストークンを取得する必要があります。
+
+1. まず、bitlyのサイトhttps://bitly.com/を開きます。
+2.「Join now. It's free!」というボタンをクリックし、サインアップを行います。
+   username, emailadress, password を入力ししてください。
+3. サインアップをし、サインイン状態で以下のURLを開きます。
+   https://bitly.com/a/oauth_apps
+4. パスワードを入力します。
+5. アクセストークンが画面の表示されますので、これをメモします。
+
+※ 以前は、bitlyのAPIを利用するにはbitly独自の APIKeyを用いる必要がありまし
+   たが、現在は、OAuthでの認証が採用されているようです。
+   ただ、以前のAPIKeyの代わりに、アクセストークンが使われており、一般的な
+   OAuth認証の方法とは異なっているようです。
+   もちろん古い APIKeyでのWeb API呼び出しも可能ですが、ここでは、新しい方式
+   でのサンプルとします。
+
+■□───────────────────────────────────
+■□ bit.ly を使ったサンプルコード
+
+ using System;
+ using System.Collections.Specialized;
+ using System.Net;
+ using System.Text;
+ using Codeplex.Data;
+
+ ...
+    static void Main(string[] args) {
+        string shorturl = ShortenUrlByBitly();
+        Console.WriteLine(shorturl);
+        Console.ReadLine();
+    }
+
+    private static string ShortenUrlByBitly() {
+        var wc = new WebClient();
+        var nameValue = new NameValueCollection();
+        nameValue.Add("access_token", "bd0aa4aa0865xxxxxxxxxxxxxxxxxxxxxxxxxxx");
+        nameValue.Add("longUrl", "http://gushwell.ldblog.jp/archives/52306210.html");
+        wc.QueryString = nameValue;
+        byte[] bytes = wc.DownloadData(@"https://api-ssl.bitly.com/v3/shorten");
+        string result = Encoding.UTF8.GetString(bytes);
+        // Console.WriteLine(result);   // ★
+        var json = DynamicJson.Parse(result);
+        return json.data.url;
+    }
+
+    ※ 当プログラムを実際に動かすには、正しいaccess_tokenを指定する必要が
+       あります。
+
+実行すると、
+
+ http://bit.ly/ZFib0g
+
+というURLが得られます。
+
+http://gushwell.ldblog.jp/archives/52306210.html という URLが、 
+http://bit.ly/ZFib0g に短縮されていることがわかります。この短縮URLを開くと、
+元のURLにリダイレクトされます。
+
+APIから返されるデータはJSON形式です。具体的にどのようなデータなのかを確認し
+たい場合は、 ★のコメント行を復活させてください。
+
+なお、当サンプルコードでは、JSONを簡単に扱える、DynamicJsonというオープンソ
+ースを利用しています。こちらから http://dynamicjson.codeplex.com/ ダウンロ
+ードできます。
+neuecc さん（http://neue.cc/）ありがとうございます。
+
+─────────────────────────────────────
+『C#プログラミングレッスン』  (ほぼ週刊）                                 
+☆皆さまからの感想をお待ちしています。http://gushwell.ifdef.jp/mail.html  
+─────────────────────────────────────
+Published by Gushwell.                                                    
+Copyright (C) 2013 Gushwell All rights reserved.                          
+Microsoft MVP for Visual C#(Apr 2005 - Mar 2014)                          
+
+■Gushwell's Page                                                         
+facebook Page                     : http://www.facebook.com/CSharpLesson  
+Gushwell's C# Dev Notes           : http://gushwell.ldblog.jp/            
+Gushwell's C# Programming Page    : http://gushwell.ifdef.jp/             
+Gushwellの読書ノート              : http://gushwell.jugem.jp/             
+Twitterアカウント                 : @gushwell                             
+─────────────────────────────────────

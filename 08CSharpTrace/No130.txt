@@ -1,0 +1,86 @@
+┏━┳━━━━━━━━━━━━━━━━━━━━━━━━━┳━┳━┳━┓
+┃☆┃ C#プログラミングレッスン                         ┃＿┃□┃×┃
+┣━┻━━━━━━━━━━━━━━━━━━━━━━━━━┻━┻━┻━┫
+┃ Trace(4)                                                   No.130┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+■──────────────────────────────────
+■ TraceSwitch クラス
+
+前回の BooleanSwitch クラスでは、Trace の On/Off の切り替えだけが可能で
+したが、TraceSwitch クラスを使えば、そのメッセージの重要度に応じて、
+On/Off を切り替えることができるようになります。
+
+TraceSwitch を利用するには、アプリケーション構成ファイルで 出力したいメ
+ッセージの重要度の設定を行います。こんな感じです。
+
+<?xml version="1.0" encoding="utf-8" ?>
+<configuration>
+<system.diagnostics>
+<switches>
+<add name="MyTraceLevel" value="1" />
+</switches>
+<trace autoflush="false" indentsize="4">
+<listeners>
+<add name="myListener"
+                     type="System.Diagnostics.TextWriterTraceListener"
+                     initializeData="DebugLog.txt" />
+</listeners>
+</trace>
+</system.diagnostics>
+</configuration>
+
+name 属性は、任意の文字列を指定します。この文字列は、プログラムでも利用
+します。
+value 属性で指定する値は、以下に示すように TraceLevel 列挙対の値と対応
+しています。
+
+ 0 : TraceLevel.Off      トレース メッセージおよびデバッグ メッセージを
+                         出力しません。  
+ 1 : TraceLevel.Error    エラーメッセージを出力。  
+ 2 : TraceLevel.Warning  警告およびエラーメッセージを出力します。  
+ 3 : TraceLevel.Info     情報メッセージ、警告、およびエラーメッセージを
+                         出力。  
+ 4 : TraceLevel.Verbose  すべてのデバッグ メッセージおよびトレース メッ
+                         セージを出力します。  
+
+これに対応するサンプルコードを示します。
+
+  TraceSwitch mySwitch = 
+             new TraceSwitch("MyTraceLevel", "Sample of TraceSwitch");
+
+  if ( mySwitch.TraceError )
+      Trace.WriteLine("エラーです");
+  if ( mySwitch.TraceWarning )
+      Trace.WriteLine("ワーニングです。");
+  if ( mySwitch.TraceInfo )
+      Trace.WriteLine("情報です。");
+  if ( mySwitch.TraceVerbose )
+      Trace.WriteLine("おしゃべりです。");
+
+このプログラムを実行すると、構成ファイルで、0 を指定した場合、何も出力
+されません。
+1 を指定した場合は、"エラーです" のメッセージだけが出力されます。4 を指
+定すれば、すべてのメッセージが出力されます。
+
+BooleanSwitch 同様、TraceSwitch も複数インスタンスを管理できますので、
+構成ファイルに複数の TraceLevel を設定することで、「データベースのレイ
+ヤでは、エラー情報だけ出力する」「ビジネスロジックのレイヤでは、すべて
+のメッセージを表示する」といった切りわけが可能となります。
+
+
+┌─┬─────────────────────────┬─┬─┬─┐
+│☆│ C#プログラミングレッスン  (ぼぼ週刊）            │＿│□│×│
+├─┴─────────────────────────┴─┴─┴─┤
+│ Published by Gushwell.                                           │
+│ Copyright (C) 2004-2007 Gushwell All rights reserved.            │
+│ Microsoft MVP Visual Developer - Visual C#(Apr 2005 - Mar 2008)  │
+│-------------------- Gushwell's Page ---------------------------- │
+│ 窓際プログラマーの独り言  ：http://blog.livedoor.jp/gushwell/    │
+│ 窓際プログラマーの読書三昧：http://gushwell.jugem.jp/            │
+│ C#デザインパターン :                                             │
+│  『増補改訂版Java言語で学ぶデザインパターン入門 / 結城 浩(著)』  │
+│   のサンプルコードをC#に移植したものを掲載しています。           │
+│   移植後のコードの公開は、結城氏の了解を得ています。             │
+│   http://blog.livedoor.jp/gushwell/archives/50333227.html        │
+└─────────────────────────────────┘

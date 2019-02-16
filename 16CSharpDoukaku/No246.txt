@@ -1,0 +1,152 @@
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━━━ No.246 ━□
+  
+ 「どう書く？org編」-- リストを逆順に表示
+                                                             by Gushwell  
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+
+■□───────────────────────────────────
+■□ お題：リストを逆順に表示 (http://ja.doukaku.org/27/)
+
+リスト状のものを逆順に表示するメソッドを書いてください。
+
+1, 2, 3, 4, 5
+
+というリストが与えられたら、
+
+5
+4
+3
+2
+1
+
+と表示するメソッドを定義してください。
+引数で与えられたリストの順番は保持してください。
+
+※ Gushwellが一部問題文を書きなおしています。
+
+
+■□───────────────────────────────────
+■□ 解答
+
+お題が、「メソッドを定義」とあるので、PrintReverseメソッドを定義しました。
+
+ static void PrintReverse<T>(IEnumerable<T> list) {
+     foreach (var x in list.Reverse())
+         Console.WriteLine(x);
+ }
+
+
+
+■□───────────────────────────────────
+■□ 解説
+
+Enumerableの拡張メソッド Reverseを使い逆順にして、順に要素を取り出していま
+す。Reverseメソッドの存在を知っていれば簡単ですね。
+
+呼び出すコード例を示します。
+
+ List<int> nums = new List<int> { 9, 8, 7, 6, 5, 4, 3, 2, 1 };
+ PrintReverse(nums);
+
+PrintReverseを呼び出した後も、nums の要素の順番は、呼び出される前の順番を
+保持しています。numsの中の要素は入れ替わりません。
+この点が重要です。
+
+以下のように書いてしまうと、呼び出し側の nums の要素も入れ替わってしまいま
+す。
+
+ static void PrintReverse2(List<int> list) {
+     list.Reverse();
+     foreach (var x in list)
+         Console.WriteLine(x);
+ }
+
+
+このメソッドで使っている Reverse()メソッドですが、メソッドは、List<T> の
+Reverseメソッドで、要素の順番を入替えてしまいます。
+解答で示した Reverseメソッドとは別のメソッドになりますので注意してください。
+
+このお題は、「逆順に表示するメソッド」であり、逆順に要素を入替えるメソッド
+ではないですから、意図しない副作用が入り込んでしまったことになります。
+
+通常、利用者は、
+
+ List<int> nums = new List<int> { 9, 8, 7, 6, 5, 4, 3, 2, 1 };
+ PrintReverse2(nums);
+
+と呼び出した後に、numsの要素の順番が入れ替わったとは思いませんので、
+思わぬバグを抱え込んでしまう危険があります。
+
+
+
+■□───────────────────────────────────
+■□ 発展
+
+今回も解答で示したメソッドをLINQを使って書いてみます。
+
+ static void PrintReverse<T>(IEnumerable<T> list) {
+     list.Reverse()
+         .ToList()
+         .ForEach(e => Console.WriteLine(e));
+ }
+
+ただ、こちらのメソッドは、ジェネリックメソッドにすることで、リストの要素の
+型を int の限定していないという点です。
+
+ PrintReverse<T>
+
+の<T> の部分がそうです。こうしておけば、
+
+ string[] strs = new[] { "abc", "def", "hij", "xyz"  };
+ PrintReverse(strs);
+
+のように、文字列配列を渡すこともできます。
+
+ちなみに、以下のように書くこともできます。
+
+ static void PrintReverse<T>(IEnumerable<T> list) {
+     list.Reverse()
+         .ToList()
+         .ForEach(Console.WriteLine);
+ }
+
+
+■□───────────────────────────────────
+■□ 次回のお題： 最初の文字を大文字に (http://ja.doukaku.org/196/)
+
+文字列に含まれる単語について、それぞれの単語の最初の文字を大文字にしてくだ
+さい。
+
+たとえば、"LL future" と与えられたときは "LL Future" と出力する。"LL day 
+and night" と与えられたときは "LL Day And Night" と出力する。
+
+与えられる文字列はリテラルで表記する、標準入力で与えられる、引数で与えられ
+るなどは自由とします。
+
+ 出題者：高野光弘様
+
+
+─────────────────────────────────────
+『C#プログラミングレッスン』  (ぼぼ週刊）                                 
+─────────────────────────────────────
+ ☆メールマガジンの感想お待ちしています☆                                 
+   http://gushwell.ifdef.jp/mail.html                                     
+
+ Published by Gushwell.                                                   
+   Copyright (C) 2004-2009 Gushwell All rights reserved.                  
+   Microsoft MVP for Visual C#(Apr 2005 - Mar 2011)                       
+                                                                          
+ <<■ Gushwell's Page ■>>                                                
+ 窓際プログラマ─の独り言  ：http://gushwell.ldblog.jp/                   
+ 窓際プログラマ―の読書三昧：http://gushwell.jugem.jp/                    
+ Gushwell's F# Programming Diary : http://techbank.jp/gushwell/           
+ Gushwell's C# Programming Page  ：http://gushwell.ifdef.jp/              
+   C#デザインパタ―ン : http://gushwell.ifdef.jp/dp/csdpindex.html        
+                                                                          
+ <<■ コミュニティtechbank.jp (http://techbank.jp/Community/) ■>>        
+ Gushwellが参加している技術系コミュニティです。                           
+ マイクロソフト系テクノロジー＆製品に特化したコミュニティです。Webサイトで
+ は、VB、C#、VC++、SQL Server, BizTalk Server などの技術情報を公開していま
+ す。皆さんの参加をお待ちしています。
+─────────────────────────────────────

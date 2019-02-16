@@ -1,0 +1,114 @@
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━━━ No.352 ━□
+
+「暗号化編」-- 共有キー暗号方式(3)
+                                                            by Gushwell  
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+購読者のみなさん。今年もよろしくお願いします。
+昨年（前回）は、共有キー暗号方式の暗号化のコードだけ示して、まだ復号化のコ
+ードを示していませんでしたので、今回は、復号化のコードを示します。
+
+
+■□───────────────────────────────────
+■□ 共有キー暗号方式による暗号化、復号化の手順
+
+復号化の手順は以下の通りです。
+
+(1)CryptoServiceProvider のインスタンス（csp とする）を生成
+(2)csp.Key, csp.IV プロパティの設定
+(3)csp.CreateDecryptorメソッドで、ICryptoTransformインスタンスを得る。
+(4)ICryptoTransformのTransformFinalBlockで復号化する。
+
+前回示した暗号化メソッド EncryptString で暗号化された文字列を、復号化する
+メソッドを示します。
+
+
+ using System.Security.Cryptography;
+ ...
+
+  public static string DecryptString(string str, string sKey, string sIv) {
+      using (SymmetricAlgorithm csp = new DESCryptoServiceProvider()) {
+          csp.Key = ASCIIEncoding.ASCII.GetBytes(sKey);
+          csp.IV = ASCIIEncoding.ASCII.GetBytes(sIv); 
+          using (ICryptoTransform transform = csp.CreateDecryptor()) {
+              byte[] source = Convert.FromBase64String(str);
+              byte[] decrypted = transform.TransformFinalBlock(
+                                          source, 0, source.Length);
+              return Encoding.UTF8.GetString(decrypted);
+          }
+      }
+  }
+
+暗号化された文字列は、Base64 でエンコードされているので、これをデコードし
+byte配列に戻してから、TransformFinalBlockで復号化しています。
+復号化されたデータはbyte配列であるため、Encoding.UTF8.GetStringで文字列に
+変換しています。これで元の文字列が得られます。
+
+以下が、暗号化された結果です。
+
+ 01GRfbjBDXX/0SDrSFmF4RoobGIgPMLZ3Y5kHuf1UJ4=
+
+この文字列と、暗号化した時の、key ,IV を与えれば、元の文字列が得られます。
+復号化する実際のコードは以下のようになります。
+
+  var key = "gushwell";
+  var iv  = "windows8";
+  var s = "01GRfbjBDXX/0SDrSFmF4RoobGIgPMLZ3Y5kHuf1UJ4=";
+  var original = DecryptString(s, key, iv);
+
+original には、"このテキストを暗号化します" の文字列が格納されます。
+
+■□───────────────────────────────────
+■□ AESアルゴリズムを使った復号化
+
+最後に、高度暗号化標準 (AES: Advanced Encryption Standard) 対称暗号化アル
+ゴリズムを利用したコードもお見せしましょう。
+
+ using System.Security.Cryptography;
+ ...
+
+  public static string AesDecryptString(string str, string sKey, string sIv) {
+      using (SymmetricAlgorithm csp = new AesManaged()) {
+          csp.Key = ASCIIEncoding.ASCII.GetBytes(sKey);
+          csp.IV = ASCIIEncoding.ASCII.GetBytes(sIv); 
+          using (ICryptoTransform transform = csp.CreateDecryptor()) {
+              byte[] source = Convert.FromBase64String(str);
+              byte[] decrypted = transform.TransformFinalBlock(
+                                          source, 0, source.Length);
+              return Encoding.UTF8.GetString(decrypted);
+          }
+      }
+  }
+
+先ほど示したDecryptStringメソッドと比べてみると、暗号化の時と同様、
+SymmetricAlgorithm オブジェクトを生成する行だけを変更しています。
+
+※ DESは、かつては標準的な暗号化方式として利用されてきましたが、10日以内
+   で破られるようになったため、現在では利用は推奨されていないようです。よ
+   り強固な高度暗号化標準 (AES: Advanced Encryption Standard)  対称暗号化
+   アルゴリズムなどを利用するのが良いと思われます。
+
+
+この共有キー暗号化方式で２者間でメッセージのやり取りをする時のシナリオが
+MSDNの以下の「暗号サービス」ページの「共有キー暗号方式」に記載されていま
+す。
+興味のある方は読んでみてください。
+
+http://msdn.microsoft.com/ja-jp/library/92f9ye3s.aspx#secret_key
+
+
+─────────────────────────────────────
+『C#プログラミングレッスン』  (ほぼ週刊）                                 
+☆皆さまからの感想をお待ちしています。http://gushwell.ifdef.jp/mail.html  
+─────────────────────────────────────
+Published by Gushwell.                                                    
+Copyright (C) 2012 Gushwell All rights reserved.                          
+Microsoft MVP for Visual C#(Apr 2005 - Mar 2013)                          
+                                                                          
+■Gushwell's Page                                                         
+facebook Page                     : http://www.facebook.com/CSharpLesson  
+Gushwell's C# Dev Notes           : http://gushwell.ldblog.jp/            
+Gushwell's C# Programming Page    : http://gushwell.ifdef.jp/             
+Gushwellの読書ノート              : http://gushwell.jugem.jp/             
+Twitterアカウント                 : @gushwell                             
+─────────────────────────────────────

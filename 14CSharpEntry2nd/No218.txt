@@ -1,0 +1,304 @@
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━ No.218 ━□
+  
+ 「C#入門編 2nd」 -- 列挙型と構造体
+                                                         by Gushwell  
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+今号が、「C#入門編 2nd」の最後です。
+まだまだ説明したいことは沢山あるのですが、入門編の最後として 列挙型と
+構造体を取り上げたいと思います。
+
+■□─────────────────────────────────
+■□ 列挙型
+
+複数の関連する定数を扱う場合は、列挙型を使うと便利です。たとえば、トラ
+ンプカードの組（クラブ、ダイヤ、ハート、スペード）をプログラムで扱う場
+合には、以下のように、enumキーワードを使い、列挙型を定義します。
+
+ public enum Cardsuit {
+     Clubs,
+     Diamonds,
+     Spades,
+     Hearts
+ };
+
+Cardsuit は、ユーザが自由に決めてよい名前で列挙型の名前です。
+Clubs,Diamonds,Spades, Heartsが列挙型が取りうる値となります。つまり、
+Cardsuitという型の変数には、この４つしか代入することができないというこ
+とです。
+
+Cardsuitは型ですので、int, doubleなどと同じように、Cardsuitの変数、
+Cardsuit型のプロパティを定義することができます。
+プログラムで、このCardsuit列挙型を使うには、
+
+  Cardsuit cs = Cardsuit.Hearts;   // 変数csは、Cardsuit型
+  ...
+  if ( cs == Hearts.Hearts )
+      Console.WriteLine("ハートです");
+
+のように記述します。 Hearts, Hearts の前に、Hearts という列挙型の名前
+が付いてることに注意してください。
+
+また、以下のように、それぞれの識別子に明示的に値を割り当てることもでき
+ます。
+
+  public enum Cardsuit {
+    Clubs  = 1,
+    Diamonds = 2,
+    Spades = 3,
+    Hearts = 4
+  };
+
+  ※ 明示的に値を割り当てる場合には、0 から始める必要はありません。
+     また、1ずつ増加させる必要もありません。
+
+ちなみに、 値を省略した場合には、0から順番に値が割り振られます。
+
+■constとの違い
+
+これと同等のことは、以下のように 定数（const）を使っても可能です。
+
+  public class Cardsuit {
+      public const int Clubs    = 1;
+      public const int Diamonds = 2;
+      public const int Spades   = 3;
+      public const int Hearts   = 4;
+  }
+
+  int cardsuit = Cardsuit.Hearts;
+  if (cardsuit == Cardsuit.Spades) {
+      ...
+  }
+
+しかし、 このの場合は、-1 や 7 といったありえない値をcardsuit変数に代
+入することができてしまいます。そのため、const よりも、enumを使った方が、
+プログラムの堅牢性を高めることができます。
+
+   int cardsuit = -1;       // これはコンパイルエラーにならない
+   Cardsuit cardsuit = -1;  // これはコンパイルエラー
+
+
+■□─────────────────────────────────
+■□ 構造体
+
+C#の構造体は、定義の仕方も、使い方もクラスととてもよく似ています。
+
+まずは、構造体の例をみてみましょう。
+
+ public struct Person {
+    public string Name { get; set; }
+    public double Weight { get; set; }
+    public int Height { get; set; }
+    public DateTime Birthday { get; set; }
+     public double GetBmi() {
+         double mh = Height / 100.0;
+         return Weight / (mh * mh);
+     }
+     public int GetAge() {
+         DateTime today = DateTime.Today;
+         int age = today.Year - Birthday.Year;
+         if (today.Month < Birthday.Month)
+             age--;
+         else if (today.Month == Birthday.Month &&
+                  today.Day < Birthday.Day)
+             age--;
+         return age;
+     }
+ }
+
+この構造体は、以前定義したPersonクラスとほとんど同じですね。違いは、
+class という部分を struct にしただけと言ってもいいくらいです。
+
+使い方も、まったく同じです。
+
+ static void Main() {
+     Person p = new Person {
+         Name = "日本太郎",
+         Weight = 68,
+         Height = 176,
+         Birthday = new DateTime(1984, 6, 13)
+     };
+     int age = p.GetAge();
+     Console.WriteLine(age);
+     Console.WriteLine(p.GetBmi());
+ }
+
+実際には、構造体の定義には若干の制限があり、クラスの定義をそのままに
+structに変えただけではコンパイルエラーになるケースもありますが、ここで
+は詳細は省略します。
+
+■ class と structの違い
+
+では、class と struct は何が違うのでしょうか。その違いは、メモリの保持
+の仕方にあります。
+
+Personがクラスの場合には、
+
+  Person hanako = new Person();
+
+とすると、hanako は、インスタンスの参照を保持することになります。
+
+  hanako
+ ┌───┐      ┌───────────┐
+ │      ┼──→│Personのインスタンス  │
+ └───┘      └───────────┘
+
+一方、struct(構造体）の場合には、同じ
+
+  Person hanako = new Person();
+
+であっても、
+
+  hanako
+ ┌───────────┐
+ │Personのインスタンス  │
+ └───────────┘
+
+となります。hanako という変数そのものに、Personの内容が保持されるのです。
+前者のようなデータを「参照型」と言い、後者のデータを「値型」といます。
+
+いったい、この違いにどういった意味があるのでしょうか。
+以下のコードをじっくりと読んでみてください。
+
+class MyClass {
+    public int X;
+    public int Y;
+}
+
+struct MyStruct {
+    public int X;
+    public int Y;
+}
+
+class Sample {
+    static void Main() {
+        MyClass mc = new MyClass();
+        mc.X  = 10;
+        mc.Y = 20;
+        MyClass mc2 = mc;
+        mc2.X = 0;
+        mx2.Y = 1;
+        Console.WriteLine("{0} {1}", mc.X,mc.Y);
+
+        MyStruct ms = new MyStruct();
+        ms.X  = 10;
+        ms.Y = 20;
+        MyStruct ms2 = ms;
+        ms2.X = 0;
+        ms2.Y = 1;
+        Console.WriteLine("{0} {1}", ms.X,ms.Y);
+    }
+}
+
+さて、このコードの出力を想像してみてください。
+
+答えは、
+  0,1
+  10,20
+です。クラスと構造体では、ほとんど同じコードでも結果が違ってきます。そ
+の理由は、前述のとおりデータの持ち方にあります。前述した図（？）を理解
+できれば、その理由も明らかだと思います。
+
+クラスの場合には、代入しても、その参照が代入されるだけで、mc も mc2 も
+同じインスタンスを指しています。
+一方、構造体では、代入するとms2の領域にmsの値がコピーされます。このた
+め、結果が違ってくるのです。
+これは、代入だけではなくメソッドに引数を渡すときにも同様です。
+
+データが大きい場合、この違いは処理速度にも大きな影響を与えます。クラス
+にするか、構造体にするかという判断は、ケースバイケースですが、ほとんど
+の場合は、クラスにしておけば間違いないと思います。
+
+一般的には、構造体は、非常にプリミティブなデータを扱う場合にのみ使うこ
+とになると思われます。
+
+.NET Frameworkでも、DateTime構造体、TimeSpan構造体、Color構造体など
+多くの構造体が用意されていますが、サイズが小さく、一般的な概念を扱う
+データに型概念
+
+■□─────────────────────────────────
+■□ 値型、参照型とは
+
+もうすこし、値型と参照型について話を続けます。C#の全てのデータは、値型
+か参照型どちらかに分類されます。
+
+いくつか例を以下に示します。
+
+○値型
+  組み込みの数値型 int, double, decimal, char
+  bool 型
+  構造体
+
+○参照型
+  string
+  配列
+  クラス
+
+それぞれの特徴は以下の通りです。
+
+○値型の特徴
+
+ ・変数を宣言すると、値そのものが格納される領域が用意される。 
+ ・引数に渡される場合は、値の複製が作られ、その複製が渡される。
+ ・代入する時は、値そのものが代入される。
+ ・継承ができない。
+
+   int a = 10; の場合
+   ┌──┐
+   │ 10 │
+   └──┘
+   
+○参照型の特徴
+
+ ・変数を宣言すると、オブジェクトへの参照が格納される領域が用意される。
+ ・引数に渡される場合は、インスタンスへの参照が渡される。
+ ・代入する場合は、インスタンスの参照が代入される。
+ ・原則として継承できる。
+
+  string s = "C# world"; の場合
+   ┌──┐  ┌────┐
+   │  ─┼→│C# world│
+   └──┘  └────┘
+
+
+───────────────────────────────────
+さて、入門編2ndはいかがでしたでしょうか？ かなり駆け足で説明してきたた
+め、十分に説明しきれていない部分もあるかと思います。例外処理、名前空間、
+抽象クラスなどは説明をすることができませんでした。このあたりは、是非バ
+ックナンバーを読んで学習していただきたいと思います。
+Gushwellが運営するサイト「Gushwell's C# Programming Page」
+http://gushwell.ifdef.jp/ では、これまで発行してきた過去の記事をテキス
+トファイルとしてダウンロードできるようにしていますので、ご活用していた
+だければ幸いです。
+
+それと、メールマガジンの感想をお待ちしています。
+皆さんの率直な感想を書き込んでいただけると嬉しいです。
+
+   http://gushwell.ifdef.jp/mail.html                                 
+
+次回からは、「FxCopに学ぶ編」を開始します。ご期待ください。
+
+───────────────────────────────────
+『C#プログラミングレッスン』  (ぼぼ週刊）                             
+───────────────────────────────────
+ Published by Gushwell.                                               
+   Copyright (C) 2004-2009 Gushwell All rights reserved.              
+   Microsoft MVP - Visual C#(Apr 2005 - Mar 2010)                     
+
+ <<■ Gushwell's Page ■>>
+ 窓際プログラマ―の独り言  ：http://blog.livedoor.jp/gushwell/        
+ 窓際プログラマ―の読書三昧：http://gushwell.jugem.jp/                
+ Gushwell's F# Programming Diary : http://techbank.jp/gushwell/       
+ Gushwell's C# Programming Page  ：http://gushwell.ifdef.jp/          
+   C#デザインパタ―ン : http://gushwell.ifdef.jp/dp/csdpindex.html    
+
+ ☆メールマガジンの感想お待ちしています☆                             
+   http://gushwell.ifdef.jp/mail.html                                 
+
+ <<■ コミュニティtechbank.jp (http://techbank.jp/) ■>>
+ Gushwellが参加している技術系コミュニティです。
+ マイクロソフト系テクノロジー＆製品に特化したコミュニティで、Webサイト
+ では、VB、C#、VC++、SQL Server, BizTalk Server などの技術情報を公開し
+ ています。皆さんの参加をお待ちしています。
+ ブロガーさんも募集中です。
+───────────────────────────────────

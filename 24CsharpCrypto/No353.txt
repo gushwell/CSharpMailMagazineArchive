@@ -1,0 +1,109 @@
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━━━ No.353 ━□
+
+「暗号化編」-- ストリームの暗号化、復号化
+                                                            by Gushwell  
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+
+■□───────────────────────────────────
+■□ ストリームの暗号化
+
+今回は、共有キー暗号方式を使ったデータをStreamへ暗号化する例をお見せします。
+これを使うことで、ファイルなどへ暗号化後のデータを保存することが簡単に行え
+ます。
+
+ using System.Security.Cryptography;
+ ...
+
+  public static void EncryptToStream(string str, string sKey, string sIv, 
+                                     Stream stream) {
+      using (SymmetricAlgorithm csp = new RC2CryptoServiceProvider()) {
+          csp.Key = ASCIIEncoding.ASCII.GetBytes(sKey);
+          csp.IV = ASCIIEncoding.ASCII.GetBytes(sIv);
+          using (ICryptoTransform transform = csp.CreateEncryptor()) {
+              CryptoStream cryptostream =
+                  new CryptoStream(stream, transform, CryptoStreamMode.Write);
+              Byte[] bytes = Encoding.UTF8.GetBytes(str);
+              cryptostream.Write(bytes, 0, bytes.Length);
+              cryptostream.Close();
+          }
+      }
+  }
+
+上記コードでは、RC2CryptoServiceProviderを使って暗号化しています。
+ICryptoTransformのインスタンスを生成するまでは、これまで示してきた暗号化
+と同じ処理です。
+実際の暗号化は、CryptoStreamを書き出し用として生成し、ソースデータである
+byte配列の内容を、Writeすることで暗号化データをストリームに書き出していま
+す。
+
+上記暗号化メソッドの呼び出し例を示します。
+
+ string str = "このテキストを暗号化します";
+ var key = "gushwell20130115";
+ var iv = "12348765";
+ Stream stream = new FileStream("Test.dat",FileMode.Create, FileAccess.Write);
+ EncryptToStream(str, key, iv, stream);
+ stream.Close();
+
+Test.datファイルにに暗号化したデータが書き込まれます。
+
+■□───────────────────────────────────
+■□ ストリームの復号化
+
+では、上記のコードで暗号化したデータを復号化してみましょう。
+複合するDecryptToStreamメソッドは以下の通りです。
+
+ using System.Security.Cryptography;
+ ...
+
+  public static string DecryptToStream(Stream stream,string sKey, string sIv) {
+      using (SymmetricAlgorithm csp = new RC2CryptoServiceProvider()) {
+          csp.Key = ASCIIEncoding.ASCII.GetBytes(sKey);
+          csp.IV = ASCIIEncoding.ASCII.GetBytes(sIv);
+          using (ICryptoTransform transform = csp.CreateDecryptor()) {
+              CryptoStream cryptostream = new CryptoStream(stream, 
+                                            transform, CryptoStreamMode.Read);
+              byte[] buff = new byte[4096];
+              StringBuilder sb = new StringBuilder();
+              int len = cryptostream.Read(buff, 0, buff.Length);
+              while (len > 0) {
+                  sb.Append(Encoding.UTF8.GetString(buff, 0, len));
+                  len = cryptostream.Read(buff, 0, buff.Length);
+              }
+              return sb.ToString();
+          }
+      }
+  }
+
+ICryptoTransformオブジェクトを生成するまでは、これまで復号化コードと同じで
+す。その後、CryptoStream オブジェクトを生成し、ReadメソッドでStreamを読み込
+みます。
+buffには、復号済みのデータが byte配列で格納されていますので、それを
+Encoding.UTF8.GetStringで文字列に変換しています。
+
+最後に、復号化のメソッドの呼び出し例を示します。
+
+ Stream instream = new FileStream("Test.dat", FileMode.Open, FileAccess.Read);
+ var s2 = DecryptToStream(instream, key, iv);
+ instream.Close();
+ Console.WriteLine(s2);
+
+暗号化されたデータが、Test.dat ファイルに格納されていますので、それを復号化
+し、文字列を Console.Writelineで表示しています。
+
+─────────────────────────────────────
+『C#プログラミングレッスン』  (ほぼ週刊）                                 
+☆皆さまからの感想をお待ちしています。http://gushwell.ifdef.jp/mail.html  
+─────────────────────────────────────
+Published by Gushwell.                                                    
+Copyright (C) 2012 Gushwell All rights reserved.                          
+Microsoft MVP for Visual C#(Apr 2005 - Mar 2013)                          
+                                                                          
+■Gushwell's Page                                                         
+facebook Page                     : http://www.facebook.com/CSharpLesson  
+Gushwell's C# Dev Notes           : http://gushwell.ldblog.jp/            
+Gushwell's C# Programming Page    : http://gushwell.ifdef.jp/             
+Gushwellの読書ノート              : http://gushwell.jugem.jp/             
+Twitterアカウント                 : @gushwell                             
+─────────────────────────────────────

@@ -1,0 +1,202 @@
+┏━┳━━━━━━━━━━━━━━━━━━━━━━━━━┳━┳━┳━┓
+┃☆┃ C#プログラミングレッスン                         ┃＿┃□┃×┃
+┣━┻━━━━━━━━━━━━━━━━━━━━━━━━━┻━┻━┻━┫
+┃ C#3.0-LINQ GroupBy演算子                                   No.180┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+SQL文でおなじみの GROUP BY 句に相当するものが、LINQでも用意されていま
+す。今回は、このGroupBy演算子について説明します。
+
+※ サンプルコードに出てくる NorthwindObjects.GetProducts() メソッドは、
+   http://gushwell.ifdef.jp/magArchive.html のページ右下からダウンロー
+   ドできます。
+
+■──────────────────────────────────
+■GroupBy
+
+GroupBy 演算子は、シーケンスの要素をグループ化します。
+まずは簡単な例を見てみましょう。
+
+ int[] numbers = { 5, 4, 1, 3, 9, 8, 6, 7, 2, 0 };
+
+ var numberGroups = numbers.GroupBy(n => n % 5);
+ foreach (var g in numberGroups) {
+     Console.Write("余りが {0} の数は、",g.Key);
+     foreach (var n in g) {
+         Console.Write("{0}, ",n);
+     }
+     Console.WriteLine("です。");                
+ }
+
+この例は、intの配列の要素を、5の剰余でグルーピングするコードです。
+GroupBy演算子は、IEnumerable<IGrouping<TKey,TSource>>を戻り値として返
+しますので、この例では、IGrouping<int int[]>>型を要素に持つシーケンス
+が返されることになります。
+IGroupingには、Keyプロパティがあり、これがGroupBy()の引数で与えたラム
+ダ式が返す値です。
+つまり、キーとして、5の剰余が入るわけですね。
+この結果は、
+
+ 余りが 0 の数は、5, 0, です。 
+ 余りが 4 の数は、4, 9, です。
+ 余りが 1 の数は、1, 6, です。
+ 余りが 3 の数は、3, 8, です。
+ 余りが 2 の数は、7, 2, です。
+
+となります。
+
+ var numberGroups = numbers.GroupBy(n => n % 5);
+
+の箇所をクエリ式で書くと、
+
+  var numberGroups = from n in numbers
+                     group n by n % 5;
+
+となります。
+
+■──────────────────────────────────
+■intoキーワード
+
+クエリ式内で、intoキーワードを使うことで、select時に、別の型にすること
+が簡単に行なえます。
+
+  var numberGroups = from n in numbers
+                     group n by n % 5 into g
+                     select new { Remainder = g.Key, Numbers = g };
+
+結果を参照するforeach文の箇所は、以下のようになります。
+
+  foreach (var g in numberGroups) {
+      Console.Write("余りが {0} の数は、", g.Remainder);
+      foreach (var n in g.Numbers) {
+          Console.Write("{0}, ", n);
+      }
+      Console.WriteLine("です。");
+  }
+
+Key順にソートしたければ、
+
+ var numberGroups = from n in numbers
+                    group n by n % 5 into g
+                    orderby g.Key
+                    select new { Remainder = g.Key, Numbers = g };
+
+と書けばOKです。
+
+実行結果を以下に示します。
+
+ 余りが 0 の数は、5, 0, です。 
+ 余りが 1 の数は、1, 6, です。
+ 余りが 2 の数は、7, 2, です。
+ 余りが 3 の数は、3, 8, です。
+ 余りが 4 の数は、4, 9, です。
+
+
+■──────────────────────────────────
+■GroupBy応用
+
+ここまで、見てくれば、いつもの、Productのシーケンスに対しても、GroupByを
+使うのは簡単ですね。
+
+ var products = NorthwindObjects.GetProducts();
+ var productsByCategory = from p in products
+                          group p by p.CategoryID;
+ foreach (var ps in productsByCategory) {
+     Console.WriteLine("■" + ps.Key);
+     foreach (var p in ps) {
+         Console.WriteLine("{0} {1} ", p.CategoryID, p.ProductName);
+     }
+ }
+
+上のコードは、単純にCategoryIDでグループ化しています。
+以下、結果の一部を載せておきます。
+
+ ■1
+ 1 Chai
+ 1 Chang
+ 1 Guarana Fantastica
+ 1 Sasquatch Ale
+ 1 Steeleye Stout
+ 1 Cote de Blaye
+ 1 Chartreuse verte
+ 1 Ipoh Coffee
+ 1 Laughing Lumberjack Lager
+ 1 Outback Lager
+ 1 Rhonbrau Klosterbier
+ 1 Lakkalikoori 
+ ■2
+ 2 Aniseed Syrup
+ 2 Chef Anton's Cajun Seasoning
+ 2 Chef Anton's Gumbo Mix
+ 2 Grandma's Boysenberry Spread
+ 2 Northwoods Cranberry Sauce
+ 2 Genen Shouyu
+ 2 Gula Malacca
+ .. 以下省略 ...
+
+
+
+では、もうすこし複雑な例を。
+
+ var products = NorthwindObjects.GetProducts();
+ var productsByCategory = from p in products
+                          group p by p.CategoryID into g
+                          where g.Count() <= 6
+                          orderby g.Count()
+                          select new { CategoryID = g.Key, 
+                                       Products = g };
+ foreach (var ps in productsByCategory) {
+     Console.WriteLine("カテゴリ:{0}", ps.CategoryID);
+     foreach (var p in ps.Products) {
+         Console.WriteLine("{0} {1} ", p.CategoryID, p.ProductName);
+     }
+ }
+
+この例は、カテゴリIDでグループ化した後に、そのカテゴリに属する製品が、
+5以下のものを抜き出し、その製品数でソートしています。
+そして、最後に、CategoryIDとProductsプロパティを持つ匿名型を持つシーケ
+ンスにしています。
+
+以下、結果です。
+
+ カテゴリ:7
+ 7 Uncle Bob's Organic Dried Pears
+ 7 Tofu
+ 7 Rossle Sauerkraut
+ 7 Manjimup Dried Apples
+ 7 Longlife Tofu 
+ カテゴリ:6
+ 6 Mishi Kobe Niku
+ 6 Alice Mutton
+ 6 Thuringer Rostbratwurst
+ 6 Perth Pasties
+ 6 Tourtiere
+ 6 Pate chinois
+
+このクエリ式を拡張メソッドで書くと、
+
+  var productsByCategory = products.GroupBy(p => p.CategoryID)
+        .Where(g => g.Count() <= 6)
+        .OrderBy(g => g.Count())
+        .Select(g => new { CategoryID = g.Key, Products = g });
+
+となります。intoキーワードに相当するものは必要ない点に注目してください。
+
+
+
+┌─┬─────────────────────────┬─┬─┬─┐
+│☆│ C#プログラミングレッスン  (ぼぼ週刊）            │＿│□│×│
+├─┴─────────────────────────┴─┴─┴─┤
+│ Published by Gushwell.                                           │
+│ Copyright (C) 2004-2007 Gushwell All rights reserved.            │
+│ Microsoft MVP Visual Developer - Visual C#(Apr 2005 - Mar 2009)  │
+│-------------------- Gushwell's Page ---------------------------- │
+│ 窓際プログラマーの独り言  ：http://blog.livedoor.jp/gushwell/    │
+│ 窓際プログラマーの読書三昧：http://gushwell.jugem.jp/            │
+│ Gushwell's C# Programing Page：http://gushwell.ifdef.jp/         │
+│ C#デザインパターン :                                             │
+│  『増補改訂版Java言語で学ぶデザインパターン入門 / 結城 浩(著)』  │
+│   のサンプルコードをC#に移植したものを掲載しています。           │
+│   移植後のコードの公開は、結城氏の了解を得ています。             │
+│   http://gushwell.ifdef.jp/dp/csdpindex.html                     │
+└─────────────────────────────────┘ 

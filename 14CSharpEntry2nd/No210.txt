@@ -1,0 +1,298 @@
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━ No.210 ━□
+  
+ 「C#入門編 2nd」 -- 条件分岐
+                                                         by Gushwell  
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+今回は、条件分岐について説明します。
+
+■□─────────────────────────────────
+■□ if 文
+
+if 文は、条件によって処理を分岐させたい時に利用します。
+
+if 文の構文は、次の形式となります。
+
+  if ( 式 )
+     ステートメント１
+  [else
+     ステートメント２]
+
+
+() の中の式が成り立った時には、 ステートメント１を実行し、成り立たなか
+ったらステートメント２を実行します。else以降は省略可能です。
+
+以下のコードを見てください。
+
+using System;
+
+namespace ConsoleApplication1 {
+    class Program {
+        static void Main(string[] args) {
+            string s = Console.ReadLine();
+            if (s == "hello") 
+                Console.WriteLine("helloと入力されました。");
+            else 
+                Console.WriteLine("入力文字列はhelloではありません。");
+        }
+    }
+}
+
+条件分岐をしているところが
+
+if (s == "hello")
+
+の部分です。== は等しいを意味します。これは、代入の = と区別をするため
+です。
+なお、Console.ReadLine()で、キーボードから文字列を1行入力することが可
+能です。
+
+複数のステートメントを実行する場合は、複数のステートメントを { と } で
+括ります。
+
+  if ( i > 10 ) {
+       Console.WriteLine("i > 10が成り立ちました。");
+       Console.WriteLine("i の値は {0} です。",i);
+  }
+
+
+
+では、もうひとつ実際に動作するプログラムコードを示します。
+入力した整数が、４で割り切れ かつ ６で割り切れれば、文字列を表示するプ
+ログラムです。
+
+
+using System;
+
+namespace ConsoleApplication1 {
+    class Program {
+        static void Main(string[] args) {
+            string s = Console.ReadLine();
+            int num = int.Parse(s);
+            if ((num % 4 == 0) && (num % 6 != 0))
+                Console.WriteLine("4で割り切れて、6で割りきれない");
+            }
+        }
+    }
+}
+
+int.Parse(s)で、入力した文字列を整数に変換しています。
+例えば、50 と入力した場合は、s には、文字列としても "50" が入っている
+ので、整数として利用することはできません。文字列を整数に変換するために、
+
+  int num = int.Parse(s);
+
+と書いています。
+
+ ※ この時点では、int.ParseやConsole.ReadLine について文法的にどのよう
+    な意味を持つのかについては説明は省略します。とりあえずは、その様に
+    書くんだと覚えておいてください。
+
+%は割り算の余りを示す演算子です。
+
+&& は 「かつ」の意味で、 && の前後の式が共に真(true) なら、true を返し
+ます。どちらか一方でも、偽(false)ならば、false を返します。
+ちなみに || は、「または」を表す演算子です。
+
+つまり、今回の例では、
+  (i % 4 == 0)
+と
+  (i % 6 != 0)      // ! は notを意味します。
+
+が共に成り立った時だけ、Console.WriteLineを実行することになります。
+
+以下に、比較演算子の一覧を載せておきます。
+
+  演算子   意味              使用例
+   ==     等しい             if ( a == b )
+   <      小なり             if ( a < 0 )
+   >      大なり             if ( a > 0 )
+   <=     以下               if ( a <= 0 )
+   >=     以上               if ( a >= 0 )
+   !=     等しくない         if ( a != 0 )
+
+
+■□─────────────────────────────────
+■□ switch 文
+
+もうひとつ、条件分岐をする構文が switch文です。
+あまり意味のないプログラムですが、switch文の動作を確認するプログラム
+を書いてみました。
+
+using System;
+
+namespace ConsoleApplication1 {
+    class Program {
+        static void Main(string[] args) {
+            string str = Console.ReadLine();
+            int num = int.Parse(str);
+            switch (num) {
+                case 1:
+                    Console.WriteLine("1が入力されました");
+                    break;
+                case 2:
+                    Console.WriteLine("2が入力されました");
+                    break;
+                case 3:
+                    Console.WriteLine("3が入力されました");
+                    break;
+                case 4:
+                case 5:
+                case 6:
+                    Console.WriteLine("4-6の値が入力されました");
+                    break;
+                default:
+                    Console.WriteLine("1-6以外が入力されました");
+                    break;
+            }
+        }
+    }
+}
+
+switch 文は、多分岐処理を行う時に使います。if 文は、式が trueか false 
+かで、２つに処理が分岐しましたが、３つ以上分岐させたい時には、switch 
+文を使うと便利です。
+
+ switch ( num ) {
+
+の num の値によって、 処理が分岐することになります。もし、num の値が 1
+ならば、case 1: の次のステートメントに処理が移ります。今回のプログラム
+の例では、
+
+  Console.WriteLine("1が入力されました");
+
+が実行され、次の break 文で、switch文から抜け出します。
+複数のcase で同一の処理がある場合には、以下のように書きます。
+
+  case 4:
+  case 5:
+  case 6:
+      Console.WriteLine("4-6の値が入力されました");
+      break;
+
+num の値が、4 か 5 か 6 の場合に 20行に処理が移ります。
+
+もし、 どの case にも該当しない場合には、default: の次の行に処理が移り
+ます。defaultブロックは省略可能です。
+
+なお、それぞれのcase ブロックの最後には、ジャンプステートメント
+(break) が必須となっっています。breakが実行されると、switch文から抜け
+出し、次の処理に移ります。
+
+■□─────────────────────────────────
+■□ else if  （もう一つの多分岐処理）
+
+switch文ではうまく表現できない多分岐処理もあります。そのときに使うのが、
+if文を応用した else if 配置です。
+
+else if を使った例を示します。
+
+  string line = Console.ReadLine();
+  int num = int.Parse(line);
+  if ( num > 80 )
+      Console.WriteLine("Aランクです");
+  else if ( num > 60 )
+      Console.WriteLine("Bランクです");
+  else if ( num > 40 )
+      Console.WriteLine("Cランクです");
+  else
+      Console.WriteLine("Dランクです");
+  Console.ReadLine();
+
+ ※ Mian { } の中だけを示しています。
+
+上記プログラムのように、ある範囲の中にあるかどうかを判定したい時などは、
+switch 文を使うことができません。このような時に使えるのが、else if で
+す。
+通常の if 文と同様、if に対応した文が複数の場合には、以下のように { と } 
+で括ります。
+
+  if (式) {
+      文1-1;
+      文1-2;
+  } else if (式2) {
+      文2-1;
+      文2-2;
+  } else if (式3) {
+      文3-1;
+      文3-2;
+  } else {
+      文4-1;
+      文4-2;
+  }
+
+最後の else部は、上記いずれにも条件にも該当しないときの処理です。この
+最後の else 部は省略可能です。
+
+なお、この多分岐の if 文を以下のように書くことはお勧めしません。
+
+    if ( num > 80 )
+        Console.WriteLine("Aランクです");
+    else
+        if ( num > 60 )
+            Console.WriteLine("Bランクです");
+        else
+            if ( num > 40 )
+                Console.WriteLine("Cランクです");
+            else
+                Console.WriteLine("Dランクです");
+
+確かに文法上の構造から見れば正しいのですが、この字下げは、意味的な構造
+を正しく表していません。
+一つの変数の値によって、処理を分岐させる場合には、サンプルプログラムで
+示したような字下げをすることをお勧めします。
+
+■□─────────────────────────────────
+■□ ?:  条件演算子
+
+if文と似たような処理をする演算子も用意されています。
+以下のような構文を持ちます。
+
+ <条件> ? <真の場合の値> : <偽の場合の値>
+
+<条件>が真ならば、<真の場合の値> を値として持ち、<条件>が偽ならば、<偽
+の場合の値>を値として持ちます。
+例えば、以下の例では、n を 2 で割った余りが 0 ならば、"偶数" が sに代
+入されます。余りが 0でないならば、"奇数"が s に代入されます。
+
+ string s = (n % 2 == 0) ? "偶数" : "奇数";
+
+この１分は、以下の if 文と同じ結果となります。
+
+ string s;
+ if (n % 2 == 0) 
+     s = "偶数";
+ else
+     s = "奇数";
+
+また、
+
+ int num = ( n > 0 ) ? n : 0;
+
+は、n が正数ならば、n そのものが、nが0以下ならば 0 が、numに代入されま
+す。
+
+───────────────────────────────────
+『C#プログラミングレッスン』  (ぼぼ週刊）                             
+───────────────────────────────────
+ Published by Gushwell.                                               
+   Copyright (C) 2004-2009 Gushwell All rights reserved.              
+   Microsoft MVP - Visual C#(Apr 2005 - Mar 2010)                     
+
+ <<■ Gushwell's Page ■>>
+ 窓際プログラマ―の独り言  ：http://blog.livedoor.jp/gushwell/        
+ 窓際プログラマ―の読書三昧：http://gushwell.jugem.jp/                
+ Gushwell's F# Programming Diary : http://techbank.jp/gushwell/       
+ Gushwell's C# Programming Page  ：http://gushwell.ifdef.jp/          
+   C#デザインパタ―ン : http://gushwell.ifdef.jp/dp/csdpindex.html    
+
+ ☆メールマガジンの感想お待ちしています☆                             
+   http://gushwell.ifdef.jp/mail.html                                 
+
+ <<■ コミュニティtechbank.jp (http://techbank.jp/) ■>>
+ Gushwellが参加している技術系コミュニティです。
+ マイクロソフト系テクノロジー＆製品に特化したコミュニティで、Webサイト
+ では、VB、C#、VC++、SQL Server, BizTalk Server などの技術情報を公開し
+ ています。皆さんの参加をお待ちしています。
+ ブロガーさんも募集中です。
+───────────────────────────────────

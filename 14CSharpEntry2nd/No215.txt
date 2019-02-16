@@ -1,0 +1,413 @@
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━ No.215 ━□
+  
+ 「C#入門編 2nd」 -- メソッドとプロパティ
+                                                         by Gushwell  
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+今回もクラスの話です。
+
+■□─────────────────────────────────
+■□ メソッドとは
+
+オブジェクト指向の本を読むと、
+「クラスは、データと振る舞いをカプセル化したものである」
+のような説明がよくされていますが、前回のBookクラスは、データだけを
+一つにまとめただけにすぎません。
+
+    class Book {
+        public string title;     // 書籍名
+        public string author;    // 著者
+        public int price;        // 価格
+        public string publisher; // 出版社
+    }
+
+
+C#で、このオブジェクトの振る舞いを関数としてクラスに定義することができ
+ます。この関数のことをC#では、メソッドと呼んでいます。
+
+なお、C#ではクラスの外側で、関数を定義することはできません。何らかの処
+理をしたい場合には、必ずクラス内のメソッドとして定義する必要があります。
+
+今まで、以下のようなプログラムを何度となく紹介してきました。
+
+ class Program {
+     static void Main() {
+         ...
+         ...
+     }
+ }
+
+もうお解かりのとおり、これは、Programというクラスを定義し、そのなかに
+Mainというメソッドを定義しているわけですね。
+Programというクラスが持つ振る舞いをMainメソッドとして定義しているとい
+うことになります。
+Mainという名前のメソッドは、C#では特別の意味があり、プログラムの入口を
+表しています。
+
+ ※ static の意味については、後日改めて説明します。
+
+
+■□─────────────────────────────────
+■□ メソッドの定義
+
+今回は、以下のPersonクラスを例に学習をしていきます。
+
+    class Person {
+        public string name;
+        public double weight;  // kg
+        public int height;     // cm
+        public DateTime birthday;
+    }
+
+それでは、早速、Personクラスにメソッドを定義してみたいと思います。
+現在の年齢を求めるメソッド GetAge を定義してみます。
+誕生日は、クラスのフィールドに格納されているので、現在の日がわかれば
+年齢を求めることができますね。
+
+    class Person {
+        public string name;
+        public double weight;
+        public int height;
+        public DateTime birthday;
+        public int GetAge() {
+            DateTime today = DateTime.Today;
+            int age = today.Year - birthday.Year;
+            if (today.Month < birthday.Month)
+                age--;
+            else if (today.Month == birthday.Month &&
+                     today.Day < birthday.Day)
+                age--;
+            return age;
+        }
+    }
+ }
+
+DateTimeというのは、.NET Frameworkが用意している日付時刻を扱う構造体で
+す。構造体はクラスととてもよく似たものであるということだけを覚えておい
+てください。
+GetAgeメソッドでは、DateTime.Todayで現在の日時が求め、これを today変数
+に代入しています。
+その後、birthdayフィールドとの比較をし、年齢を求めています。
+最後の、
+
+ return age;
+
+で、メソッドの結果を呼び出し元に返しています。
+なお、
+
+ public int GetAge() {
+
+の int は、int型の値を返すメソッドですよ、ということを示しています。
+
+
+■□─────────────────────────────────
+■□ メソッドの呼び出し
+
+GetAge メソッドの使い方は以下の通りです。
+
+ Person p = new Person {
+     name = "日本太郎",
+     weight = 68,
+     height = 176,
+     birthday = new DateTime(1984, 6, 13)
+ };
+ int age = p.GetAge();  // ※
+ Console.WriteLine(age);
+
+※で示した行が、メソッドを呼び出しているところです。
+
+メソッドを呼び出すには、
+
+  <変数名>.<メソッド名>（引数）
+
+という書式になります。
+メソッドを呼び出すには、どのインスタンスに対する処理なのかを明示してあ
+げる必要があります。 そうしなかったら、Personクラスのオブジェクトが複
+数あった場合に、誰の年齢を求めるのかの区別がつきません。オブジェクト指
+向的に言えば、
+
+「p というオブジェクト(インスタンス）に対して、『年齢を教えてね』とメ
+ッセージを送っている」
+
+と言えるでしょうか。 メッセージを受けた p オブジェクトは、自分自身の
+誕生日(birthday)と今日の日にちから年齢を求める処理をするわけですね。
+
+GetAgeメソッドは、int 型の値を返しますので、それを age変数に代入して
+います。
+なお、ここの ageとGetAge()メソッドの中で出てきた age は年齢を入れる変
+数ですが、まったく別物です。たまたま同じ変数になっただけであり、別の名
+前であってもなんら問題ありません。
+
+
+■□─────────────────────────────────
+■□ GetBmiメソッドの追加
+
+では。もうひとつメソッドを追加してみましょう。今度は、BMI値（ボディマ
+ス指数）を求めるメソッドを追加してみます。
+BMI値は、人の肥満度を表す指数で、以下の計算式で求まります。
+
+身長をt[m]、体重をw[kg]としたとき、BMIは
+
+  BMI = w / (t * t)
+
+詳しくは、
+http://ja.wikipedia.org/wiki/%E3%83%9C%E3%83%87%E3%82%A3%E3%83%9E%E3%82%B9%E6%8C%87%E6%95%B0
+を参照してください。
+
+GetBmiメソッドを追加したPersonクラスを示します。
+
+ class Person {
+     public string name;
+     public double weight;
+     public int height;
+     public DateTime birthday;
+     public double GetBmi() {
+         double mh = height / 100.0;
+         return weight / (mh * mh);
+     }
+
+     public int GetAge() {
+         DateTime today = DateTime.Today;
+         int age = today.Year - birthday.Year;
+         if (today.Month < birthday.Month)
+             age--;
+         else if (today.Month == birthday.Month &&
+                  today.Day < birthday.Day)
+             age--;
+         return age;
+     }
+ }
+
+GetBmiメソッドは double型を返すメソッドとして定義しました。
+なお、GetBmiもGetAge同様引数を取らないメソッドとなっています。
+
+バックバンバーNo.213 の関数のところで説明したように、引数を持つメソッ
+ドも定義することができます。
+
+
+■□─────────────────────────────────
+■□ プロパティ
+
+Personクラスですが、ちょっと困ったことがあります。それは、
+
+  Person p = new Person {
+      name = "日本太郎",
+      weight = 68,
+      height = 176,
+      birthday = new DateTime(1984, 6, 13)
+  };
+  p.weight = -10.0;
+
+と誤った値を代入できてしまうことです。
+そんなことをするプログラマーが悪いということも言えますが、プログラムが
+大きく複雑になってくると、こういったことが起こりえます。
+これを防ぐ一つの方法がプロパティを用意することです。
+
+では、さっそくプロパティを使った Personクラスをお見せします。
+今回は、weight だけをプロパティにした例です。
+
+ class Person {
+     ...
+     private double weight;
+
+     public double Weight { 
+         get { 
+             return weight;
+         }
+         set {
+             if (value < 0)
+                 Console.WriteLine("値の誤り");
+             else
+                 weight = value;
+         }
+     }
+     ...
+ }
+
+ ※マイナス値を入れた場合に、Console.WriteLineを実行していますが、
+   良いやり方とはいえません。
+   本来ならば、例外を発生させる場面ですが、まだ例外について説明してい
+   ないので、ここでは Console.WriteLineを使っています。
+
+  public double Weight { 
+
+でプロパティの宣言をしています。
+プロパティの型が double で名前がWeightであることを示しています。
+プロパティ名は、大文字で始めるのが推奨されています。
+
+なお、
+
+  public double Weight() { 
+
+ではありませんので注意してください。プロパティに () は不要です。
+
+
+■ get アクセッサ
+
+   get { 
+       return weight;   // weightフィールドの値を返す
+   }
+
+これを getアクセサと呼びます。Weightプロパティが参照された時に呼び出さ
+れるメソッドのようなものです。
+
+   int w = taro.Weight;
+
+というように、プロパティを参照するコードが実行された場合、 上記getアク
+セサが呼び出され、taroインスタンスのweightフィールドの値が返されます。
+
+※大文字と小文字の違いに注意してください。
+
+getアクセサ内には、 複数の文を記述することも可能ですが、必ず、return
+で値を返す必要があります。
+
+
+■ set アクセッサ
+
+   set {
+       if (value < 0)
+           Console.WriteLine("値の誤り");
+       else
+           weight = value;
+   }
+
+が、set アクセッサです。
+
+setアクセサ内では、 特殊な value 変数を使用できます。この value には書
+き込みする値が入っています。
+
+  taro.Weight = 78.0;
+
+と書くと、78.0 という右辺の値が、value に格納され setアクセッサが呼ば
+れます。この valueを使い、 自分自身の weightフィールドに値を設定してい
+ます。setアクセサでは、値をセットするだけですので、return 文は必要あり
+ません。
+
+  taro.Weight = -10.0;
+
+と書くと、エラーメッセージがConsoleに出力されます。
+
+もし、weightフィールドと、Weightプロパティの区別がつかず混乱してしまっ
+たら、weightフィールド名を _weight と先頭に _ をつけた名前に変えてみて
+ください。そうすれば、区別がつくようになると思います。
+
+
+■□─────────────────────────────────
+■□ public と private
+
+Personクラスの weightフィールドには、private キーワードが付いています。
+これは、情報を非公開にするという意味です。
+どういうことかというと、
+
+  taro.weight = 10;
+  Console.WriteLine(taro.weight);
+
+のように、直接 フィールドにアクセスすることができないということです。
+実際に、このコードを書いてコンパイルすると、コンパイルエラーとなります。
+
+フィールドをprivateとすることで、体重を扱う場合には、必ずプロパティを
+経由してもらうことになります。
+
+一方、publicというのな、「公開」を意味し、他からアクセスできることを
+意味しています。
+
+
+■□─────────────────────────────────
+■□ フィールドは、公開しない
+
+C#では、フィールドは非公開にするのが原則です。文法上は公開にすることは
+間違ってはいないのですが、作法として非公開にするのが望ましいとされてい
+ます。
+とはいっても、値のチェックの必要ないフィールドに対しても、
+
+  private double hoge;
+  public double Hoge { 
+      get { 
+          return hoge;
+      }
+      set {
+          weight = hoge;
+      }
+  }
+
+と書くのは面倒です。そのため、C#3.0では、以下のような記述も可能になっ
+ています。
+
+  public double Hoge { get; set; }
+
+上の、９行が、この１行と同じ意味になります。これを自動プロパティと
+読んでいます。
+では、すべてのフィールドをプロパティにしたPersonクラスをお見せします。
+
+ public class Person {
+     public string Name { get; set; }
+
+     public double weight;
+     public double Weight { 
+         get { return weight; }
+         set {
+             if (value < 0)
+                 Console.WriteLine("値の誤り");
+             else
+                 weight = value;
+         }
+     }
+     public int Height { get; set; }
+     public DateTime Birthday { get; set; }
+
+     public double GetBmi() {
+         double mh = Height / 100.0;
+         return Weight / (mh * mh);
+     }
+
+     public int GetAge() {
+         DateTime today = DateTime.Today;
+         int age = today.Year - Birthday.Year;
+         if (today.Month < Birthday.Month)
+             age--;
+         else if (today.Month == Birthday.Month &&
+                  today.Day < Birthday.Day)
+             age--;
+         return age;
+     }
+ }
+
+
+最後に、このPerson を使ったコード例を示します。
+
+  Person p = new Person {
+      Name = "日本太郎",
+      Weight = 68,
+      Height = 176,
+      Birthday = new DateTime(1984, 6, 13)
+  };
+  int age = p.GetAge();
+  Console.WriteLine(age);
+  Console.WriteLine(p.GetBmi());  // メソッドの戻り値を直接引数で
+                                  // 渡している。
+
+
+───────────────────────────────────
+『C#プログラミングレッスン』  (ぼぼ週刊）                             
+───────────────────────────────────
+ Published by Gushwell.                                               
+   Copyright (C) 2004-2009 Gushwell All rights reserved.              
+   Microsoft MVP - Visual C#(Apr 2005 - Mar 2010)                     
+
+ <<■ Gushwell's Page ■>>
+ 窓際プログラマ―の独り言  ：http://blog.livedoor.jp/gushwell/        
+ 窓際プログラマ―の読書三昧：http://gushwell.jugem.jp/                
+ Gushwell's F# Programming Diary : http://techbank.jp/gushwell/       
+ Gushwell's C# Programming Page  ：http://gushwell.ifdef.jp/          
+   C#デザインパタ―ン : http://gushwell.ifdef.jp/dp/csdpindex.html    
+
+ ☆メールマガジンの感想お待ちしています☆                             
+   http://gushwell.ifdef.jp/mail.html                                 
+
+ <<■ コミュニティtechbank.jp (http://techbank.jp/) ■>>
+ Gushwellが参加している技術系コミュニティです。
+ マイクロソフト系テクノロジー＆製品に特化したコミュニティで、Webサイト
+ では、VB、C#、VC++、SQL Server, BizTalk Server などの技術情報を公開し
+ ています。皆さんの参加をお待ちしています。
+ ブロガーさんも募集中です。
+───────────────────────────────────

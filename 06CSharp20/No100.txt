@@ -1,0 +1,121 @@
+┏━┳━━━━━━━━━━━━━━━━━━━━━━━━━┳━┳━┳━┓
+┃☆┃ C#プログラミングレッスン                         ┃＿┃□┃×┃
+┣━┻━━━━━━━━━━━━━━━━━━━━━━━━━┻━┻━┻━┫
+┃プロパティアクセッサのアクセシビリティ                      No.100┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+今回は、記念すべき１００号です。月日の経つのは早いものです。創刊号を出
+してから、もう 2年以上も経ってしまったんですね。
+何号まで続けられるか判りませんが、気力のある限り発行し続けたいと思いま
+すので、応援よろしくお願いします。
+
+■──────────────────────────────────
+■ プロパティアクセッサのアクセシビリティ
+
+C#2.0では、get アクセサ、setアクセサそれぞれに、アクセシビリティを付加
+することができるようになりました。
+
+C#を始めた頃、
+
+class MyClass {
+    private string text;
+    public string Text {
+        get { return text; }
+    }
+    protected string Text {
+        set { text = value; }
+    }
+}
+
+なんて、書ければ良いな、と思ったことがあるのですが、C#2.0では、構文は
+違いますが、それぞれのアクセシビリティを指定可能になりました。そのコー
+ドを示します。
+
+class MyClass {
+    private string text;
+    public string Text {
+        get { return text; }
+        protected set { text = value; }
+    }
+}
+
+これで、get アクセサは、public となり、set アクセサは、protectedになり
+ます。
+これまでだと、text フィールドそのものを protected にしたり、set アクセ
+ッサも、public にしたりと、クラスの情報隠蔽を一部崩す必要がありました
+が、C#2.0では、そういったことは必要なくなりました。
+
+なお、get, set アクセシビリティで指定できるのは、プロパティのアクセシ
+ビリティよりも制限されたものでなければなりません。そのため、以下のよう
+なコードはコンパイルエラーとなります。
+
+class MyClass {
+    private string text;
+    private string Text {
+        public get { return text; }  // エラー
+        set { text = value; }
+    }
+}
+
+
+■──────────────────────────────────
+■ プロパティのオーバーライド
+
+プロパティをオーバーライドする場合は、そのアクセシビリティが一致してい
+る必要があります。
+
+  class MyClass {
+     private string text;
+      public virtual string Text {
+          get { return text; }
+          protected set { text = value; }
+      }
+  }
+
+  class SubClass : MyClass {
+      private string newtext;
+      public override string Text {
+          get { return newtext; }
+          protected set { newtext = value; }   // ※
+      }
+  }
+
+もし、※の部分が、 private になっていたり、指定がなかったりした場合、
+コンパイルができません。
+
+
+■──────────────────────────────────
+■ プロパティのインターフェース実装
+
+では、interface にプロパティが定義されていた場合は、どうでしょうか。
+interfaceには、getアクセサだけが定義されているとします。このとき、この
+interfaceを実装するクラスでは、setアクセサに、アクセシビリティを指定す
+ることができます。ただし、get アクセサには、指定することはできません。
+
+interface IMyInterface {
+    string Text { get; }
+}
+
+class MyClass : IMyInterface {
+    private string text;
+    public virtual string Text {
+        get { return text; }
+        protected set { text = value; }
+    }
+}
+
+┌─┬─────────────────────────┬─┬─┬─┐
+│☆│ C#プログラミングレッスン  (ぼぼ週刊）            │＿│□│×│
+├─┴─────────────────────────┴─┴─┴─┤
+│ Published by Gushwell.                                           │
+│ Copyright (C) 2004-2006 Gushwell All rights reserved.            │
+│ Microsoft MVP Visual Developer - Visual C#(Apr 2006 - Mar 2006)  │
+│-------------------- Gushwell's Page ---------------------------- │
+│ 窓際プログラマーの独り言  ：http://blog.livedoor.jp/gushwell/    │
+│ 窓際プログラマーの読書三昧：http://gushwell.jugem.jp/            │
+│ C#デザインパターン :                                             │
+│  『増補改訂版Java言語で学ぶデザインパターン入門 / 結城 浩(著)』  │
+│   のサンプルコードをC#に移植したものを掲載しています。           │
+│   移植後のコードの公開は、結城氏の了解を得ています。             │
+│   http://blog.livedoor.jp/gushwell/archives/50333227.html        │
+└─────────────────────────────────┘

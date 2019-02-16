@@ -1,0 +1,139 @@
+
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━━━ No.259 ━□
+  
+ 「LINQ to SQL編」-- 即時実行
+                                                             by Gushwell  
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+前回は、遅延実行について説明しましたが、今回は、即時実行について説明します。
+
+
+■□───────────────────────────────────
+■□ 即時実行(集計関数)
+
+Count, Min, Max, First, Sum など単一値を返すSQLを実行するクエリでは遅延実行
+はされません。
+
+例えば、
+
+ var count = (from product in db.Products
+              where product.UnitPrice < 10
+              select product).Count();
+
+というステートメントでは、即SQLが発行され、count変数にその結果が格納され
+ます。
+
+また、
+
+ var product = (from p in db.Products
+                where p.UnitPrice < 10
+                orderby p.UnitPrice descending
+                select p).First();
+
+とすれば、First()メソッド呼び出しで、SQLが発行され、UnitPriceが 10より小さ
+いものの中で最大のProductを求めることができます。
+なお、該当するProductが存在しない場合、例外が発生しますので注意してくださ
+い。
+
+即時実行とは直接関係ありませんが、Firstが出たついでなので、LINQ to Object 
+で利用できる Last, LastOrDefault について一言。
+これらのメソッドは、LINQ to SQL では利用できませんので注意してください。
+
+さらについでですが、LINQ to SQL では、Reverse もサポートされていません。
+OrderBy、OrderByDescendingで順序付けしてあげる必要があります。
+また、TakeWhile、SkipWhileもサポートされません。
+
+話がそれました。もとに戻しましょう。
+
+
+■□───────────────────────────────────
+■□ 即時実行(コレクション変換関数)
+
+
+遅延実行されるクエリについて、即時実行を強制し、その結果をキャッシュした
+い場合があります。そのような場合には、ToList()、ToArray()を呼び出します。
+
+ToList() はシーケンスをリストへ、ToArrayは配列に変換するメソッドです。
+例えば、
+
+ var list = (from product in db.Products
+             where product.UnitPrice < 10
+             select product).ToList();
+
+とすれば、ToList()メソッドを呼び出した時点で、SQLが発行され、その結果が、
+List<Product>に変換されます。
+
+上記コードは、
+
+ var query = (from product in db.Products
+              where product.UnitPrice < 10
+              select product);
+ var list = query.ToList();
+
+と同じ意味になります。
+
+これ以降 list変数へのアクセスでは、SQLが発行されることはありません。
+
+
+--------------------------------------------------------------------------
+■■読者プレゼント■■
+--------------------------------------------------------------------------
+Visual Studio 2010 Ultimate with MSDN Subscription のアクティベーションカ
+ードを、当メールマガジンの読者 1 名の方にプレゼントします。
+
+Visual Studio 2010 Ultimate with MSDN Subscription は、Visual Studio シリ
+ーズの中の最上位エディションで、設計、開発、テスト、導入、そしてその管理ま
+で、アプリケーション ライフサイクルを広範囲にカバーする製品です。
+
+●応募方法
+  希望される方は、以下に示す「Gushwellへの問い合わせ」ページから、申込んで
+  ください。
+  http://gushwell.ifdef.jp/mail.html
+
+  お名前：ハンドル名でもかまいません。
+  メールアドレス：連絡可能なメールアドレス
+  題名：「プレゼント希望」と記入してください。
+  本文：以下の３項目を必ずご記入ください。
+        ・当メールマガジンのご意見、ご感想
+        ・Visual Studio 2010 を利用する目的
+        ・応募要件にあるWebサイト、ブログのUR。
+ 
+  ※ メールアドレスは、当選者に連絡する目的にのみ利用したします。
+
+●応募要件
+・当メールマガジンを購読していただいている方
+・ブログまたはWebサイトをお持ちの方
+・Visual Studio 2010 を使った感想などをブログなどで公開して下さる方
+・MSDN サブスクリプションを所持または使用していない方。
+・Visual Studio 2010 (Professional以上) を所持または使用していない方。
+・転売、譲渡をしないこと。
+
+●締め切り
+ 2010年7月31日
+
+●当選通知
+ 8月上旬
+ ご記入いただいた内容を見て決めさせていただきます。
+ 当選した方には、直接メールでお知らせいたします。
+
+
+
+
+─────────────────────────────────────
+『C#プログラミングレッスン』  (ぼぼ週刊）                                 
+ ☆皆さまからの感想をお待ちしています。http://gushwell.ifdef.jp/mail.html 
+─────────────────────────────────────
+ Published by Gushwell.                                                   
+   Copyright (C) 2004-2010 Gushwell All rights reserved.                  
+   Microsoft MVP for Visual C#(Apr 2005 - Mar 2011)                       
+                                                                          
+ ■Gushwell's Page                                                        
+ 窓際プログラマ─の独り言        : http://gushwell.ldblog.jp/             
+ Gushwell's C# Programming Page  : http://gushwell.ifdef.jp/              
+ Gushwell's F# Programming Diary : http://techbank.jp/gushwell/           
+ Gushwellの読書ノート            : http://gushwell.jugem.jp/              
+                                                                          
+ ■コミュニティtechbank.jp (http://techbank.jp/)                          
+ Gushwellが参加している技術系コミュニティです。                           
+ 有志メンバーによるBlogでの技術情報発信も行っています。                   
+─────────────────────────────────────

@@ -1,0 +1,109 @@
+┏━┳━━━━━━━━━━━━━━━━━━━━━━━━━┳━┳━┳━┓
+┃☆┃ C#プログラミングレッスン                         ┃＿┃□┃×┃
+┣━┻━━━━━━━━━━━━━━━━━━━━━━━━━┻━┻━┻━┫
+┃ C#3.0-Auto-Implemented Properties                          No.153┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+今回から、C#3.0の説明です。C#3.0と言えば、LINQが最もホットな話題ですが、
+LINQの説明は、後ほどやるとして、まずは、その他の拡張された文法について
+説明します。まずは、自動的に実装されるプロパティです。
+
+■──────────────────────────────────
+■ 自動的に実装されるプロパティ
+
+今までは、プロパティを実装するときは、以下のように書いていたと思います。
+
+ public class Person {
+     private string _name;
+     public string Name {
+         get { return _name; }
+         set { _name = value; }
+     }
+ }
+
+これって、毎回毎回同じパターンでコーディングなので、Visual Studio2005
+のスニペット挿入機能を使って、prop [tab][tab] で、
+
+    private int myVar;
+    public int MyProperty {
+        get { return myVar; }
+        set { myVar = value; }
+    }
+
+というコードの断片を挿入していた方も多かったのではないかと思います。
+
+C#3.0では、このようなパターンのプロパティを自動実装することができます。
+以下の宣言は、先ほどのPersonクラスと同等です。
+
+ public class Person {
+     public string Name { get; set; }
+ }
+
+実際に、ILに落とされると、バッキングフィールドと呼ばれる string型のフ
+ィールドが定義されています。
+しかし、このバッキングフィールドに直接アクセスすることはできません。
+かならず、当該クラス内であっても、プロパティを使って、アクセスする必要
+があります。
+
+なお、Visual Studio 2008で、prop [tab][tab]とタイプすると、
+
+ public int MyProperty { get; set; }
+
+といったコードスニペットが挿入されます。
+
+get, set それぞれに、異なるアクセシビリティを指定することもできます。
+
+ public class Person {
+     public string Name { get; set; }
+     public int Age { get; private set; }
+ }
+
+なお、以下のような記述はできません。
+
+ // get だけのプロパティは不可
+ public int Prop01 { get; }
+
+ // set だけのプロパティは不可
+ public int Prop02 { set; }
+
+ // get,setのアクセシビリティは、プロパティよりも制限されて
+ // いなければならない
+ protected int Prop03 { public get; set; }
+
+ // get, set両方にアクセシビリティを指定できない。
+ public int Prop04 { protected get; protected set; }
+
+では、今までのように、get のみのプロパティは作れないのというと、以下の
+ように書けば同様の効果を得ることができます。
+
+ public class Person {
+     public Person(BloodType blood) {
+         Blood = blood;
+     }
+     ....
+     // set をprivateにし、外部からアクセス不可にする。
+     public BloodType Blood { get; private set; }
+ }
+
+
+参考文献
+『C#3.0の概要』
+ http://www.microsoft.com/japan/msdn/net/bb308966.aspx
+
+
+┌─┬─────────────────────────┬─┬─┬─┐
+│☆│ C#プログラミングレッスン  (ぼぼ週刊）            │＿│□│×│
+├─┴─────────────────────────┴─┴─┴─┤
+│ Published by Gushwell.                                           │
+│ Copyright (C) 2004-2007 Gushwell All rights reserved.            │
+│ Microsoft MVP Visual Developer - Visual C#(Apr 2005 - Mar 2008)  │
+│-------------------- Gushwell's Page ---------------------------- │
+│ 窓際プログラマーの独り言  ：http://blog.livedoor.jp/gushwell/    │
+│ 窓際プログラマーの読書三昧：http://gushwell.jugem.jp/            │
+│ Gushwell's C# Programing Page：http://gushwell.ifdef.jp/         │
+│ C#デザインパターン :                                             │
+│  『増補改訂版Java言語で学ぶデザインパターン入門 / 結城 浩(著)』  │
+│   のサンプルコードをC#に移植したものを掲載しています。           │
+│   移植後のコードの公開は、結城氏の了解を得ています。             │
+│   http://blog.livedoor.jp/gushwell/archives/50333227.html        │
+└─────────────────────────────────┘

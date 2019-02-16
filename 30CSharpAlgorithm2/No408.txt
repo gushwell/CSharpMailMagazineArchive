@@ -1,0 +1,184 @@
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━━━ No.408 ━□
+
+「続・アルゴリズム編」-- 有効グラフ(2)
+                                                          by Gushwell
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+さて、メールやブログでお知らせしたとおり、今回が、C#プログラミングレッスン
+の最終号となります。最終号も気合を入れて書きますよ！
+
+前回に続きです。
+
+問題を再度掲載しておきます。
+
+■□───────────────────────────────────
+■□ 問題 （有効グラフ）
+
+有効グラフが与えられたとき、2つのノード間に経路があるかどうかを見つけるアル
+ゴリズムを設計してください。
+
+ 出展：『世界で闘うプログラミング力を鍛える150問』
+ http://www.amazon.co.jp/exec/obidos/ASIN/4839942390/gaius-22/
+
+
+■□───────────────────────────────────
+■□ アルゴリズムを考える
+
+前回定義した Graph<T> を使って問題を解いていきたいと思います。
+このプログラムは、どうやってグラフの各ノードを辿っていくかがポイントになり
+ます。やり方は２つ。深さ優先の探索をするか、幅優先の探索をするかです。
+深さ優先探索はこのシリーズで何度かお見せしましたので、今回は幅優先探索を使
+いたいと思います。
+
+幅優先探索は再帰処理ではなくキューを使って実装します。
+擬似コードで書くとこんな感じ。
+
+  探索の先頭のノードをキューに入れる
+  while (キューが空で無い) {
+  while queue not empty
+      node = キューからノードを取り出す。
+      ノードに対して処理をする
+      foreach (item in nodeに隣接するすべてのノード) {
+          item をキューに入れる
+      }
+  }
+
+これですべてのnodeに対して処理をすることができます。
+ただし、これだと、ループ構造のグラフの場合は、キューが空になることがないた
+め、永遠と処理が続いてしまいます。
+
+これを避けるために、すでに訪れたノードかどうかをマークしておき、訪れている
+ノードは、キューに入れないコードを追加しなければなりません。
+
+つまり、以下のような処理になるでしょうか？
+
+※問題は 2つのノード間に経路があるかどうかを見つけることですから、この２つ
+  のノードをfirst, lastという名前にしています。
+
+1 firstから辿るのですから、firstをキューに入れて処理を開始します。
+
+2 キューを取り出し、lastかどうかを調べます。
+
+3 lastだったらば、経路があるということですのでtrueを返します。
+
+4 lastでないならば、取り出したノードに隣接するノードをキューに入れていきま
+  す。
+
+5 このとき、すでに訪れたノードならば、キューには入れません。
+
+6 2に戻りキューが空になるまで処理を続けます。
+
+7 キューが空になれば、lastへの経路がないということですので、falseを返しま
+  す。
+
+
+■□───────────────────────────────────
+■□ 実装する
+
+では実際のコードを示します。このメソッドは、Graph<T> のメソッドとして定義し
+ます。
+なお、すでに訪れたノードは、Dictionary<Node<T>, bool> に格納しています。
+
+   public bool CanTrace(Node<T> first, Node<T> last) {
+       Queue<Node<T>> queue = new Queue<Node<T>>();
+       Dictionary<Node<T>, bool> Visited = new Dictionary<Node<T>, bool>();
+       queue.Enqueue(first);
+       Visited[first] = true;
+       while (queue.Count != 0) {
+           var node = queue.Dequeue();
+           if (node == last)
+               return true;
+           foreach (var next in node.GetAdjacents()) {
+               if (!Visited.ContainsKey(next)) {
+                   queue.Enqueue(next);
+                   Visited[next] = true;
+               }
+           }
+       }
+       return false;
+   }
+
+ついでに、以下のメソッドも追加しておきます。グラフの中から特定のノードを見
+つけるためのメソッドです。
+
+   public Node<T> FindNode(T value) {
+       foreach (var obj in AllNodes.Keys) {
+           if (obj.Value.CompareTo(value) == 0 )
+               return obj;
+       }
+       return null;
+   }
+
+
+■□───────────────────────────────────
+■□ 動作を確認する
+
+先週示した MakeGraph メソッドでグラフを作成し、動作を確認してみましょう。
+
+   static void Main(string[] args) {
+       var graph = MakeGraph();
+       Print(graph);
+       Console.WriteLine();
+       var a = graph.FindNode('A'); 
+       var g = graph.FindNode('G'); 
+       Console.Write("{0} -> {1} ", a.Value, g.Value);
+       Console.WriteLine(graph.CanTrace(a, g));
+
+       var e = graph.FindNode('E');
+       Console.Write("{0} -> {1} ", e.Value, g.Value);
+       Console.WriteLine(graph.CanTrace(e, g));
+
+       Console.ReadLine();
+   }
+
+結果は以下のようになります。
+
+   A -> B C
+   B -> D E F
+   C -> G
+   D ->
+   E -> D
+   F -> G
+   G ->
+
+   A -> G True
+   E -> G False
+
+
+正しく答えを出力していますね。
+グラフ構造は、普通のプログラマにはあまりなじみのないデータ構造ですが、これを
+知っていると、役に立つ場面がきっとあると思います。
+
+
+----------------------------------------------------------------------------------
+
+購読者の皆さん、メールマガジン「C#プログラミングレッスン」は、これで最後と
+なります。
+
+長い間、本当にありがとうございました m(_ _)m
+
+ブログは、今後も続けていきますので、気が向きましたら、ご訪問いただけると嬉
+しいです。
+
+メールマガジン「C#プログラミングレッスン」に対する皆さまからの感想をお待ち
+しています。
+
+下記のURLから、お願いします。
+ http://gushwell.ifdef.jp/mail.html
+
+それでは、皆さん、さようなら。
+
+─────────────────────────────────────
+『C#プログラミングレッスン』  (ほぼ週刊）
+─────────────────────────────────────
+Published by Gushwell.
+Copyright (C) 2014 Gushwell All rights reserved.
+Microsoft MVP for Visual C#(Apr 2005 - Mar 2015)
+
+■Gushwell's Page
+facebook Page                     : http://www.facebook.com/CSharpLesson
+Gushwell's C# Dev Notes           : http://gushwell.ldblog.jp/
+Gushwell's C# Programming Page    : http://gushwell.ifdef.jp/
+気ままな読書ノート                : http://gwbooks.hatenablog.com/
+Twitterアカウント                 : @gushwell
+─────────────────────────────────────

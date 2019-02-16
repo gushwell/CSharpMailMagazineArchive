@@ -1,0 +1,285 @@
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━━━ No.398 ━□
+
+「続・アルゴリズム編」-- スタック(1)
+                                                          by Gushwell
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+MEF編をやるために 3月末でいったん中断してた「アルゴリズム編」を再開したいと
+思います。前編同様に、書籍『世界で闘うプログラミング力を鍛える150問』に
+掲載されている問題を解いていきましょう。
+再開の第一回目は、スタックに関する問題です。
+
+■□───────────────────────────────────
+■□ 問題 （スタック）
+
+PushとPopに加えて、最小の要素を返すminを持つスタックをどのようにデザインし
+ますか？ただし、push, pop, minは関数はすべて O(1)の実行時間になるようにして
+ください。
+
+ 出展：『世界で闘うプログラミング力を鍛える150問』
+ http://www.amazon.co.jp/exec/obidos/ASIN/4839942390/gaius-22/
+
+
+■□───────────────────────────────────
+■□ 問題を解くための準備
+
+O(1)とは、入力の大きさに関わらず一定回数の計算量で終了することです。
+つまり、要素の数に左右されないということですから、min関数の中で、すべての要
+素を走査して、最小値の要素を見つけるというやり方はだめだってことですね。
+
+ということは、minを呼び出したときは、すでに最小値が見つかっている状態になっ
+ていれば良いわけです。これってどうやるのかな？
+
+でも、それは後回しにして、pushとpopのメソッドを持ったクラスを作成しちゃいま
+しょう。作ったスタッククラスを以下に示します。
+
+ public class MyStack<T> where T:IComparable {
+     private List<T> datalist = new List<T>();
+
+     public virtual void Push(T obj) {
+         datalist.Add(obj);
+     }
+
+     public bool IsEmpty() {
+         return datalist.Count == 0;
+     }
+
+     public virtual T Pop() {
+         if (datalist.Count == 0) 
+             throw new InvalidOperationException();
+         int last = datalist.Count-1;
+         var val = datalist[last];
+         datalist.RemoveAt(last);
+         return val;
+     }
+
+     public T Peek() {
+         if (datalist.Count == 0)
+             throw new InvalidOperationException();
+         return datalist[datalist.Count - 1];
+     }
+ }
+
+
+配列だと保持する要素の数が制限されてしまうので、ここではList<T>を使うことと
+しました。
+IsEmptyとPeekは問題には出てこないですが、Stackのインターフェースとしては必要
+だろうということで、実装しています。
+
+Pushでは、要素をリストの最後に追加していきます。Popでは、最後の要素を取り出
+し、リストから除去します。
+
+
+■□───────────────────────────────────
+■□ MyStack<T>は本当にO(1)なのかを確認する
+
+本当にこれがO(1)なのかを確かめてみます。MSDNライブラリのList<T>の説明を見て
+みましょう。
+
+まずは、インデクサであるItemプロパティの説明を見てみましょう。
+「このプロパティ値を取得することは、O(1) 操作になります。また、このプロパテ
+ ィを設定することも O(1) 操作になります。」
+と書いてあります。
+つまり、datalist[ix] という記述は、O(1)ということですね。
+
+RemoveAt(index)ですが、
+
+「このメソッドは O(n) 操作です。ここで、n は (Count - index).」
+
+とあります。上記 Popメソッドの中の RemoveAtは、常に、最後の要素 (datalist.
+Count -1)を見ているわけですから、
+O(n) = O(Count - index) = O(Count - (Count - 1) = O(1)
+となって、O(1)となります。これで、Popの計算量は、O(1)となります。
+
+次に、Pushを見ていきましょう。Addメソッドを使っているので、Addメソッドの説
+明を見てみます。
+
+「Count が Capacity より小さい場合、このメソッドは O(1) 操作になります。 新
+ しい要素を格納するために容量を増やす必要がある場合、このメソッドは O(n)
+ 操作になります。ここで、n は Count です。」
+
+あれっ、常にO(1)じゃないみたいです。
+困りましたね。Capacityを大き目の値にしておけば、O(n)となる確率が減りますか
+ら、今回はこれで逃げることにしましょう。
+そのために、以下のようにMyStackクラスにコンストラクタを追加します。
+
+ public class MyStack<T> where T:IComparable {
+     private List<T> datalist = new List<T>();
+
+     public MyStack() {
+         datalist.Capacity = 1024;
+     }
+
+     ...
+ }
+
+1024が大きいか小さいかは異論があると思いますが、まあこれでよしとします。
+
+
+■□───────────────────────────────────
+■□ 解き方を考える
+
+さて、いよいよここからが本題です。「最小の要素を返すminを持つスタック」とい
+うことでしたね。
+
+Pushでは、現在の最小値よりも Pushされる値が小さかったら最小値を置き換え
+る、という処理を書けば良さそうです。実行時間も O(1)になりますね。
+
+じゃあ、Popで、要素を取り出したらどうなるのかな。もしPopで取り出した要素が
+最小値だとすると、最小値を更新しないとだめですね。どうやって最小値を更新し
+たらいいんでしょうか？
+MyStackオブジェクトが保持しているデータは、変数list の格納された各要素と、
+現在の最小値の値だけですから、listの中の全部の要素を走査していかないと最小
+値がどれか分からないですね。
+うーん、O(1)という制約があるのでこれではだめです。
+
+ということは、PopのときでもO(1)で処理するには、もう少し多くのデータが必要だ
+ってことです。
+
+そこで以下のような具体的な例で考えてみました。具体的な例を考えるのはとても
+大切なことです。
+
+10 8 9 7 4 9 6 4 2 7 4
+
+左から順に、Stackに値が積まれていくと考えてください。つまり、左がStackの底、
+一番右がStackの天井だと思ってください。Popの時は、天井から要素を取り出すこ
+とになります。
+
+この時の最小値は
+
+10 8 8 7 4 4 4 4 2 2 2   --- (1)
+
+のように（左の値から右の値へ）変化していきます。当たり前ですが最小値は大き
+くなることはありません。
+
+次に、StackからPopで値を取り出していくと最小値がどう変化するかを考えてみま
+した。
+
+2 2 2 4 4 4 4 7 8 8 10    --- (2)
+
+と変化します。よく見ると、これは先ほどの(1)の列を逆転させたものです。
+つまり、(1)の列もStackに記憶しておけばよいということです。（以降このStackを
+MinStackという名前にします）
+Pushするごとに、MinStackに値を積んでいって、Popするたびに、MinStackから値を
+取り出せばOKですね。
+ただ、本来のStackに入る要素数だけ、MinStackに最小値を記憶しておくのは領域の
+無駄かなと思います。
+そのため、最小値が変わった時だけ、MinStackに要素をPushしてあげれば、使用す
+る領域を節約できます。
+
+
+■□───────────────────────────────────
+■□ 実装する
+
+上記考えで書いたのが以下のクラスです。
+先ほど作成した MyStackを基底クラスとして、Minメソッドを持つStackWithMinクラ
+スを定義してみました。
+
+ public class MyStackWithMin<T> : MyStack<T>
+                        where T : IComparable {
+     private MyStack<T> minStack = new MyStack<T>();
+
+     public override void Push(T obj) {
+         if (minStack.IsEmpty() || obj.CompareTo(minStack.Peek()) <= 0)
+             minStack.Push(obj);
+         base.Push(obj);
+     }
+
+     public override T Pop() {
+         if (this.IsEmpty())
+             throw new InvalidOperationException();
+         var val = base.Pop();
+         if (val.CompareTo(minStack.Peek()) == 0)
+             minStack.Pop();
+         return val;
+     }
+
+     public T Min() {
+         if (minStack.IsEmpty())
+             throw new InvalidOperationException();
+         return minStack.Peek();
+     }
+ }
+
+※ baseキーワード久しぶりに使った気がします。
+
+MyStackに定義したIsEmptyとPeekは、最初はオーバースペックかと思いましたが、
+なんと無駄になりませんでしたね。
+
+なお、MyStackWithMinクラスは、IComparableを実装している型ならば、int に限ら
+ずどんな型でも保持できるジェネリッククラスになっています。
+その関係で minStack の操作では、大小の比較にCompareToを使ってるので直感的で
+はなくなってますが、そこはトレードオフでしょう。
+
+どうでしょう、具体的な例で考えるという大切さが分かっていただけたでしょうか？
+
+
+■□───────────────────────────────────
+■□ 確認するコードを書く
+
+最後に、MyStackWithMinの動作を確認するコードです。
+
+ static void Main(string[] args) {
+     var stack = new MyStackWithMin<int>();
+     stack.Push(10);
+     stack.Push(8);
+     stack.Push(9);
+     Console.WriteLine(stack.Min());  // 8が表示されるはず
+     stack.Push(7);
+     stack.Push(4);
+     Console.WriteLine(stack.Min());  // 4が表示されるはず
+     stack.Push(9);
+     stack.Push(6);
+     Console.WriteLine(stack.Min());  // 4が表示されるはず
+     stack.Push(4);
+     stack.Push(2);
+     stack.Push(7);
+     stack.Push(4);
+     Console.WriteLine(stack.Min());  // 2が表示されるはず
+
+     // popして行き、最小値の変化を見る
+     while (!stack.IsEmpty()) {
+         var min = stack.Min();
+         var v = stack.Pop();
+         Console.WriteLine(min);
+     }
+     Console.ReadLine();
+ }
+
+結果は以下のようになり、正しく動いているようです。
+
+ 8
+ 4
+ 4
+ 2
+ 2
+ 2
+ 2
+ 4
+ 4
+ 4
+ 4
+ 7
+ 8
+ 8
+ 10
+
+※ 本来ならば、ユニットテストのコードを書けばよいのでしょうが、このシリーズ
+  ではコンソールへの出力での確認にとどめています。
+
+
+─────────────────────────────────────
+『C#プログラミングレッスン』  (ほぼ週刊）
+☆皆さまからの感想をお待ちしています。http://gushwell.ifdef.jp/mail.html
+─────────────────────────────────────
+Published by Gushwell.
+Copyright (C) 2014 Gushwell All rights reserved.
+Microsoft MVP for Visual C#(Apr 2005 - Mar 2015)
+
+■Gushwell's Page
+facebook Page                     : http://www.facebook.com/CSharpLesson
+Gushwell's C# Dev Notes           : http://gushwell.ldblog.jp/
+Gushwell's C# Programming Page    : http://gushwell.ifdef.jp/
+気ままな読書ノート                : http://gwbooks.hatenablog.com/
+Twitterアカウント                 : @gushwell
+─────────────────────────────────────

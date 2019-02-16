@@ -1,0 +1,128 @@
+┏━┳━━━━━━━━━━━━━━━━━━━━━━━━━┳━┳━┳━┓
+┃☆┃ C#プログラミングレッスン                         ┃＿┃□┃×┃
+┣━┻━━━━━━━━━━━━━━━━━━━━━━━━━┻━┻━┻━┫
+┃リフレクション-応用(2) カスタム属性その２                   No.189┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+前回の続きです。
+
+■──────────────────────────────────
+■属性情報の取得
+
+では、次にこの属性情報を取得する方法を見ていきましょう。
+
+Validateメソッドのなかで、それぞれのフィールドにカスタム属性が付加され
+ているかどうかを確認し、付加されていたら、フィールドの値がMinVal, 
+MaxValの範囲内にあるかをチェックすればいいですね。
+
+そのコードを以下に示します。
+
+ public static class FieldsValidator {
+     public static bool Validate<T>(this T obj) {
+         Type type = obj.GetType();
+         var fields = type.GetFields(BindingFlags.Instance | 
+                                     BindingFlags.Public | 
+                                     BindingFlags.NonPublic);
+         bool result = true;
+         foreach (var field in fields) {
+             var attrs = (IntValidationAttribute[])
+                          field.GetCustomAttributes(
+                              typeof(IntValidationAttribute), false);
+             if (attrs.Length != 0 && field.FieldType == typeof(int)) {
+                 int val = (int)field.GetValue(obj);
+                 if (attrs[0].MinVal > val || val > attrs[0].MaxVal)
+                     result = false;
+             }
+             var attrs2 = (LongValidationAttribute[])
+                           field.GetCustomAttributes(
+                               typeof(LongValidationAttribute), false);
+             if (attrs2.Length != 0 && 
+                   field.FieldType == typeof(long)) {
+                 long val = (long)field.GetValue(obj);
+                 if (attrs2[0].MinVal > val || val > attrs2[0].MaxVal)
+                     result = false;
+             }
+         }
+         return result;
+     }
+ }
+
+■──────────────────────────────────
+■解説
+
+では、上記コードを簡単に説明しますね。
+
+まず、
+ public static bool Validate<T>(T obj) {
+
+とジェネリックメソッドを定義することで、型に依存しない汎用的なValidate
+メソッドを定義します。
+ジェネリックメソッドは、型推論が働きますので、
+
+ bool b = FieldsValidator.Validate<MyClass>(myobjec);
+ 
+と書く必要はなく、通常のメソッドのように、
+ 
+ bool b = FieldsValidator.Validate(myobjec);
+
+と書くことができます。
+
+このメソッドの引数 objに対し、
+
+ Type type = obj.GetType();
+         
+でType型情報を取り出し、
+
+ var fields = type.GetFields(BindingFlags.Instance | 
+                             BindingFlags.Public |
+                             BindingFlags.NonPublic);
+
+で、インスタンスフィールドの一覧を取り出しています。
+ 
+ foreach (var field in fields) {
+         
+で、ひとつひとつのフィールドに対し、範囲のチェックをしていきます。
+
+ var attrs = (IntValidationAttribute[])
+              field.GetCustomAttributes(
+                 typeof(IntValidationAttribute), false);
+
+が、フィールドに付加されたIntValidationAttribute属性を取り出していると
+ころです。IntValidationAttribute属性を取り出せれば、attrs.Lengthが 1 
+になりますので、
+
+ if (attrs.Length != 0 && field.FieldType == typeof(int)) {
+ 
+と、if文で、範囲チェックするフィールドかどうかを判断しています。
+
+ int val = (int)field.GetValue(obj);
+
+で、そのフィールドの値を取り出せますので、
+
+ if (attrs[0].MinVal > val || val > attrs[0].MaxVal)
+                      
+で、範囲内かどうかをチェックしています。
+
+引き続き、LongValidationAttributeについてもチェックします。
+
+以上が、Validateメソッドの説明です。
+
+あまり実用的な機能ではなかったかもしれませんが、カスタム属性の作成方法
+とその利用についてはご理解いただけたのではと思います。
+
+┌─┬─────────────────────────┬─┬─┬─┐
+│☆│ C#プログラミングレッスン  (ぼぼ週刊）            │＿│□│×│
+├─┴─────────────────────────┴─┴─┴─┤
+│ Published by Gushwell.                                           │
+│ Copyright (C) 2004-2008 Gushwell All rights reserved.            │
+│ Microsoft MVP Visual Developer - Visual C#(Apr 2005 - Mar 2009)  │
+│-------------------- Gushwell's Page ---------------------------- │
+│ 窓際プログラマーの独り言  ：http://blog.livedoor.jp/gushwell/    │
+│ 窓際プログラマーの読書三昧：http://gushwell.jugem.jp/            │
+│ Gushwell's C# Programing Page：http://gushwell.ifdef.jp/         │
+│ C#デザインパターン :                                             │
+│  『増補改訂版Java言語で学ぶデザインパターン入門 / 結城 浩(著)』  │
+│   のサンプルコードをC#に移植したものを掲載しています。           │
+│   移植後のコードの公開は、結城氏の了解を得ています。             │
+│   http://gushwell.ifdef.jp/dp/csdpindex.html                     │
+└─────────────────────────────────┘

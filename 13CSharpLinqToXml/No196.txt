@@ -1,0 +1,135 @@
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━ No.196 ━□
+  
+   「LINQ to XML編」 -- 条件指定でXML要素を取り出す
+                                                         by Gushwell 
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+
+■□―――――――――――――――――――――――――――――――――
+■□ 条件指定でXML要素を取得
+
+価格が 4000円未満の書籍を抽出するコ―ドです。
+
+ XDocument xdoc = XDocument.Load("sample.xml");
+ foreach (var xbook in xdoc.Root.Elements()) {
+     if ((int)xbook.Element("price") < 4000) {
+         XAttribute xisbn = xbook.Attribute("isbn");
+         XElement xtitile = xbook.Element("title");
+         XElement xprice = xbook.Element("price");
+         Console.WriteLine("{0} ({1}) ISBN={2}", 
+                 xtitile.Value, xprice.Value, xisbn.Value);
+     }
+ }
+
+
+ ※ sample.xmlは、http://gushwell.ifdef.jp/mailmag/sample.xmlに掲載し
+    てあります。
+
+以下、その結果です。
+
+ XML Hacks (3360) ISBN=978-4873112213
+ Xml Pocket Reference (1160) ISBN=978-0596100506
+
+前にも説明しましたように、Elementメソッドの戻り値であるXElement型は、
+キャストをすることで目的の型に変換することができます。
+
+ (int)xbook.Element("price")
+
+のElementメソッドは、XElement型を返すのですが、Explicit(XElement)メソ
+ッドが定義されていて、int, long, double, Decimal, DateTime, 
+TimeSpan,bool などにキャストできるようになっています。 
+
+
+■□―――――――――――――――――――――――――――――――――
+■□ Where句の利用
+
+クエリ式だと、where句を使いこのようなコ―ドになります。
+
+ XDocument xdoc = XDocument.Load("sample.xml");
+ var query = from xbook in xdoc.Root.Elements()
+             where (int)xbook.Element("price") < 4000
+             select new {
+                 Title = xbook.Element("title").Value,
+                 Price = xbook.Element("price").Value,
+                 Isbn = xbook.Attribute("isbn").Value
+             };
+ foreach (var book in query)
+     Console.WriteLine("{0} ({1}) ISBN={2}", 
+                        book.Title, book.Price, book.Isbn);
+
+クエリ式内でwhere句で条件指定していますので、foreachの中でif文を使う必
+要はありません。
+
+
+-----
+あと２つほどwhere句を使ったクエリ式の例を載せておきます。
+
+■例１
+
+titleに C#という文字列が含まれている書籍だけを抜き出しています。
+
+ XDocument xdoc = XDocument.Load("sample.xml");
+ var query = from xbook in xdoc.Root.Elements()
+             where ((string)xbook.Element("title")).Contains("C#")
+             select new {
+                 Title = xbook.Element("title").Value,
+                 Price = xbook.Element("price").Value,
+                 Isbn = xbook.Attribute("isbn").Value
+             };
+ foreach (var book in query)
+     Console.WriteLine("{0} ({1}) ISBN={2}", 
+                       book.Title, book.Price, book.Isbn);
+
+結果
+
+ C# CookBook (5200) ISBN=978-0596516109
+ C# 3.0 Design Patterns (4200) ISBN=978-0596527730
+
+
+■例２
+
+次の例は、著者にMichael Fitzgeraldが含まれている書籍を取り出すコ―ドで
+す。
+
+ XDocument xdoc = XDocument.Load("sample.xml");
+ var query = from xbook in xdoc.Root.Elements()
+             where xbook.Element("authers")
+                        .Elements()
+                        .Any(e => e.Value == "Michael Fitzgerald")
+             select new {
+                 Title = xbook.Element("title").Value,
+                 Price = xbook.Element("price").Value,
+                 Isbn = xbook.Attribute("isbn").Value
+             };
+ foreach (var book in query)
+     Console.WriteLine("{0} ({1}) ISBN={2}", 
+                       book.Title, book.Price, book.Isbn);
+
+authers要素は、複数のautherタグが含まれている可能性がありますので、こ
+れまでの例よりは複雑な式になっています。
+Any演算子を利用して、ある書籍に対し、autherのうちの一つでも、"Michael 
+Fitzgerald"が含まれていれば、where句が成り立つようにしています。
+
+結果
+
+ XML Hacks (3360) ISBN=978-4873112213
+ Xml Pocket Reference (1160) ISBN=978-0596100506
+
+
+───────────────────────────────────
+『C#プログラミングレッスン』  (ぼぼ週刊）                             
+───────────────────────────────────
+ Published by Gushwell.                                               
+   Copyright (C) 2004-2009 Gushwell All rights reserved.              
+   Microsoft MVP - Visual C#(Apr 2005 - Mar 2009)                     
+
+ <<■ Gushwell's Page ■>>
+ 窓際プログラマ―の独り言  ：http://blog.livedoor.jp/gushwell/        
+ 窓際プログラマ―の読書三昧：http://gushwell.jugem.jp/                
+ Gushwell's C# Programming Page：http://gushwell.ifdef.jp/            
+ C#デザインパタ―ン :                                                 
+  『増補改訂版Java言語で学ぶデザインパタ―ン入門 / 結城 浩(著)』      
+   のサンプルコ―ドをC#に移植したものを掲載しています。               
+   移植後のコ―ドの公開は、結城氏の了解を得ています。                 
+   http://gushwell.ifdef.jp/dp/csdpindex.html                         
+───────────────────────────────────

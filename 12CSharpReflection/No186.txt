@@ -1,0 +1,162 @@
+┏━┳━━━━━━━━━━━━━━━━━━━━━━━━━┳━┳━┳━┓
+┃☆┃ C#プログラミングレッスン                         ┃＿┃□┃×┃
+┣━┻━━━━━━━━━━━━━━━━━━━━━━━━━┻━┻━┻━┫
+┃リフレクション-MethodInfoクラス                             No.186┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+プロパティ情報に続き、今回はメソッド情報の説明です。
+
+■──────────────────────────────────
+■MethodInfo
+
+まず、Randomクラスに定義されている publicなインスタンスメソッドの名前
+の一覧を表示するコードを見てみましょう。 
+
+ System.Random obj = new Random(); 
+ Type type = obj.GetType();
+ MethodInfo[] ms = type.GetMethods(BindingFlags.Instance |
+                                   BindingFlags.Public);
+ foreach (var m in ms) {
+     Console.WriteLine("Name = {0}", method.Name);
+ }
+ 
+
+結果は以下のとおりです。
+
+ Name = Next
+ Name = Next
+ Name = Next
+ Name = NextDouble
+ Name = NextBytes
+ Name = ToString
+ Name = Equals
+ Name = GetHashCode
+ Name = GetType
+
+
+Nextメソッドが複数表示されていますが、これは引数の異なるメソッドが
+overloadされているためです。
+ 
+MethodInfoクラスからは、名前以外にもさまざまな情報が取得できます。
+メソッドの戻り値の型や、引数の型なども取得することができます。
+
+以下に、MethodInfoの各プロパティの内容を表示するコードを示します。読ん
+でいただければ、わかると思いますので、各プロパティ、メソッドの説明は省
+略します。 
+
+ private static void PrintMethodInfo(MethodInfo method) { 
+     Console.WriteLine("Name = {0}", method.Name);
+     Console.WriteLine("IsAbstract = {0}", method.IsAbstract);
+     Console.WriteLine("IsFinal = {0}", method.IsFinal);
+     Console.WriteLine("IsPrivate = {0}", method.IsPrivate);
+     Console.WriteLine("IsPublic = {0}", method.IsPublic);
+     Console.WriteLine("IsStatic = {0}", method.IsStatic);
+     Console.WriteLine("IsVirtual = {0}", method.IsVirtual);
+     Console.WriteLine("IsSpecialName = {0}", method.IsSpecialName);
+     Console.WriteLine("IsConstructor = {0}", method.IsConstructor);
+     Console.WriteLine("ReturnType = {0}", method.ReturnType);
+     foreach (var p in method.GetParameters()) {
+         Console.WriteLine("Parameter : {1} {0}", 
+                                        p.Name, p.ParameterType);
+     }
+ }
+ 
+ 
+■──────────────────────────────────
+■Invoke
+ 
+では、MethodInfoを利用し、実際にメソッドを呼び出してみましょう。
+ 
+ Assembly asm = Assembly.Load("SampleClassLib, Version=1.0.0.0,
+                               Culture=neutral, PublicKeyToken=null");
+ object obj = asm.CreateInstance("SampleClassLib.Sample");
+ Type type = obj.GetType();
+ MethodInfo mi = type.GetMethod("Add");
+ object[] param = new object[2] { 10,20 };
+ object n = mi.Invoke(obj, param);
+ Console.WriteLine(n);
+ 
+ ※見やすいように途中で改行しています。
+
+このコードでは、SampleClassLib.dllをLoadし、この中に定義されている 
+SampleクラスのAddメソッドを呼び出しています。
+メソッドを呼び出すには、Invokeメソッドを利用します。
+Sampleクラスの定義は以下のとおりです。 
+
+ public class Sample {
+     public int Add(int a, int b) {
+         return a + b;
+     }
+ }  
+
+では、もうひとつ例を示しましょう。
+
+ Assembly asm = Assembly.Load("SampleClassLib, Version=1.0.0.0,
+     Culture=neutral, PublicKeyToken=null");
+ object obj = asm.CreateInstance("SampleClassLib.SampleClass");
+ foreach (var method in obj.GetType().GetMethods(
+                                        BindingFlags.Public |
+                                        BindingFlags.Instance)) {
+     if (method.IsSpecialName)
+         continue;
+     ParameterInfo[] paramInfos = method.GetParameters();
+     if (paramInfos.Length == 0 && method.Name.StartsWith("Get")) {
+         object value = method.Invoke(obj, null);
+         Console.WriteLine("{0}: {1}", 
+                            method.Name, value ?? "(null)");
+     }
+ }
+
+この例は、引数の数がゼロでGetで始まるメソッドをすべて呼び出し、その戻
+り値を表示しています。
+コードの中ほどで、IsSpecialNameかどうかを判断していますが、これは、コ
+ンパイラが自動生成するプロパティのget_メソッドを除外するためです。
+
+通常のアプリケーションでは、リフレクションを利用したメソッドの呼び出し
+機能(Invoke)を使うことはないかと思いますが、知っておいて損はない機能だ
+と思います。
+
+なお、先ほどのPrintMethodInfoを使い、Sample.Addの情報を表示してみまし
+た。  
+
+ Assembly asm = Assembly.Load("SampleClassLib, Version=1.0.0.0, 
+                               Culture=neutral, PublicKeyToken=null");
+ object obj = asm.CreateInstance("SampleClassLib.Sample");
+ Type type = obj.GetType();  
+ MethodInfo mi = type.GetMethod("Add");
+ PrintMethodInfo(mi);
+
+結果は
+  
+ Name = Add
+ DeclaringType = SampleClassLib.SampleClass
+ IsAbstract = False
+ IsFinal = False
+ IsPrivate = False
+ IsPublic = True
+ IsStatic = False
+ IsVirtual = False
+ IsSpecialName = False
+ IsConstructor = False
+ ReturnType = System.Int32
+ Parameter : System.Int32 a
+ Parameter : System.Int32 b
+  
+となります。
+
+┌─┬─────────────────────────┬─┬─┬─┐
+│☆│ C#プログラミングレッスン  (ぼぼ週刊）            │＿│□│×│
+├─┴─────────────────────────┴─┴─┴─┤
+│ Published by Gushwell.                                           │
+│ Copyright (C) 2004-2008 Gushwell All rights reserved.            │
+│ Microsoft MVP Visual Developer - Visual C#(Apr 2005 - Mar 2009)  │
+│-------------------- Gushwell's Page ---------------------------- │
+│ 窓際プログラマーの独り言  ：http://blog.livedoor.jp/gushwell/    │
+│ 窓際プログラマーの読書三昧：http://gushwell.jugem.jp/            │
+│ Gushwell's C# Programing Page：http://gushwell.ifdef.jp/         │
+│ C#デザインパターン :                                             │
+│  『増補改訂版Java言語で学ぶデザインパターン入門 / 結城 浩(著)』  │
+│   のサンプルコードをC#に移植したものを掲載しています。           │
+│   移植後のコードの公開は、結城氏の了解を得ています。             │
+│   http://gushwell.ifdef.jp/dp/csdpindex.html                     │
+└─────────────────────────────────┘

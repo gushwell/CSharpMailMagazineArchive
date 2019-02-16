@@ -1,0 +1,161 @@
+
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━━━ No.273 ━□
+  
+ 「C#4.0 編」-- 名前付き引数と省略可能な引数
+                                                             by Gushwell  
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+
+購読者の皆様、こんにちは。
+気がつけば、もう１１月半ば。このところめっきり日が短くなってきました。
+もう冬の季節ですね。
+さて、今号から、「C#4.0文法編」を開始します。C#4.0の新機能と言えば、なんと
+いっても、dynamicキーワードによる動的プログラミングですね。
+この「C#4.0文法編」も dynamic関連が中心となりますが、まずは、地味な機能で
+はありますが、なかなか便利な、名前付き引数と省略可能な引数について説明しま
+す。
+
+■□───────────────────────────────────
+■□ 名前付き引数
+
+名前付き引数を使用すると、メソッド呼び出し時に、引数の定義順とは無関係に、
+名前付きで引数を指定することができます。
+
+  static double CaluculateBMI(double height, double weight) {
+      return weight / (height * height);
+  }
+
+というメソッドがあった場合、
+
+  double bmi = CaluculateBMI(weight: 60,height: 1.7);
+
+  double bmi2 = CaluculateBMI(height: 1.7,weight: 60);
+
+のような書き方ができます。引数の数が多い場合などに、この名前付き引数を使
+用すると、コードの可読性が向上します。
+時々、７つも８つも引数のあるメソッドに出会いますが、この機能があれば、タ
+イプ量は増えますが、コードを読むのが楽になりますね。
+
+この名前付き引数のコード入力時に、Visual Studio 2010でインテリセンスを利
+用するには、引数を入力する場所で、Ctrl + Spaceを押し、入力候補一覧をだし
+ます。
+そこで、引数の名前（ここでは height)を途中までタイプすると、height: とい
+う候補の箇所にカーソルが移動しますので、タブキー(or Enterキー)を押して確
+定してください。
+コロン(:)は、自分でタイプする必要があります。コロン(:)も自動入力されると
+いいのですが...
+
+
+■□───────────────────────────────────
+■□ 省略可能な引数
+
+ある程度、C#でのプログラミングを経験したなら、以下のように引数の数が異な
+るメソッドをオーバーロードさせたことがあると思います。
+
+ void Hoge(int num, string s) {
+   ...  // num と s をつかって処理をする。
+ }
+
+ void Hoge(int num) {
+     Hoge(num,"");   // もう一つのHogeを呼び出す。
+ }
+
+C#4.0では、省略可能な引数が導入され、これを一つのメソッドで定義できるよう
+になりました。
+
+ void Hoge(int num, string s = "") {
+   ...
+ }
+
+s = "" の "" が省略された時の値を指定しているところです。
+
+ピンと来ない人もいるかと思いますので、別の例も示します。
+
+ int[] CreateIntArray(int length = 10, int value = 0) {
+     int[] array = Enumerable.Repeat(value, length).ToArray();
+     return array;
+ }
+
+は、int型の配列を生成し、一定の値で要素を初期化するメソッドです。
+
+このメソッドを呼び出す側は、３つの呼び出し方法が選べます。
+
+  int[] array = CreateIntArray(20, -1);
+
+  int[] array2 = CreateIntArray(20);
+
+  int[] array3 = CreateIntArray();
+
+２行目は、
+
+  int[] array2 = CreateIntArray(20,0);
+
+と同じです。3行目は
+
+  int[] array3 = CreateIntArray(10,0);
+
+と記述したのと同じ意味になります。コンパイラが省略された引数の値を補って
+くれます。
+
+なお、引数リストは、必須引数、省略可能引数の順に記述する必要があります。
+以下のような、書き方はできません。
+
+ public void ExampleMethod(string optionalstr = "", 
+                           int required, int optionalint = 10)
+
+次のように引数の順番を入れ替える必要があります。
+
+ public void ExampleMethod(int required, string optionalstr = "", 
+                           int optionalint = 10)
+
+
+省略可能な引数を指定したメソッドは、インテリセンスで表示されるメソッド構
+文にも、以下のように省略値が表示されるので、コード入力時、その省略値を確
+認することができます。
+
+ int[] CreateIntArray([int length = 10], [int value = 0]) 
+
+
+■□───────────────────────────────────
+■□ COM インターフェイスへのアクセス
+
+名前付き引数と省略可能な引数の機能は、Office オートメーション APIなどの
+COM API を呼び出す際にも利用できます。というよりもOffice オートメーション
+のために追加された機能のようです。
+
+これにより、相互運用性が向上します。
+
+たとえば、C#3.0では、
+
+ excelApp.get_Range("A1", "B4")
+         .AutoFormat(myFormat, 
+                     Type.Missing, Type.Missing, Type.Missing, 
+                     Type.Missing, Type.Missing, Type.Missing);
+
+のようなコードを書く必要がありましたが、C#4.0では、
+
+ excelApp.Range["A1", "B4"]
+         .AutoFormat( Format: myFormat );
+
+と書くことができます。
+Officeオートメーションについては、また、後日扱いたいと思います。
+
+─────────────────────────────────────
+『C#プログラミングレッスン』  (ぼぼ週刊）                                 
+ ☆皆さまからの感想をお待ちしています。http://gushwell.ifdef.jp/mail.html 
+─────────────────────────────────────
+ Published by Gushwell.                                                   
+   Copyright (C) 2004-2010 Gushwell All rights reserved.                  
+   Microsoft MVP for Visual C#(Apr 2005 - Mar 2011)                       
+                                                                          
+ ■Gushwell's Page                                                        
+ 窓際プログラマ─の独り言 - C#の話題を中心に: http://gushwell.ldblog.jp/  
+ Gushwell's C# Programming Page             : http://gushwell.ifdef.jp/   
+ Gushwell's F# Programming Diary            : http://techbank.jp/gushwell/
+ Gushwellの読書ノート                       : http://gushwell.jugem.jp/   
+                                                                          
+ ■コミュニティtechbank.jp (http://techbank.jp/)                          
+ Gushwellが参加している技術系コミュニティです。                           
+ 有志メンバーによるBlogでの技術情報発信も行っています。                   
+─────────────────────────────────────
+

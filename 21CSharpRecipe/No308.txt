@@ -1,0 +1,139 @@
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━━━ No.308 ━□
+
+「レシピ編」-- 日付の操作 (3)
+                                                           by Gushwell  
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+日付の操作の最後として、日付と時刻のフォーマットについてのコードを示します。
+知っているようで知らない、覚えたつもりでも忘れている、そんな日付のフォーマ
+ット機能ですが、今日の記事で再確認していただければと思います。
+
+
+今日のコード
+
+1. 日付をフォーマットするには
+2. 日付を和暦で表示するには
+3. 時刻をフォーマットするには
+
+
+■□───────────────────────────────────
+■□ 日付をフォーマットするには
+
+.NET Frameworkの機能を使うと、日付をさまざまな書式でフォーマットすることが
+できます。
+
+まずは、DateTime.ToStringメソドを使ったコードを示します。
+
+DateTime today = DateTime.today;
+s = today.ToString("d");       // "2011/10/07"
+Console.WriteLine(s);
+s = today.ToString("D");       // 2011年10月7日
+Console.WriteLine(s);
+s = today.ToString("M");       // 10月7日
+Console.WriteLine(s);
+s = today.ToString("M/d");     // 10/7
+Console.WriteLine(s);
+
+結果は、以下の通りです。
+
+2011/10/07
+2011年10月7日
+10月7日
+10/7
+
+String.Format でも同じ書式を使うことができます。String.Formatを使ったコード
+を示します。
+
+DateTime today = DateTime.today;
+string s = String.Format("{0:d}", today);      // "2011/10/07"
+Console.WriteLine(s);
+s = String.Format("{0:D}", today);             // "2011年10月7日"
+Console.WriteLine(s);
+s = String.Format("{0:M}", today);             // "10月7日"
+Console.WriteLine(s);
+s = String.Format("{0:M/d}", today);           // "10/7"
+Console.WriteLine(s);
+
+DateTimeには、ToStringのほかに、日付を文字列化するメソッドがいくつかあります。
+
+ Console.WriteLine();
+ Console.WriteLine(today.ToLongDateString());  //2011年10月7日
+ Console.WriteLine(today.ToShortDateString()); // 2011/10/07
+
+結果は、以下の通りです
+
+2011年10月7日
+2011/10/07
+
+それでは、"2011年10月 7(金)" のように、月、日を2桁固定でかつゼロサプレスし
+て表示するにはどうしたらよいでしょうか。これは、既製の書式ではできません。
+いくつか方法はあると思いますが、以下のようなコードで実現できます。
+
+Console.WriteLine("{0}年{1,2}月{2,2}日({3:ddd})", 
+                   today.Year, today.Month, today.Day, today);
+
+ddd は曜日の表示を指定する書式です。dddd と4桁指定をすると、
+"金曜日" のように曜日の完全名が表示されます。
+
+■□───────────────────────────────────
+■□ 日付を和暦で表示するには
+
+年を和暦で表示するコードを示します。以下のコードでは、JapaneseCalendarクラ
+スを使い、元号を求めています。
+
+ CultureInfo culture = (CultureInfo)(Thread.CurrentThread.CurrentCulture.Clone());
+ culture.DateTimeFormat.Calendar = new System.Globalization.JapaneseCalendar();
+ Thread.CurrentThread.CurrentCulture = culture;
+ s = today.ToString("ggyy年M月d日");   // 平成23年9月17日
+ Console.WriteLine(s);
+
+ggが元号を示す書式になります。
+
+
+■□───────────────────────────────────
+■□ 時刻をフォーマットするには
+
+おまけとして、時刻のフォーマットについても、いくつか例を示しましょう。
+
+s = now.ToString("t");   
+Console.WriteLine(s);
+s = now.ToString("T");   
+Console.WriteLine(s);
+s = now.ToString("hh:mm tt", CultureInfo.CreateSpecificCulture("en-US"));
+Console.WriteLine(s);
+s = now.ToString("HH時mm分ss秒"); 
+Console.WriteLine(s);
+
+
+実行例を示します。
+
+13:24
+13:24:06
+01:24 PM
+13時24分06秒
+
+==========================================================================
+■ Gushwellの書籍
+
+『C#プログラミング入門』
+http://www.amazon.co.jp/exec/obidos/ASIN/4777515982/gaius-22/
+
+C#を覚えたい、C#を再学習したい、そんな方にピッタリの書籍です。
+Gushwellが自信をもってお勧めします。
+目次は、こちらで確認できます。
+http://www.kohgakusha.co.jp/books/detail/978-4-7775-1598-1
+
+
+─────────────────────────────────────
+『C#プログラミングレッスン』  (ぼぼ週刊）                                 
+☆皆さまからの感想をお待ちしています。http://gushwell.ifdef.jp/mail.html  
+─────────────────────────────────────
+Published by Gushwell.                                                    
+ Copyright (C) 2011 Gushwell All rights reserved.                        
+ Microsoft MVP for Visual C#(Apr 2005 - Mar 2012)                        
+
+■Gushwell's Page                                                         
+Gushwell's C# Dev Notes           : http://gushwell.ldblog.jp/            
+Gushwell's C# Programming Page    : http://gushwell.ifdef.jp/             
+Gushwellの読書ノート              : http://gushwell.jugem.jp/             
+─────────────────────────────────────

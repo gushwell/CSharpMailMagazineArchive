@@ -1,0 +1,246 @@
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━━━ No.253 ━□
+  
+ 「どう書く？org編」-- 年間カレンダー
+                                                             by Gushwell  
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+■□───────────────────────────────────
+■□ お題： 年間カレンダー (http://ja.doukaku.org/119/)
+ 
+=========================================================================
+
+nを入力としてn年の年間カレンダーを返すプログラムを作ってください。
+少なくとも日曜日と土曜日が判別出来るようにしてください。
+出力は標準出力でもファイルでも構いません。
+デザインは各自のお好みで。
+
+■□───────────────────────────────────
+■□ 解答
+
+今回は、いままでで一番長いコードなので、しっかりと読んでください。
+
+using System;
+using System.Collections.Generic;
+
+namespace Calender {
+    class Program {
+        static void Main(string[] args) {
+            Calender cal = new Calender();
+            var strs = cal.GetCalender(2009);
+            foreach (var s in strs)
+                Console.WriteLine(s);
+            Console.ReadLine();
+        }
+    }
+
+    class Calender {
+        public string[] GetCalender(int year) {
+            List<string> lines = new List<string>();
+            for (int m = 1; m <= 12; m++) {
+                lines.AddRange(GetMonthCalender(year,m));
+                lines.Add("");
+            }
+            return lines.ToArray();
+        }
+
+        public string[] GetMonthCalender(int year, int month) {
+            List<string> lines = new List<string>();
+            lines.Add(string.Format("      {0}年{1}月",year,month));
+            lines.Add(" 日 月 火 水 木 金 土");
+            DateTime dt = new DateTime(year, month, 1);
+            string s = new string(' ', (int)dt.DayOfWeek * 3);
+            while (dt.Month == month) {
+                s += string.Format("{0,3}", dt.Day);
+                if (dt.DayOfWeek == DayOfWeek.Saturday) {
+                    lines.Add(s);
+                    s = "";
+                }
+                dt = dt.AddDays(1);
+            }
+            if (s != "")
+                lines.Add(s);
+            return lines.ToArray();
+        }
+    }
+}
+
+■□───────────────────────────────────
+■□ 解説
+
+今回のコードの最も重要なメソッドは、 Calenderクラスの
+
+ public string[] GetMonthCalender(int year, int month)
+
+メソッドです。
+このメソッドは引数で与えられた月のカレンダーを、文字列配列に設定し返してい
+ます。
+このメソッドを呼び出したときの結果は、例えば、2010年4月ならば、
+
+      2010年4月
+ 日 月 火 水 木 金 土
+              1  2  3
+  4  5  6  7  8  9 10
+ 11 12 13 14 15 16 17
+ 18 19 20 21 22 23 24
+ 25 26 27 28 29 30
+
+という文字列配列を返しています。
+
+      2010年4月
+ 日 月 火 水 木 金 土
+
+は良いですよね。
+問題は、
+              1  2  3
+
+の部分です。1 の←側に空白文字を詰めないといけないわけですが、これをやって
+いるのが、
+
+  string s = new string(' ', (int)dt.DayOfWeek * 3);
+
+です。このときの dt の値は、2010年4月1日で、木曜日なので、４日分の空白を作
+成しています。曜日を示すDayOfWeekプロパティをintに変換すると、４という数字
+が得られます。
+
+列挙体の値は、
+
+日：0
+月：1
+火：2
+水：3
+木：4
+金：5
+土：6
+
+と定義されていますので、int型にすれば、そのまま先頭の空白の日数を得られま
+す。１日３文字分を有していますので、×3 すれば、空白の個数が得られます。あ
+とは、Whileループでまわし、１日から月末までを処理します。
+
+ s += string.Format("{0,3}", dt.Day);
+
+で、日にちの文字列を追加し、土曜日になったら、１行分が出来上がったので、
+linesリストに追加しています。
+
+whileループから抜けたら、最終週を
+
+ if (s != "")
+     lines.Add(s);
+
+でlinesに追加しています。このif 文で、土曜日が月末のときに、余分な行が追加
+されないようにしています。
+ただ、全ての月で５週表示にしたい場合には、このif の判断は不要です。
+
+この１か月分の処理が書ければ、これを１月から１２月まで回せばよいだけです。
+
+ public string[] GetCalender() 
+
+でそれを行っています。
+
+なお、コードを短くしたいのならば、リストに入れるのではなく、直接Consoleへ
+出力してしまえば、もっと短くなります。しかし、「コンソールに出力する」のと
+「カレンダーを組み立てる」という２つの仕事は別にしたほうが良い、というのが
+僕の考えです。こうしておけば、ファイルに出力したいという要求にも答えられま
+す。
+
+
+■□───────────────────────────────────
+■□ 発展
+
+先ほどのプログラムの欠点をあげるとすれば、カレンダーを作るというロジックと
+その見た目を整えるというロジックが渾然一体となっている点です。
+これを分割したプログラムも書いてみました。
+無理やり感はちょっと残りますが、Calenderクラスは、GUIで表示する場合にも利
+用できると思います。
+
+コードを示します。
+
+using System;
+using System.Collections.Generic;
+
+namespace Calender {
+    class Program {
+        static void Main(string[] args) {
+            ConsoleCalender cale = new ConsoleCalender();
+            cale.Print(2010);
+            Console.ReadLine();
+        }
+    }
+
+    class ConsoleCalender {
+        // １年分のカレンダーをコンソールに出力する
+        public void Print(int year) {
+            for (int m = 1; m <= 12; m++) {
+                PrintMonthCalender(year,m);
+                Console.WriteLine();
+            }
+        }
+
+        // １ヶ月分のカレンダーをコンソールに出力する
+        public void PrintMonthCalender(int year, int month) {
+            Console.WriteLine(string.Format("      {0}年{1}月",year, month));
+            Console.WriteLine(" 日 月 火 水 木 金 土");
+            foreach (var week in Calender.GetMonthCalender(year, month)) {
+                string line = "";
+                foreach (var day in week) 
+                    line += string.Format("{0,3:#}", day); 
+                Console.WriteLine(line);
+            }
+        }
+    }
+
+    static class Calender {
+        // int[] は、１週分（１行）のデータ。これをIEnumerableとして返す。
+        public static IEnumerable<int[]> GetMonthCalender(int year, int month) {
+            List<int> oneWeek = new List<int>();
+            DateTime dt = new DateTime(year, month, 1);
+            // 空白の箇所は、0 で示す
+            for (int i = 0; i < (int)dt.DayOfWeek; i++ ) 
+                oneWeek.Add(0);
+            for (; dt.Month == month; dt = dt.AddDays(1)) {
+                oneWeek.Add(dt.Day);
+                if (dt.DayOfWeek == DayOfWeek.Saturday) {
+                    yield return oneWeek.ToArray();
+                    oneWeek.Clear();
+                }                
+            }
+            if (oneWeek.Count != 0)
+                yield return oneWeek.ToArray();
+        }
+    }
+}
+
+Calenderクラスの GetMonthCalender(int year, int month) メソッドは、
+IEnumerable<int[]>を返すメソッドで、int[]は1週間分のデータが入っています。
+それが、カレンダー上の行数分返されます。
+ConsoleCalenderクラスは、このデータを受け取り、コンソールへ出力します。
+
+あとは皆さんが解読してみてください。
+
+--------------------------------------------------------------------------
+今回の号を持ちまして「どう書く？org編」は終了です。
+Weサイト「どう書く？org http://ja.doukaku.org/」 には、まだまだ取り上げた
+いお題はありますので、いつか「どう書く？org編」の続編をやりたいと考えてい
+ます。
+
+さて、次号からの新たな話題ですが、「LINQ to SQL」か「正規表現」のいずれか
+にしようと思いますが、まだどちらにするかは決めかねています。
+2週間ほどお休みをいただきますので、次号の発行は、6月15日の予定です。
+
+─────────────────────────────────────
+『C#プログラミングレッスン』  (ぼぼ週刊）                                 
+ ☆皆さまからの感想をお待ちしています。http://gushwell.ifdef.jp/mail.html 
+─────────────────────────────────────
+ Published by Gushwell.                                                   
+   Copyright (C) 2004-2010 Gushwell All rights reserved.                  
+   Microsoft MVP for Visual C#(Apr 2005 - Mar 2011)                       
+                                                                          
+ ■Gushwell's Page                                                        
+ 窓際プログラマ─の独り言        : http://gushwell.ldblog.jp/             
+ Gushwell's C# Programming Page  : http://gushwell.ifdef.jp/              
+ Gushwell's F# Programming Diary : http://techbank.jp/gushwell/           
+ Gushwellの読書ノート            : http://gushwell.jugem.jp/              
+                                                                          
+ ■コミュニティtechbank.jp (http://techbank.jp/Community/blogs/)          
+ Gushwellが参加している技術系コミュニティです。                           
+ 有志メンバーによるBlogでの技術情報発信を行っています。
+─────────────────────────────────────

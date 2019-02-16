@@ -1,0 +1,155 @@
+┏━┳━━━━━━━━━━━━━━━━━━━━━━━━━┳━┳━┳━┓
+┃☆┃ C#プログラミングレッスン                         ┃＿┃□┃×┃
+┣━┻━━━━━━━━━━━━━━━━━━━━━━━━━┻━┻━┻━┫
+┃ファイルの扱い (1)  Stream                                  No.103┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+テキストファイルなどのファイルの入出力には、ストリームに関連したクラス
+を利用します。ストリームとは「データの流れ」という意味で、そのデータの
+流れは基本的に一方向に限られています。
+C#では、ほとんどの入出力をストリームとして扱うことができます。 ファイ
+ル、ネットワーク、メモリ内のデータの入出力はストリームとして扱えます。
+ファイルの扱いが分かれば、メモリやネットワークでのストリームの扱いは
+ほとんど同じですので、ファイルI/Oについて、見ていきましょう。
+
+■──────────────────────────────────
+■ ファイルからの読み込み
+
+ストリームの既定クラスが、System.IO.Stream クラスです。まずは、この
+Stream クラスを使ったコードを示します。
+
+  1:using System;
+  2:using System.Text;
+  3:using System.IO;
+  4:...
+  5:    static void Main(string[] args) {
+  6:        Stream st = new FileStream(@"D:\Doc\C#\memo.txt",
+  7:                FileMode.Open,FileAccess.Read);
+  8:        int b = -1;
+  9:        while ( (b = st.ReadByte()) != -1 ) {
+ 10:            Console.Write(b.ToString("X2"));
+ 11:            Console.Write(b.ToString("-"));
+ 12:        }
+ 13:        st.Dispose();
+ 14:        Console.ReadLine();
+ 15:    }
+
+6行目:
+  new FileStream でファイルをオープンし、そのインスタンスを Stream型の
+  変数 st に代入しています。
+
+9行目:
+  ReadByteメソッドを使い、１byteずつデータを読み込んでいます。
+  -1 が返ってきた場合、ファイルの終端を示していますので、ループを抜け
+  ます。
+
+  
+13行目
+  Dispose を呼び出し、ファイルを閉じています。
+
+
+※ FileStream クラスは、Streamクラスの派生クラスです。そのほか、
+    System.IO.BufferedStream 
+    System.IO.Compression.GZipStream 
+    System.IO.MemoryStream 
+    System.Net.Sockets.NetworkStream 
+    System.Security.Cryptography.CryptoStream 
+   などの派生クラスがあります。
+
+
+■──────────────────────────────────
+■ 行単位で読み込む
+
+データを byte として扱う場合は、上記コードで良いのですが、テキストとし
+て扱う場合は、GetByte()メソッドで処理するのは面倒です。行単位に読み込
+むほうが簡単です。では、そのコードを。
+
+  1:using System;
+  2:using System.Text;
+  3:using System.IO;
+  4:
+  5:    static void Main(string[] args) {
+  6:        using ( Stream stm = new FileStream(@"D:\Doc\C#\memo.txt",
+  7:                  FileMode.Open, FileAccess.Read) )
+  8:        using ( StreamReader reader = new StreamReader(stm) ) {
+  9:            string s;
+ 10:            while ( ( s = reader.ReadLine() ) != null ) {
+ 11:                Console.WriteLine(s);
+ 12:            }
+ 13:        }
+ 14:        Console.ReadLine();
+ 15:    }
+
+
+今回は、Dispose を呼び出す代わりに、usingステートメントを使っています。
+
+8行目:
+   行単位で読み込む機能を持つ、StreamReaderクラスのインスタンスを生成
+   しています。この時、既に開いているstream のインスタンスを第1引数に
+   渡します。
+
+10行目:
+   ストリームから１行ずつ読み込んでいます。nullが返ってくるとファイル
+   の最後まで読み取ったことになります。
+
+
+このコード、読み込むテキストファイルによっては、文字化けしてしまう場合
+があります。
+例えば、memo,txt が、シフトJISで格納されていた場合は、上記コードでは、
+文字化けを起こします。そのためには、読み込むファイルのコード体系を
+指定し、StreamReaderに変換してもらうようにします。
+
+8 行目のコードを、以下のように変更します。
+
+  using ( StreamReader reader = new StreamReader(stm,
+                                     Encoding.GetEncoding(932)) ) {
+
+932 という部分は、"shift_jis" という文字列でも OKです。
+
+なお、StreamReader は、ストリームのインスタンスではなく、直接ファイル
+名を与えることでも、インスタンスを生成できます。
+
+
+  1:  using ( StreamReader reader = 
+  2:              new StreamReader(@"D:\Doc\C#\memo.txt",
+  3:                             Encoding.UTF16) ) {
+  4:      string s;
+  5:      while ( ( s = reader.ReadLine() ) != null ) {
+  6:          Console.WriteLine(s);
+  7:      }
+  8:  }
+
+
+この例では、memo.txtがUTF16 エンコーディングされていると仮定しています。
+
+
+■──────────────────────────────────
+■ 配列に一気に読み込む
+
+.NET Framework2.0の Fileクラスを使うと、上記コードは、以下のように書く
+ことが可能です。
+
+  1:  string[] strs = File.ReadAllLines(@"D:\Doc\C#\memo.txt",
+  2:                                    Encoding.UTF16);
+  3:  foreach ( string s in strs ) {
+  4:      Console.WriteLine(s);
+  5:  }
+
+こうなると、ストリームとは関係なくなってしまいますが、テキストファイル
+の総ての行を読み込む場合は、これが現実的なコードかなとも思います。
+
+┌─┬─────────────────────────┬─┬─┬─┐
+│☆│ C#プログラミングレッスン  (ぼぼ週刊）            │＿│□│×│
+├─┴─────────────────────────┴─┴─┴─┤
+│ Published by Gushwell.                                           │
+│ Copyright (C) 2004-2006 Gushwell All rights reserved.            │
+│ Microsoft MVP Visual Developer - Visual C#(Apr 2006 - Mar 2007)  │
+│-------------------- Gushwell's Page ---------------------------- │
+│ 窓際プログラマーの独り言  ：http://blog.livedoor.jp/gushwell/    │
+│ 窓際プログラマーの読書三昧：http://gushwell.jugem.jp/            │
+│ C#デザインパターン :                                             │
+│  『増補改訂版Java言語で学ぶデザインパターン入門 / 結城 浩(著)』  │
+│   のサンプルコードをC#に移植したものを掲載しています。           │
+│   移植後のコードの公開は、結城氏の了解を得ています。             │
+│   http://blog.livedoor.jp/gushwell/archives/50333227.html        │
+└─────────────────────────────────┘

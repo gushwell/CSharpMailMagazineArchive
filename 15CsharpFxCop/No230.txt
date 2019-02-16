@@ -1,0 +1,117 @@
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━ No.230 ━□
+  
+ 「FxCopに学ぶ編」 -- CA1002: Do not expose generic lists (後編)
+                                                         by Gushwell  
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+
+■□─────────────────────────────────
+■□ CA1002: Do not expose generic lists
+
+前回は、List<T>などのジェネリックリストを公開してはいけない理由を説明
+しましたが、まだ、その解決策を示していません。
+では、どうすれば良かったのでしょうか。
+その解決策のひとつが、List<string>ではなく、継承を前提に設計された
+System.Collections.ObjectModel.Collectionジェネリッククラスを公開する
+という方法です。
+
+Collectionクラスを使った、Singerクラスは以下のようになります。
+
+ using System.Collections.ObjectModel;
+
+ public class Singer {
+     private Collection<string> albums = new Collection<string>();
+
+     public Collection<string> Albums {
+         get { return albums; }
+     }
+ }
+
+Collection<T>クラスは、用意されているメソッドの数はList<T>よりは少なめ
+ですが、通常の利用においては、十分なメソッドを備えています。
+
+では、上のSingerクラスを、「既存のインターフェースは変えないで、
+AlbumAdded イベントを追加してほしい」という要求に答えてみましょう。
+
+コードを示します。
+
+ public class Singer {
+     public event EventHandler AlbumAdded;
+
+     private AlbumCollection albums;
+
+     public Singer() {
+         albums = new AlbumCollection(this);
+     }
+     public Collection<string> Albums {
+         get { return albums; }
+     }
+
+     protected virtual void OnAlbumAdded(EventArgs e) {
+         if (AlbumAdded != null) {
+             AlbumAdded(this, e);
+         }
+     }
+
+     private class AlbumCollection : Collection<string> {
+         Singer owner;
+         public AlbumCollection(Singer owner) {
+             this.owner = owner;
+         }
+         protected override void InsertItem(int index, string item) {
+             base.InsertItem(index, item);
+             owner.OnAlbumAdded(EventArgs.Empty);
+         }
+     }
+ }
+
+Collection<string>を拡張したAlbumCollectionクラスを Singerクラスのイン
+ナークラスとして定義しています。ここで、InsertItem メソッドをオーバー
+ライドし、追加を捕捉できるようにします。
+Singerクラスでは、拡張した AlbumCollectionを保持しましが、Albumsプロパ
+ティは、Collection<string>のまま変更しません。こうすることで、
+
+  Singer singer = new Singer();
+  singer.AlbumAdded += new EventHandler(singer_AlbumAdded);
+  singer.Albums.Add("ABC");
+
+というコードが書けるようになります。
+利用者側は、最後の Albums.Addの部分を書き換える必要はありません。
+
+
+前回と2回に分けて、ジェネリック リストを公開してはいけない理由とその
+対応方法を説明してきましたが、実際のアプリケーション開発においては、
+それほど厳密にこのルールを守る必要はないと思います。
+ただ、多くの開発者が利用するような汎用クラスライブラリを作成する場合に
+は、このルールに従っていけば、将来の機能拡張に備えられるようになります。
+
+
+■ 参照MSDNページ
+  CA1002: ジェネリック リストを公開しません （しないでください）
+  http://msdn.microsoft.com/ja-jp/library/ms182142.aspx
+
+
+───────────────────────────────────
+『C#プログラミングレッスン』  (ぼぼ週刊）
+───────────────────────────────────
+ Published by Gushwell.
+  Copyright (C) 2004-2009 Gushwell All rights reserved.
+  Microsoft MVP - Visual C#(Apr 2005 - Mar 2010)
+
+ <<■ Gushwell's Page ■>>
+ 窓際プログラマ─の独り言  ：http://gushwell.ldblog.jp/
+ 窓際プログラマ─の読書三昧：http://gushwell.jugem.jp/
+ Gushwell's F# Programming Diary : http://techbank.jp/gushwell/
+ Gushwell's C# Programming Page  ：http://gushwell.ifdef.jp/
+  C#デザインパタ─ン : http://gushwell.ifdef.jp/dp/csdpindex.html
+
+ ☆メールマガジンの感想お待ちしています☆
+  http://gushwell.ifdef.jp/mail.html
+
+ <<■ コミュニティtechbank.jp (http://techbank.jp/Community/) ■>>
+ Gushwellが参加している技術系コミュニティです。
+ マイクロソフト系テクノロジー＆製品に特化したコミュニティで、Webサイト
+ では、VB、C#、VC++、SQL Server, BizTalk Server などの技術情報を公開し
+ ています。皆さんの参加をお待ちしています。
+ ブロガーさんも募集中です。
+───────────────────────────────────

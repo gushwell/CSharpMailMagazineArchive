@@ -1,0 +1,141 @@
+
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━━━ No.295 ━□
+
+ 「正規表現編」-- RegexOptions 列挙体
+                                                            by Gushwell
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+RegexOptions 列挙体
+
+■□───────────────────────────────────
+■□ 大文字小文字を区別しない
+
+大文字小文字を区別しないで検索したいときがあります。
+それを正規表現で記述するのは意外と面倒です。
+例えば、"jpn" という３文字の単語を大文字小文字を区別しないように正規表現で
+書くとすると
+
+ "[Jj][Pp][Nn]"
+
+となるでしょうか。3文字ならいいですが、これがもっと長い単語だと、正規表現
+を書くのが面倒です。
+そんな時に使えるのが、RegexOptions 列挙体です。Match, Matchesメソッドの最
+後の引数として、RegexOptions 列挙体を指定することで、大文字小文字を区別し
+ないで検索することが出来るようになります。
+
+ string text = "jpn, JPN, Jpn";
+ var mc = Regex.Matches(text, @"jpn",RegexOptions.IgnoreCase);
+ foreach (Match m in mc) {
+     Console.WriteLine(m.Value);
+ }
+
+
+
+■□───────────────────────────────────
+■□ 改行コードが入っている文字列にも対応する。
+
+System.IO.File.ReadAllText メソッドで読み込んだテキストデータに対し、正規
+表現で検索処理をすることを考えましょう。このテキストファイルの各行は、数字
+か英字のいずれかで成り立っているものとします。
+
+例えば、こんな感じ。
+
+1234
+401
+Hoo
+12987
+Bar
+Baz
+1980
+345
+128650
+
+このとき、数字だけの行が何行あるかを調べるコードをRegexクラスを使い、書い
+てみたいと思います。
+そのコードを以下に示します。
+
+ string text = File.ReadAllText("sample.txt");
+ var mc = Regex.Matches(text, @"^[0-9]+\r$", RegexOptions.Multiline);
+ Console.WriteLine(mc.Count);
+
+結果は 6 と表示されます。
+
+続けて、
+
+ foreach (Match m in mc) {
+    Console.WriteLine(m.Value);
+ }
+
+とすれば、一致した行を表示できます。
+
+RegexOptions.Multiline オプションを使えば、複数行の中から特定の行を探すの
+に、１行ごとに Match/Matchesメソッドを呼び出すのではなく、複数行丸ごと、
+Match/Matchesメソッドの引数に渡すことができます。
+
+
+■□───────────────────────────────────
+■□ 行頭、行末、改行
+
+先ほどの例の正規表現には、行頭、行末を示す ^ と $ をつける必要があります。
+これが無いと、
+
+A1234
+123 456
+
+のような行とも一致してしまいます。
+
+\rは、改行コードの片割れです。Windowsでは、テキストファイルの改行コードは、
+\r\n(0D 0A)の2文字で表されます。
+しかし、正規表現上は、\n が改行を示し、$ はこの \nを行末と認識するようで
+す。
+そのため、各行の行末を $ で示そうとして
+
+^[0-9]+$
+
+と書いてしまうと、数字と $ の間に \r が挟まっている文字列とは一致しなくな
+ってしまいます。
+なんか釈然としないですが、しかたないですね。
+
+なお、改行が\nだけからなるテキストファイルも対象にしたい場合は、
+
+"^[0-9]+\r?$"
+
+と \r の後に ? をつけます。この ? は、ゼロ回または 1 回の一致を意味します。
+
+ただし、Macの改行コードは、\r であり、Regexでは、これを改行とはみなしてく
+れません。
+つまり、複数行とはみなさないため、今度は、行頭 ^ の指定が、邪魔をして、
+２行目以降を検索してくれなくなります。
+
+Windows, Unix, Mac の改行コードすべてに対応するには、もうすこし工夫が必要
+です。
+Mac形式のテキストファイルであることが事前に分かっているのならば、\r を \n
+に変換後に、Regexで処理をするのでも良いと思います。
+
+このあたりは、どなたか良い方法があれば、情報をお寄せいただければと思います。
+
+
+==========================================================================
+■ Gushwellの書籍
+
+『C#プログラミング入門』
+ http://www.amazon.co.jp/exec/obidos/ASIN/4777515982/gaius-22/
+
+ 目次は、こちらで確認できます。
+ http://www.kohgakusha.co.jp/books/detail/978-4-7775-1598-1
+
+
+─────────────────────────────────────
+『C#プログラミングレッスン』  (ぼぼ週刊）
+ ☆皆さまからの感想をお待ちしています。http://gushwell.ifdef.jp/mail.html
+─────────────────────────────────────
+ Published by Gushwell.
+  Copyright (C) 2011 Gushwell All rights reserved.
+  Microsoft MVP for Visual C#(Apr 2005 - Mar 2012)
+
+ ■Gushwell's Page
+ Gushwell's C# Dev Notes           : http://gushwell.ldblog.jp/
+ Gushwell's C# Programming Page    : http://gushwell.ifdef.jp/
+ Gushwell's F# Programming Diary   : http://techbank.jp/gushwell/
+ Gushwellの読書ノート              : http://gushwell.jugem.jp/
+─────────────────────────────────────

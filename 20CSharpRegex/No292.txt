@@ -1,0 +1,92 @@
+
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━━━ No.292 ━□
+
+ 「正規表現編」-- Regexクラスのstaticメソッド
+                                                            by Gushwell
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+■□───────────────────────────────────
+■□ Staticメソッドとインスタンスメソッド
+
+前回、指定した正規表現が、対象文字列にあるかどうかを調べる以下のようなコー
+ドを掲載しました。
+
+ string text = "private List<string> results = new List<string>();";
+ Regex rx = new Regex(@"List<\w+>");   // ★
+ Match m = rx.Match(text);             // ★
+ if (m.Success) {
+    Console.WriteLine("Index={0}, Length={1}, Value={2}",
+                       m.Index, m.Length, m.Value);
+ }
+
+このコードは、つぎのように書き換えることができます。
+
+ string text = "private List<string> results = new List<string>();";
+ Match m = Regex.Match(text, @"List<\w+>");
+ if (m.Success) {
+    Console.WriteLine("Index={0}, Length={1}, Value={2}",
+                       m.Index, m.Length, m.Value);
+ }
+
+
+このようにstaticメソッドを呼ぶことで、★印の行を１行にすることもできます。
+通常は、こちらのstaticメソッドを使うほうが良いと思います。
+
+IsMacthメソッドも、staticメソッドで書き直してみましょう。
+
+ string text = "private List<string> results = new List<string>();";
+ bool isMatch = Regex.IsMatch(text,@"List<\w+>");
+ if (isMatch) {
+    Console.WriteLine("見つかりました");
+ }
+
+と書くことができます。
+
+
+■□───────────────────────────────────
+■□ 正規表現のキャッシュ
+
+.NET Framework の正規表現エンジンは最近使用された静的正規表現をキャッシュ
+します。言い換えると、staticメソッド呼び出しで渡された正規表現は、内部表
+現に変換（コンパイル）後、キャッシュされます。
+一方、インスタンスメソッドからの呼び出しでは、正規表現はキャッシュされま
+せん。
+そのため、いくつか固定的な正規表現が利用されるアプリケーションでは、正規
+表現がキャッシュされるstaticメソッドを使うことをお勧めします。
+インスタンスメソッドの場合は、コードの書き方によっては、同じ正規表現が何
+回もコンパイルされる可能性があります。
+
+なお、正規表現のキャッシュサイズは、規定で15個となっています。このキャッ
+シュサイズを変更する場合は、Regex.CacheSize プロパティで値を変更できます。
+キャッシュサイズが自動で拡張されることはありません。
+
+staticメソッドには、Match、IsMatchのほかに、Matches、Replace、および
+Splitメソッドがあります。Matches、Replace、および Split メソッドについて
+は、次回以降の回で順次説明します。
+
+
+==========================================================================
+■ Gushwellの書籍
+
+『C#プログラミング入門』
+ http://www.amazon.co.jp/exec/obidos/ASIN/4777515982/gaius-22/
+ 2415円
+
+題名は「入門」とありますが、ビギナー向けの本ではありません。
+すでにC#でプログラミングしている方にも有用な情報を盛り込んだつもりです。
+もし、ご興味がありましたら、本屋さんで手にとっていただければ幸いです。
+
+─────────────────────────────────────
+『C#プログラミングレッスン』  (ぼぼ週刊）
+ ☆皆さまからの感想をお待ちしています。http://gushwell.ifdef.jp/mail.html
+─────────────────────────────────────
+ Published by Gushwell.
+  Copyright (C) 2011 Gushwell All rights reserved.
+  Microsoft MVP for Visual C#(Apr 2005 - Mar 2012)
+
+ ■Gushwell's Page
+ Gushwell's C# Dev Notes           : http://gushwell.ldblog.jp/
+ Gushwell's C# Programming Page    : http://gushwell.ifdef.jp/
+ Gushwell's F# Programming Diary   : http://techbank.jp/gushwell/
+ Gushwellの読書ノート              : http://gushwell.jugem.jp/
+─────────────────────────────────────

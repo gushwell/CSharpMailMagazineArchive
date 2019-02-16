@@ -1,0 +1,94 @@
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━━━ No.374 ━□
+
+「C#5.0編」-- async, awaitによる非同期処理(4)
+                                                           by Gushwell
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+おはようございます。
+さて今回は、Task.Delayを例に、非同期メソッドの利用方法についてみていきたい
+と思います。
+
+
+■□───────────────────────────────────
+■□ Task.Delay
+
+これまでは、Thread.Sleep()メソッドで、処理の遅延をしていましたが、Taskク
+ラスにも同様の処理をするDelayメソッドがあります。
+
+これを使ってみましょう。
+
+  private async void button2_Click(object sender, EventArgs e) {
+      label1.Text = "";
+      var task = Task.Factory.StartNew(() => {
+          return DoSomething();
+      });
+      string s = await task;
+      label1.Text = "Finish " + s;
+  }
+
+  private string DoSomething() {
+      string s = DateTime.Now.ToLongTimeString();
+      Task.Delay(4000);
+      return s + "～" + DateTime.Now.ToLongTimeString();
+  }
+
+実行してみましょう。
+あれ？。DoSSoomethingメソッドは、4秒待たずにすぐに抜けてしまいます。
+これはDelayメソッドが内部で非同期処理をしているためです。
+つまり、このDelayメソッドが終わるまで待ってあげないといけません。
+await キーワードをつければよいですね。awaitを使うということは、
+メソッドにasyncキーワードも付加しないといけませんね。
+DoSomethingメソッドを書き換えてみました。
+
+  private async string DoSomething() {
+      string s = DateTime.Now.ToLongTimeString();
+      await Task.Delay(4000);
+      return s + "～" + DateTime.Now.ToLongTimeString();
+  }
+
+しかし、
+"非同期メソッドの戻り値の型は、void、Task、または Task<T> である
+ことが必要です。"
+というビルドエラーが出てしまいます。
+ということで、戻り値の型を書き直したのが以下のメソッドです。
+
+  private async Task<string> DoSomething() {
+      string s = DateTime.Now.ToLongTimeString();
+      await Task.Delay(4000);
+      return s + "～" + DateTime.Now.ToLongTimeString();
+  }
+
+DoSomethingメソッドの戻り値の型が変更されたたので、呼び出し元も変更して
+あげます。
+
+  private async void button2_Click(object sender, EventArgs e) {
+      label1.Text = "";
+      var s = await DoSomething();
+      label1.Text = "Finish " + s;
+  }
+
+コードを見ていただければお分かりのように、Task.Factory.StartNewメソッド
+が無くなっています。
+すでに、DoSomethingメソッド自体が、Task<TResult>型ですから、それをまた
+Task.Factory.StartNewで起動する必要はありません。
+DoSomethingメソッドが非同期で呼び出されるメソッドとして定義されたので、
+
+  var s = await DoSomething();
+
+とするだけです。
+
+─────────────────────────────────────
+『C#プログラミングレッスン』  (ほぼ週刊）
+☆皆さまからの感想をお待ちしています。http://gushwell.ifdef.jp/mail.html
+─────────────────────────────────────
+Published by Gushwell.
+Copyright (C) 2013 Gushwell All rights reserved.
+Microsoft MVP for Visual C#(Apr 2005 - Mar 2014)
+
+■Gushwell's Page
+facebook Page                     : http://www.facebook.com/CSharpLesson
+Gushwell's C# Dev Notes           : http://gushwell.ldblog.jp/
+Gushwell's C# Programming Page    : http://gushwell.ifdef.jp/
+気ままな読書ノート                : http://gwbooks.hatenablog.com/
+Twitterアカウント                 : @gushwell
+─────────────────────────────────────

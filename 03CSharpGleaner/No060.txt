@@ -1,0 +1,154 @@
+┏━┳━━━━━━━━━━━━━━━━━━━━━━━━━┳━┳━┳━┓
+┃☆┃ C#プログラミングレッスン                         ┃＿┃□┃×┃
+┣━┻━━━━━━━━━━━━━━━━━━━━━━━━━┻━┻━┻━┫
+┃演算子のオーバーロード                                     No.060 ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+■──────────────────────────────────
+■ 演算子のオーバーロードとは、
+
+intやlongなど組込み型には、+, -, <, > などの演算子が用意されています。
+構造体などのユーザ定義型に対して、これらの演算子を使えるようにする機能
+が、演算子のオーバーロードです。
+
+演算子のオーバーロードの説明で必ずと言ってよいほど例に使われるのが、
+複素数 Complex 型の例です。
+C# には、複素数を扱う型がないので、複素数を扱おうと思ったら、Complex
+という構造体を作ることになりまね。このとき、
+
+  Complex a = new Complex(1,2);
+  Complex b = new Complex(3,4);
+  Complex c = a + b;
+
+と + 演算子で加算できれば便利ですよね。
+
+  Complex c = Complex.Add(a,b);
+とか
+  Complex c = a.Add(b);
+だと、直感的ではありません。とくに、後者のAddは、a に追加されるのか、
+追加されないのかが、分かり難いインターフェースです。
+
+このまま、 Complexを例に説明を続けてもよいのですが、それだと、あまりに
+もありふれているので、別の例で説明することにしましょう。
+
+
+■──────────────────────────────────
+■ Distance 構造体における例
+
+演算子のオーバーロードについて見て行くために、長さ表す Distance構造体
+を定義し、このDistance 構造体に対して、演算子を使えるようにしたいと思
+います。
+
+長さ表す場合、50cm とか、12Km とか、「数値」と「単位」が対になっていま
+すね。
+そのため、Distance構造体では、数値と単位の２つを持つようにします。
+以下のそのコードを示します。
+
+enum DistanceUnit {                // km, mm は、ここでは省略
+    cm,
+    m,
+}
+
+struct Distance {
+    public double value;           // 便宜上 public にしている
+    public DistanceUnit unit;      // 便宜上 public にしている
+    public Distance(double value, DistanceUnit unit) {
+        this.value = value;
+        this.unit = unit;
+    }
+    public override string ToString() {
+        return value.ToString() + unit.ToString();
+    }
+    private Distance ConvertToM() {
+        double val = (unit == DistanceUnit.cm) ? value * 0.01 : value;
+        return new Distance(val, DistanceUnit.m);
+    }
+    // 加算を行うメソッド    
+    public static Distance Plus(Distance a, Distance b) {
+        double val = a.ConvertToM().value + b.ConvertToM().value;
+        return new Distance(val, DistanceUnit.m);
+    }
+    // 減算を行うメソッド    
+    public static Distance Minus(Distance a, Distance b) {
+        double val = a.ConvertToM().value - b.ConvertToM().value;
+        return new Distance(val, DistanceUnit.m);
+    }
+}
+
+class Program {
+    static void Main(string[] args) {
+        Distance a = new Distance(2, DistanceUnit.m);
+        Distance b = new Distance(30, DistanceUnit.cm);
+        Distance c = Distance.Plus(a, b);
+        Distance d = Distance.Minus(a, b);
+        Console.WriteLine(c);
+        Console.WriteLine(d);
+        Console.ReadLine();
+    }
+}
+
+※ このコードは、Visual C# 2005 Express Editionで動作を確認しています。
+
+まだ、演算子のオーバーロードをしていませんが、これで、とりあえず動くク
+ラスとなりました。
+Plus,Minus演算子の中で、単位変換をやっていますので、Distance構造体を使
+う側は、どのような単位かを意識することなく、加算、減算が可能です。
+Plus,Minus は、
+  ・staticメソッドにしてある。
+  ・２つのDistance インスタンスを引数として受け取る。
+  ・結果は、新たな構造体を生成し、それを返している。
+この３つに注目してください。
+この３点が、２項演算子をオーバーロードする時の、お約束です。
+
+■──────────────────────────────────
+■ +、- 演算子のオーバーロード
+
+では、＋ と － の２つの演算子をオーバーロードしましょう。この段階まで
+構造体が出来ていれば、演算子のオーバーロードをするのは、それほど難しい
+ことではありません。Plus, Minus メソッドを、operator キーワードを使い、
+以下のように変更するだけです。
+
+struct Distance {
+    ... 省略 ...
+    // + 演算子をオーバーロード
+    public static Distance operator +(Distance a, Distance b) {
+        double val = a.ConvertToM().value + b.ConvertToM().value;
+        return new Distance(val, DistanceUnit.m);
+    }
+    // - 演算子をオーバーロード
+    public static Distance operator -(Distance a, Distance b) {
+        double val = a.ConvertToM().value - b.ConvertToM().value;
+        return new Distance(val, DistanceUnit.m);
+    }
+}
+
+このようにすれば、
+
+   Distance c = a + b;
+   Distance d = a - b;
+
+という記述が可能です。また、+=, -= 演算子をオーバーロードしていなくて
+も、
+
+   c += a;
+   d -= b;
+
+のように記述が可能になります。
+
+オーバーロードできる演算子は、+, - * / 以外にも、
+
+++, --, &, ==, !=, <, >, <=, >=
+
+などが、 オーバーロード可能です、詳しくは、.NET Framework のドキュメン
+トをご覧ください。
+
+┌─┬─────────────────────────┬─┬─┬─┐
+│☆│ C#プログラミングレッスン  (ぼぼ週刊）            │＿│□│×│
+├─┴─────────────────────────┴─┴─┴─┤
+│ Published by Gushwell  (Microsoft MVP for Visual C#)             │
+│ Copyright (C) 2004-2005 Gushwell All rights reserved.            │
+│-------------------- Gushwell's Page ---------------------------- │
+│ 窓際プログラマーの独り言  ：http://blog.livedoor.jp/gushwell/    │
+│ 窓際プログラマーの読書三昧：http://gushwell.jugem.jp/            │
+│             よろしかったらアクセスしてみてください！             │
+└─────────────────────────────────┘

@@ -1,0 +1,97 @@
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━━━ No.359 ━□
+
+「暗号化編」-- 秘密キーをキーコンテナに格納する
+                                                           by Gushwell  
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+
+公開キー暗号化やデジタル署名で利用した秘密キーは平文のままローカルコンピ
+ュータに保存することはセキュリティ上好ましくありません。
+秘密キーをローカルコンピュータに格納する必要がある場合は、キー コンテナを
+使用することが推奨されています。
+今回は、非対称キーを作成し、キー コンテナに格納する方法についてみていきま
+す。
+
+■□───────────────────────────────────
+■□ 非対称キーを作成し、キーコンテナに格納する手順
+
+非対称キーを作成し、キーコンテナに格納する手順を示します。
+
+(1)CspParameters クラスのインスタンスを作成します。
+
+(2) キーコンテナを呼び出すときに使用する名前を CspParametersオブジェクトの
+    KeyContainerNameフィールドに渡します。
+
+(3)AsymmetricAlgorithmから派生したクラス (通常はRSACryptoServiceProvider
+   または DSACryptoServiceProvider) のインスタンスを作成します。このとき
+   (1)で作成したCspParameters オブジェクトをそのコンストラクタに渡します。
+
+AsymmetricAlgorithmから派生したクラスのインスタンスを生成することで、非対
+称キーを作成しキーコンテナに格納されます。ちょっと不思議なインターフェー
+スですね。コード自体は単純ですが、直感的に理解しにくいなーというのが僕の
+感想ですが、そういうもんだと思ってください。
+
+得られた非対称キーを得るには、AsymmetricAlgorithmの具象オブジェクトの
+ToXmlStringを使います。
+
+では実際にそのコードを示します。
+
+ CspParameters cp = new CspParameters();
+ cp.KeyContainerName = "SamleContainerName";
+ RSACryptoServiceProvider rsa = new RSACryptoServiceProvider(cp);
+ string privateKey = rsa.ToXmlString(true);
+ Console.WriteLine(privateKey);
+
+ここでは、privateキーだけを取得しましたが、ToXmlString(false) で公開キーを
+取得することができます。
+
+
+実は、キーコンテナから既存のキーを取得するのも、上記のコードと全く同じとな
+ります。既に、同盟のKeyContainerNameが存在している場合は、既存のキーを取得
+できます。
+
+
+■□───────────────────────────────────
+■□ キー コンテナからキーを削除する手順
+
+キーコンテナに格納したキーを、キーコンテナから削除する手順は以下の通りです。
+
+(1) CspParameters クラスの新しいインスタンスを作成します。
+
+(2) キーコンテナを呼び出すときに使用する名前を CspParametersオブジェクトの
+    KeyContainerNameフィールドに渡します。
+
+(3) AsymmetricAlgorithmから派生したクラス (通常はRSACryptoServiceProvider
+    または DSACryptoServiceProvider) のインスタンスを作成します。このとき
+    (1)で作成したCspParameters オブジェクトをそのコンストラクタに渡します。
+
+(4) (3)で作成したAsymmetricAlgorithm具象オブジェクトの PersistKeyInCSP プ
+    ロパティをfalseに設定します。
+
+(5) AsymmetricAlgorithm から派生したクラスの Clear メソッドを呼び出し、キー
+    を削除します。
+
+その具体的なコードを示します。
+
+  CspParameters cp = new CspParameters();
+  cp.KeyContainerName = "SamleContainerName";
+  RSACryptoServiceProvider rsa = new RSACryptoServiceProvider(cp);
+  rsa.PersistKeyInCsp = false;
+  rsa.Clear();
+
+
+─────────────────────────────────────
+『C#プログラミングレッスン』  (ほぼ週刊）                                 
+☆皆さまからの感想をお待ちしています。http://gushwell.ifdef.jp/mail.html  
+─────────────────────────────────────
+Published by Gushwell.                                                    
+Copyright (C) 2013 Gushwell All rights reserved.                          
+Microsoft MVP for Visual C#(Apr 2005 - Mar 2013)                          
+
+■Gushwell's Page                                                         
+facebook Page                     : http://www.facebook.com/CSharpLesson  
+Gushwell's C# Dev Notes           : http://gushwell.ldblog.jp/            
+Gushwell's C# Programming Page    : http://gushwell.ifdef.jp/             
+Gushwellの読書ノート              : http://gushwell.jugem.jp/             
+Twitterアカウント                 : @gushwell                             
+─────────────────────────────────────

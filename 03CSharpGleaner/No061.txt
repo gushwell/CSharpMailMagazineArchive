@@ -1,0 +1,109 @@
+┏━┳━━━━━━━━━━━━━━━━━━━━━━━━━┳━┳━┳━┓
+┃☆┃ C#プログラミングレッスン                         ┃＿┃□┃×┃
+┣━┻━━━━━━━━━━━━━━━━━━━━━━━━━┻━┻━┻━┫
+┃implicit と explicit                                       No.061 ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+前回の、Distance構造体を例に、型変換に関する implicit と explicit キー
+ワードについて説明しましょう。
+
+■──────────────────────────────────
+■ implicit
+
+implicit キーワードは、ユーザー定義型において暗黙の型変換を行えるよう
+にするためのキーワードです。ちなみに、implicitとは、「暗黙の」という意
+味です。
+
+先週説明した Distance構造体は、メートル単位で扱うことがほとんどで、ご
+く稀に、cm など他の単位で使うものと仮定しましょう。
+
+その場合、以下のように、簡単に double型に変換できれば、便利ですね。
+
+  Distance a = new Distance(2, DistanceUnit.m);   // 2メートル
+  double x = a;      // xには、2.0が代入される。
+  Distance a = new Distance(50, DistanceUnit.cm); // 50cm
+  double y = a;      // yには、0.5が代入される。
+
+この暗黙的な型変換をさせるのが、implicit キーワードです。
+
+struct Distance {
+    ... 省略 ...
+    public Distance(double value, DistanceUnit unit) {
+        this.value = value;
+        this.unit = unit;
+    }
+    private Distance ConvertToM() {
+        double val = (unit == DistanceUnit.cm) ? value * 0.01 : value;
+        return new Distance(val, DistanceUnit.m);
+
+    }
+    public static Distance operator +(Distance a, Distance b) {
+        double val = a.ConvertToM().value + b.ConvertToM().value;
+        return new Distance(val, DistanceUnit.m);
+    }
+    public static Distance operator -(Distance a, Distance b) {
+        double val = a.ConvertToM().value - b.ConvertToM().value;
+        return new Distance(val, DistanceUnit.m);
+    }
+    // double への暗黙の変換を定義
+    public static implicit operator double(Distance m) {
+        return m.ConvertToM().value;
+    }
+}
+
+最後のメソッドが、doubleへの暗黙の型変換を定義している箇所です。
+このメソッドの中で、doubleへの変換処理を行い、変換後の値を returnしま
+す。
+
+これにより、
+
+  Distance a = new Distance(2, DistanceUnit.m);
+  double x = a;      // xには、2.0が代入される。
+  Distance a = new Distance(50, DistanceUnit.cm);
+  double y = a;      // yには、0.5が代入される。
+
+のような記述が可能になります。
+
+■──────────────────────────────────
+■ explicit
+
+explicit キーワードは、 ユーザー定義の明示的な型変換演算子を宣言するた
+めに使用されます。丁度、implicitとは逆ですね。Distance クラスでの例を
+以下に示します。
+
+  struct Distance {
+      ... 省略 ...
+      public static explicit operator Distance(double m) {
+          Distance d = new Distance(m,DistanceUnit.m);
+          return d;
+      }
+  }
+
+この例では、double型からDistanec型への明示的なキャストを可能にしていま
+す。
+
+これにより、以下のようなキャストが可能になります。
+
+  Distance a = (Distance)25.8;
+
+なお、 explicitを指定したstaticメソッドの引数に別の型を指定すれば、様
+々な型から Distance型への変換が可能になります。
+ただし、演算子のオーバーロードも同様ですが、誰もが自然に感じるようなも
+のにする必要があります。
+
+----------------------------------------------------------------------
+落穂拾いということで、C#の文法の枝葉にあたる部分を解説していますが、
+あと数回で落穂ひろいを終わらせ、interface, delegate, event について
+の解説を始める予定です。
+C#2.0 についての説明はまだまだ先になりそうです。
+
+┌─┬─────────────────────────┬─┬─┬─┐
+│☆│ C#プログラミングレッスン  (ぼぼ週刊）            │＿│□│×│
+├─┴─────────────────────────┴─┴─┴─┤
+│ Published by Gushwell  (Microsoft MVP for Visual C#)             │
+│ Copyright (C) 2004-2005 Gushwell All rights reserved.            │
+│-------------------- Gushwell's Page ---------------------------- │
+│ 窓際プログラマーの独り言  ：http://blog.livedoor.jp/gushwell/    │
+│ 窓際プログラマーの読書三昧：http://gushwell.jugem.jp/            │
+│             よろしかったらアクセスしてみてください！             │
+└─────────────────────────────────┘

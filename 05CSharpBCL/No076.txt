@@ -1,0 +1,168 @@
+┏━┳━━━━━━━━━━━━━━━━━━━━━━━━━┳━┳━┳━┓
+┃☆┃ C#プログラミングレッスン                         ┃＿┃□┃×┃
+┣━┻━━━━━━━━━━━━━━━━━━━━━━━━━┻━┻━┻━┫
+┃System.Collections.ArrayListクラス                          No.076┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+■──────────────────────────────────
+■ ArrayListクラスとは
+
+配列は複数の要素を格納する祭に利用する基本的なデータ構造ですが、いくつ
+の要素を格納するのかが事前に分らない場合に対応が困難です。後から、サイ
+ズを変更したくても、変更することができません。
+そんな時に利用できるのが、.NET Frameworkに用意されている ArrayListクラ
+スです。ArrayListクラスは、動的にサイズが変更する配列のようなものです。
+
+では、早速使い方を見てみましょう。
+
+public class Book {
+    private string name;
+    public Book(string name) {
+        this.name = name;
+    }
+    public string Name {
+        get { return name; }
+    }
+}
+
+というBookクラスを例に、複数の Bookオブジェクトを扱う例を見ていきます。
+
+
+■──────────────────────────────────
+■ ArrayListにオブジェクトを追加する
+
+以下に、追加するコードを示します。
+
+  ArrayList list = new ArrayList();
+  list.Add(new Book("C#入門"));
+  list.Add(new Book("C#応用"));
+  list.Add(new Book("やさしいC#"));
+
+  まず、ArrayList のインスタンスを生成し、list 変数に代入します。
+  次に、Add メソッドで、Bookオブジェクトを、追加しています。
+
+  list.Add(new Book("C#入門"));
+
+  は、
+
+  Book book = new Book("C#入門");
+  list.Add(book);
+
+  を１行にしたものです。
+
+
+■──────────────────────────────────
+■ ArrayListからオブジェクトを取り出す
+
+ArrayListから要素を取り出すには、インデクサを使い、
+
+  Book book = list[0] as Book;  // 0番目の要素を取り出す
+
+のように記述します。ArrayListでは、Addした順番にオブジェクトが格納され
+ますので、 list[0] で、 "C#入門" のインスタンスが取得できるのですが、
+ArrayList が返す型は、object型なので、as 演算子を使い、Bookにキャスト
+してあげる必要があります。
+
+※ ちょっと、めんどくさいですね。
+
+
+■──────────────────────────────────
+■ すべての要素を取り出す
+
+すべての要素を取り出すコードを示します。
+
+ for (int i = 0; i < list.Count; i++) {
+     Book book = list[i] as Book;
+     Console.WriteLine(book.Name);
+ }
+
+ArrayList には、 Countプロパティがあり、要素の数を知ることができますの
+で、この数だけ、ループさせることで、すべての要素を取得できます。
+
+先ほどのコードは、foreach 文を使えば、さらに簡単に記述できます。
+この場合は、キャストは不要です。
+
+ foreach (Book book in list) {
+     Console.WriteLine(book.Name);
+ }
+
+
+■──────────────────────────────────
+■ その他のメソッド
+
+・Insert
+
+  ArrayList 内の指定したインデックスの位置に要素を挿入します。
+  第１引数には、挿入する位置を指定します。0 から始まるインデックス番号
+  です。
+
+    list.Insert( 2, new Book("犬でもわかるC#" ) );
+
+・Remove
+
+  ArrayList 内で最初に見つかった特定のオブジェクトを削除します。
+
+    Book book = new Book("C#入門");
+    list.Add(new Book(book);
+    ...
+    list.Remove(book);    // C#入門を削除
+
+・RemoveAt
+
+  ArrayList の指定したインデックスにある要素を削除します。
+
+    list.RemoveAt( 2 );  // ２番目の要素を削除
+
+・Clear
+
+  ArrayList からすべての要素を削除します。
+
+    list.Clear();  // すべての要素をArrayListから削除
+
+・IndexOf
+
+  ArrayList 内またはその一部にある値のうち、最初に出現する値の、0 から
+  始まるインデックス番号を返します。
+  それ以外の場合は -1を返します。
+
+    int index = list.IndexOf(book);
+
+  <<注意>>
+    以下のコードは、"C#応用"の位置を見つけようとしていますが、正しくあ
+    りません。
+
+    ArrayList list = new ArrayList();
+    list.Add(new Book("C#入門"));
+    list.Add(new Book("C#応用"));
+    list.Add(new Book("やさしいC#"));
+
+    Book book = new Book("C#応用");
+    int index = list.IndexOf(book);
+
+    なぜなら、最初の new Book("C#応用") で生成されるインスタンスと、２
+    回目の new Book("C#応用"); で生成されるインスタンスは、 たまたま、
+    本の名前が一緒だったというだけで、別物だからです。
+
+・ToArray
+
+  ArrayList の要素を新しい配列にコピーします。
+
+    Book[] books = list.ToArray(typeof(Book)) as Book[];
+    foreach (Book book in books) {
+       Console.WriteLine(book.Name);
+    }
+
+    ToArrayメソッドの引数には、 typeof演算子を使って、要素の型を指定し
+    ます。
+
+
+┌─┬─────────────────────────┬─┬─┬─┐
+│☆│ C#プログラミングレッスン  (ぼぼ週刊）            │＿│□│×│
+├─┴─────────────────────────┴─┴─┴─┤
+│ Published by Gushwell  (Microsoft MVP for Visual C#)             │
+│ Copyright (C) 2004-2006 Gushwell All rights reserved.            │
+│-------------------- Gushwell's Page ---------------------------- │
+│ 窓際プログラマーの独り言  ：http://blog.livedoor.jp/gushwell/    │
+│ 窓際プログラマーの読書三昧：http://gushwell.jugem.jp/            │
+│             よろしかったらアクセスしてみてください！             │
+└─────────────────────────────────┘

@@ -1,0 +1,168 @@
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━━━ No.240 ━□
+  
+ 「どう書く？org編」-- 九九の表示
+                                                             by Gushwell  
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+
+■□───────────────────────────────────
+■□ お題:九九の表示
+
+掛け算の九九を下のように表示してください。 
+
+1 * 1 =  1
+1 * 2 =  2
+1 * 3 =  3
+(略)
+7 * 8 = 56
+7 * 9 = 63
+8 * 1 =  8
+8 * 2 = 16
+8 * 3 = 24
+8 * 4 = 32
+(略)
+9 * 8 = 72
+9 * 9 = 81
+
+なお、この問題は掛け算をどうやるかではなく、どうやって右端がそろうようにレ
+イアウトするかに重点を置いているので、下のようなへこんだ出力は禁止です。
+
+
+7 * 9 = 63
+8 * 1 = 8
+8 * 2 = 16
+
+ URL:http://ja.doukaku.org/62/
+
+
+
+■□───────────────────────────────────
+■□ 解答コード
+
+using System;
+
+namespace Sample {
+    class Program {
+        static void Main(string[] args) {
+            for (int i = 1; i <= 9; i++ )
+                for (int j = 1; j <= 9; j++) {
+                    string s = string.Format("{0} * {1} = {2,2}", 
+                                             i, j, i * j);
+                    Console.WriteLine(s);
+                }
+            Console.ReadLine();
+        }
+    }
+}
+
+
+■□───────────────────────────────────
+■□解説
+
+2重ループを利用している部分は特に解説の必要はないですね。
+右端をそろえる方法をどうやって書くかがこのお題のポイントなわけです。
+桁あわせをしないのであれば、
+
+ Console.WriteLine("{0} * {1} = {2}", i, j, i * j);
+
+となりますが、桁あわせをするために、
+
+ Console.WriteLine("{0} * {1} = {2,2}", i, j, i * j);
+
+としています。桁あわせの指定は、{2,2} の後ろの 2 の部分です。ここで、表示
+する桁数を示しています。
+4とすれば、4桁分の領域で右寄せされます。
+
+
+■□───────────────────────────────────
+■□ ポイント
+
+String.Formatで複合書式指定文字列を使うと、数値を様々な書式でフォーマット
+することができます。
+それを確認するためのコードを示しますので、是非動かしてみて、どのようにフォ
+ーマットされるのかを確認してください。実際に確かめてもらえるように、あえて
+結果は載せないでおきます。
+
+ private static void FormatNumberTest() {
+     // 数値をフォーマットする
+     FormatAndWrite("[{0,10}]", 12345);
+     FormatAndWrite("[{0,-10}]", 12345);
+     FormatAndWrite("[{0:d10}]", 12345);
+     FormatAndWrite("[{0,10:000000}]", 12345);
+     FormatAndWrite("[{0,10:#,#}]", 12345);
+     FormatAndWrite("[{0,10:#}]", 0);
+     FormatAndWrite("[{0,10:0}]", 0);
+
+     FormatAndWrite("[{0,10}]", 1234.567);
+     FormatAndWrite("[{0,10:f2}]", 1234.567);
+     FormatAndWrite("[{0,10:00.000}]", 1234.56);
+     FormatAndWrite("[{0,10:#,#.00}]", 1234.56);
+     FormatAndWrite("[{0,10:#,#.00}]", 1234.5);
+     FormatAndWrite("[{0,10:#,#.00}]", 1234);
+     FormatAndWrite("[{0:#,#.00}]", 1234);
+     FormatAndWrite("[{0:f2}]", 1234.5);
+ }
+ static void FormatAndWrite(string format, int num) {
+     string s = string.Format(format, num);
+     Console.WriteLine(s);
+ }
+
+
+なお、この複合書式指定文字列は、Console.WriteLineやStringBuilderクラスの
+AppendFormatメソッドでも利用できます。
+
+
+
+■□───────────────────────────────────
+■□ 次回のお題：与えられた文字列でピラミッド 
+
+「ピラミッドを作る」の続編です。与えられた文字列を使って下の例のようなピラ
+ミッドを書いてください。頂点は与えられた文字列の最後の一文字、底辺は与えら
+れた文字列の各文字の間に空白が入ったものになります。
+
+>>> >>> pyramid("sample")
+     e
+    l e
+   p l e
+  m p l e
+ a m p l e
+s a m p l e
+
+>>> >>> pyramid("abracadabra")
+          a
+         r a
+        b r a
+       a b r a
+      d a b r a
+     a d a b r a
+    c a d a b r a
+   a c a d a b r a
+  r a c a d a b r a
+ b r a c a d a b r a
+a b r a c a d a b r a
+
+ URL:http://ja.doukaku.org/52/
+
+─────────────────────────────────────
+『C#プログラミングレッスン』  (ぼぼ週刊）                                 
+─────────────────────────────────────
+ ☆メールマガジンの感想お待ちしています☆                                 
+   http://gushwell.ifdef.jp/mail.html                                     
+
+ Published by Gushwell.                                                   
+   Copyright (C) 2004-2009 Gushwell All rights reserved.                  
+   Microsoft MVP for Visual C#(Apr 2005 - Mar 2011)                       
+                                                                          
+ <<■ Gushwell's Page ■>>                                                
+ 窓際プログラマ─の独り言  ：http://gushwell.ldblog.jp/                   
+ 窓際プログラマ─の読書三昧：http://gushwell.jugem.jp/                    
+ Gushwell's F# Programming Diary : http://techbank.jp/gushwell/           
+ Gushwell's C# Programming Page  ：http://gushwell.ifdef.jp/              
+   C#デザインパタ─ン : http://gushwell.ifdef.jp/dp/csdpindex.html        
+                                                                          
+ <<■ コミュニティtechbank.jp (http://techbank.jp/Community/) ■>>        
+ Gushwellが参加している技術系コミュニティです。                           
+ マイクロソフト系テクノロジー＆製品に特化したコミュニティです。Webサイトで
+ は、VB、C#、VC++、SQL Server, BizTalk Server などの技術情報を公開していま
+ す。皆さんの参加をお待ちしています。
+─────────────────────────────────────

@@ -1,0 +1,104 @@
+
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━━━ No.306 ━□
+
+「レシピ編」-- 日付の操作 (1)
+                                                           by Gushwell  
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+今回から、日付操作についてのコードを示します。日付を扱うには.NET Framework
+のDateTime構造体を使います。
+
+今日のコード
+
+1. 本日の日付を求めるには
+2. 指定した日にちの曜日を求めるには
+3. ２つの日付の差を得るには
+4. ｎ日後、ｎ日前の日付を求めるには
+5. 1月1日からの通算日を求めるには
+
+
+■□───────────────────────────────────
+■□ 本日の日付を求めるには
+
+本日の日付を求めるには、Today静的プロパティを参照します。
+
+DateTime today = DateTime.Today;
+Console.WriteLine("{0}年{1}月{2}日",today.Year, today.Month, today.Day);
+
+DateTimeオブジェクトの Year、Month、Day プロパティで、年、月、日を得ること
+ができます。
+
+■□───────────────────────────────────
+■□ 指定した日にちの曜日を求めるには
+
+DateTime構造体の DayOfWeekプロパティを参照することで、曜日を得ることができます。
+次のコードは、Todayプロパティで、本日の日付を得て、その曜日を取り出しています。
+曜日は、DayOfWeek列挙体です。
+
+DateTime today = DateTime.Today;
+DayOfWeek dayOfWeek = today.DayOfWeek;
+Console.WriteLine(dayOfWeek);
+
+
+■□───────────────────────────────────
+■□ ２つの日付の差を得るには
+
+２つの日付の差を求めるには、マイナス演算子を使い、引き算をすればいいだけです。
+結果は、 TimeSpan型です
+
+DateTime date1 = new DateTime(2011, 8, 24);
+DateTime date2 = new DateTime(2011, 9, 2);
+TimeSpan ts = date2 - date1;
+Console.WriteLine(ts.Days);
+
+
+■□───────────────────────────────────
+■□ ｎ日後、ｎ日前の日付を求めるには
+
+AddDaysメソッドを使うことで、n日後、n日前を求めることができます。ここでは、
+20日後、20日前の日付を求めるコードを示します。
+
+DateTime date = DateTime.Today;
+DateTime date2 = date.AddDays(20);
+DateTime date3 = date.AddDays(-20);
+
+なお、+,- 演算子を使い、以下のように書くこともできます。
+
+DateTime date4 = date + new TimeSpan(20, 0, 0, 0);
+DateTime date5 = date - new TimeSpan(20, 0, 0, 0);
+
+
+■□───────────────────────────────────
+■□ 1月1日からの通算日を求めるには
+
+求めるのが、1月2日だとすると、通算日は 2日となります。
+
+- 演算子をつかえば日数差を求めることができますので、前年の12月31日との差を
+求めれば、1月1日からのからの通算日を求められます。
+次のコードは、本日が、1月1日からの通算日を求めるコードです。
+
+DateTime today = DateTime.Today;
+DateTime baseDate = new DateTime(today.Year, 1, 1).AddDays(-1);
+TimeSpan ts = today - baseDate;
+Console.WriteLine(ts.Days);
+
+しかし、わざわざこのようなコードを書く必要はありません。DayOfYearプロパティ
+を使えば簡単に通算日がわかります。
+
+DateTime today = DateTime.Today;
+Console.WriteLine(today.DayOfYear);
+
+
+─────────────────────────────────────
+『C#プログラミングレッスン』  (ぼぼ週刊）                                 
+☆皆さまからの感想をお待ちしています。http://gushwell.ifdef.jp/mail.html  
+─────────────────────────────────────
+Published by Gushwell.                                                    
+ Copyright (C) 2011 Gushwell All rights reserved.                        
+ Microsoft MVP for Visual C#(Apr 2005 - Mar 2012)                        
+
+■Gushwell's Page                                                         
+Gushwell's C# Dev Notes           : http://gushwell.ldblog.jp/            
+Gushwell's C# Programming Page    : http://gushwell.ifdef.jp/             
+Gushwellの読書ノート              : http://gushwell.jugem.jp/             
+─────────────────────────────────────

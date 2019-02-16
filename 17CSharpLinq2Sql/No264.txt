@@ -1,0 +1,142 @@
+
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━━━ No.264 ━□
+  
+ 「LINQ to SQL編」-- 読込む関連データを制限する
+                                                             by Gushwell  
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+
+これまで、「遅延読み込み」、「即時読み込み」の説明をしてきましたが、データ
+を読み込む際に、より細かな制御を行いたい場合があります・
+今回は、そのようなときに利用するAssociateWith メソッドについて説明します。
+
+■□───────────────────────────────────
+■□ 不要なデータも読み込んでしまうLINQクエリ
+
+例えば、
+
+ int thisYear = 1998;
+ using (var db = new NorthwindDataContext()) {
+     var custOrderQuery =
+             from cust in db.Customers
+             where cust.City == "London"
+             select cust;
+
+     foreach (Customer custObj in custOrderQuery) {
+         Console.WriteLine(custObj.CustomerID);
+         foreach (Order ord in custObj.Orders) {
+             if ( ord.OrderDate.Value.Year == thisYear)
+                 Console.WriteLine("\t {0}", ord.OrderDate);
+         }
+     }
+ }
+
+
+というコードを考えてみましょう。
+まず、"London"にある顧客(Customer)だけを取得するクエリを用意します。その後、
+取得した(*)それぞれの顧客に対し、関連する注文(Order)をforeachで処理します。
+そして、その注文(Order)のOrderDateが thisYearのものだけをコンソールに出力
+しています。
+
+ (*)"取得した"という用語ですが、実際には「遅延実行」されるために、
+    custOrderQuery変数に代入された時には、まだ、取得されていません。
+    foreachでcustOrderQueryが参照される時に、SQLが発行され取得されます。
+
+このコードの欠点は、取得したCustomerに関連するOrderのうち、今年(thisYear)
+のOrderデータだけを扱いたいにも関わらず、そのCustomerに関連するOrderのデー
+タを全て取得してしまうことです。
+
+Ordersプロパティにアクセスしたときに、全てのOrederが読み込まれてしまいます。
+
+
+■□───────────────────────────────────
+■□ AssociateWithメソッドによる読み込み条件の付加
+
+必要なのは、今年のデータだけなのですから、関連するOrdersには、今年のデータ
+だけが読み込まれるようにしたいですよね。
+関連するデータの取得を制限するには、AssociateWith メソッドを使用します。
+
+では、そのコードを示します。
+
+ int thisYear = 1998;
+ using (var db = new NorthwindDataContext()) {
+     DataLoadOptions dlo = new DataLoadOptions();
+     dlo.AssociateWith<Customer>(c => 
+         c.Orders.Where(p => p.OrderDate.Value.Year == thisYear));
+     db.LoadOptions = dlo;
+     var custOrderQuery =
+         from cust in db.Customers
+         where cust.City == "London"
+         select cust;
+
+     foreach (Customer custObj in custOrderQuery) {
+         Console.WriteLine(custObj.CustomerID);
+         foreach (Order ord in custObj.Orders) {
+             Console.WriteLine("\t {0}", ord.OrderDate);
+         }
+     }
+ }
+
+DataLoadOptions.AssociateWithメソッドを使い、読み込むOrderデータを今年の注
+文のものに制限しています。
+DataLoadOptionsは、System.Linq 名前空間にあります。
+
+foreachの中に、if文がなくなっていることに注目してください。
+
+前回示した即時読み込み(DataLoadOptions.LoadWithメソッド)と組み合わせれば、
+１回のSQLの発行にすることができます。
+
+ int thisYear = 1996;
+ using (var db = new NorthwindDataContext()) {
+     db.Log = Console.Out;
+     db.DeferredLoadingEnabled = false;
+     DataLoadOptions dlo = new DataLoadOptions();
+     dlo.LoadWith<Customer>(c => c.Orders);
+     dlo.AssociateWith<Customer>(c => 
+         c.Orders.Where(p => p.OrderDate.Value.Year == thisYear));
+     db.LoadOptions = dlo;
+     var custOrderQuery =
+         from cust in db.Customers
+         where cust.City == "London"
+         select cust;
+
+     foreach (Customer custObj in custOrderQuery) {
+         Console.WriteLine(custObj.CustomerID);
+         foreach (Order ord in custObj.Orders) {
+                 Console.WriteLine("\t {0}", ord.OrderDate);
+         }
+     }
+ }
+
+
+もう、ここまでくると、同等のSQL文を書けと言われても、SQLが苦手な僕には絶対
+に無理です(笑)。
+
+LINQ to SQLが登場したころ、「LINQ to SQL はどんなSQLが発行されるかわからな
+いから、不安だし使えない」というような意見を聞いたりしましたが、LINQ to
+SQLの機能を正しく理解すれば、そんな不安は杞憂であり、一般的なプログラマが
+書くSQLよりも、まともなSQLを発行させることができるということが理解していた
+だけるのでは思います。
+あくまでも、Gushwellの個人的な意見ですが、次回説明する「遅延ロード」と組み
+合わせれば、ADO.NET2.0と比べ、より容易に実務的なクエリが作れるのではと考え
+ています。
+
+
+─────────────────────────────────────
+『C#プログラミングレッスン』  (ぼぼ週刊）                                 
+ ☆皆さまからの感想をお待ちしています。http://gushwell.ifdef.jp/mail.html 
+─────────────────────────────────────
+ Published by Gushwell.                                                   
+   Copyright (C) 2004-2010 Gushwell All rights reserved.                  
+   Microsoft MVP for Visual C#(Apr 2005 - Mar 2011)                       
+                                                                          
+ ■Gushwell's Page                                                        
+ 窓際プログラマ─の独り言        : http://gushwell.ldblog.jp/             
+ Gushwell's C# Programming Page  : http://gushwell.ifdef.jp/              
+ Gushwell's F# Programming Diary : http://techbank.jp/gushwell/           
+ Gushwellの読書ノート            : http://gushwell.jugem.jp/              
+                                                                          
+ ■コミュニティtechbank.jp (http://techbank.jp/)                          
+ Gushwellが参加している技術系コミュニティです。                           
+ 有志メンバーによるBlogでの技術情報発信も行っています。                   
+─────────────────────────────────────

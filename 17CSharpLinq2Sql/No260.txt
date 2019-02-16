@@ -1,0 +1,158 @@
+
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━━━ No.260 ━□
+  
+ 「LINQ to SQL編」-- リレーションシップ
+                                                             by Gushwell  
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+--------------------------------------------------------------------------
+■■読者プレゼント■■
+--------------------------------------------------------------------------
+7月半ばにご案内を開始した「読者プレゼント」ですが、厳選な抽選のもと、２名
+の方（当初は１名の予定でしたが、２名に増やしました）に当選のメールを差し上
+げました。
+後日、「Visual Studio 2010 Ultimate with MSDN Subscription のアクティベー
+ションカード」を、送らせていただきます。
+
+今回の応募では、当メールマガジンのご意見、ご感想を記入していただきましたが、
+すべてに目を通させていただきました。貴重なご意見・ご感想をお寄せいただき感
+謝しています。この場をお借りしお礼申しあげます。今後とも皆様のご期待にこた
+えられるよう、より良い記事を書いていきたいと思いますので、ご愛顧のほどよろ
+しくお願いいたします。
+
+さて、それでは本題に入りましょう。
+前回までは、一つのテーブルを参照するクエリについての説明でしたが、今回は、
+複数のテーブルを参照するリレーションについて見ていきたいと思います。
+
+■□───────────────────────────────────
+■□ エンティティクラス間の関係
+
+NorthwindデータベースのCategoryテーブルとProductテーブルは、１対多の関係が
+あります。この２つのテーブルのデータの参照について見てみます。
+まず、CategoryテーブルをLINQ to SQLで扱えるようにするために、サーバーエク
+スプローラーからNORTHWND.MDFのCategoryテーブルを O/Rデザイナー画面に D&Dし
+てください。
+作成されたCategoryクラスとProductクラスの間には、リレーションが貼られてい
+るのが確認できます。テーブル間の関連が、そのまま「LINQ to SQLエンティティ
+クラス」にも、受け継がれているわけです。
+
+Northwind.designer.csを見てみると、Categoryクラスには、
+
+ [Association(Name="Category_Product", Storage="_Products",
+           ThisKey="CategoryID", OtherKey="CategoryID")]
+ public EntitySet<Product> Products
+ {
+     get
+     {
+         return this._Products;
+     }
+     set
+     {
+         this._Products.Assign(value);
+     }
+ }
+
+というプロパティが追加されています。
+
+また、Productクラスには、
+
+ [Association(Name="Category_Product", Storage="_Category",
+          ThisKey="CategoryID", OtherKey="CategoryID", 
+          IsForeignKey=true)]
+ public Category Category
+ {
+     get
+     {
+         return this._Category.Entity;
+     }
+     ...
+ }
+
+というプロパティが存在します。
+ここから、
+「一つの製品カテゴリーには、複数の製品が関連付けされている」
+「一つの製品には、一つのカテゴリが関連付けされている」
+ということがわかります。
+
+
+■□───────────────────────────────────
+■□ リレーションシップを使ったデータの参照
+
+先ほど説明したプロパティを使うと、joinをする代わりに、
+
+ using (var db = new NorthwindDataContext()) {
+     db.Log = Console.Out;
+     var query = from p in db.Products
+                 where p.Category.CategoryName == "Condiments"
+                 select new {
+                     p.ProductID,
+                     p.ProductName,
+                     p.Category.CategoryName
+                 };                                
+     foreach (var p in query) {
+         Console.WriteLine("{0} | {1} | {2}", 
+                 p.ProductID, p.ProductName, p.CategoryName);
+     }
+ }
+
+と書けます。
+where句に注目してください。これは、CategoryNameが"Condiments"である
+Productを取得しているのですが、Productオブジェクト経由で、Categoryテーブル
+に存在するCategoryNameにアクセスしています。
+オブジェクト指向的なコードで書けるため、C#で慣れ親しんだプログラマにとって
+はとても分かりやすいコードになっています。
+
+実際発行されるSQLは、
+
+SELECT [t0].[ProductID], [t0].[ProductName], [t1].[CategoryName]
+FROM [dbo].[Products] AS [t0]
+LEFT OUTER JOIN [dbo].[Categories] AS [t1] 
+     ON [t1].[CategoryID] = [t0].[CategoryID]
+WHERE [t1].[CategoryName] = @p0
+
+となっています。
+
+もし、Customerプロパティを使わないと、joinを使って、
+
+ using (var db = new NorthwindDataContext()) {
+     db.Log = Console.Out;
+     var query = from p in db.Products
+                 join c in db.Categories on 
+                           p.CategoryID equals c.CategoryID
+                 where c.CategoryName == "Condiments"
+                 select new {
+                     p.ProductID,
+                     p.ProductName,
+                     c.CategoryName
+                 };
+     foreach (var p in query) {
+         Console.WriteLine("{0} | {1} | {2}",
+                 p.ProductID, p.ProductName, p.CategoryName);
+     }
+
+
+と、より複雑なクエリ式を書く必要があります。
+こちらは、INNER JOIN が使われますので厳密には同じコードとは言えませんが、
+joinを使ったクエリと比べると、格段に理解しやすいものになっています。
+内部結合、外部結合については、機会があれば説明したいと思います。
+
+
+─────────────────────────────────────
+『C#プログラミングレッスン』  (ぼぼ週刊）                                 
+ ☆皆さまからの感想をお待ちしています。http://gushwell.ifdef.jp/mail.html 
+─────────────────────────────────────
+ Published by Gushwell.                                                   
+   Copyright (C) 2004-2010 Gushwell All rights reserved.                  
+   Microsoft MVP for Visual C#(Apr 2005 - Mar 2011)                       
+                                                                          
+ ■Gushwell's Page                                                        
+ 窓際プログラマ─の独り言        : http://gushwell.ldblog.jp/             
+ Gushwell's C# Programming Page  : http://gushwell.ifdef.jp/              
+ Gushwell's F# Programming Diary : http://techbank.jp/gushwell/           
+ Gushwellの読書ノート            : http://gushwell.jugem.jp/              
+                                                                          
+ ■コミュニティtechbank.jp (http://techbank.jp/)                          
+ Gushwellが参加している技術系コミュニティです。                           
+ 有志メンバーによるBlogでの技術情報発信も行っています。                   
+─────────────────────────────────────
+

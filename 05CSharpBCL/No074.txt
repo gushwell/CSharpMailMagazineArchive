@@ -1,0 +1,161 @@
+┏━┳━━━━━━━━━━━━━━━━━━━━━━━━━┳━┳━┳━┓
+┃☆┃ C#プログラミングレッスン                         ┃＿┃□┃×┃
+┣━┻━━━━━━━━━━━━━━━━━━━━━━━━━┻━┻━┻━┫
+┃System.Stringクラス                                         No.074┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+C#の string は、 .NET Frameworkの System.Stringの別名ですので、System.
+Stringクラスで定義してあるプロパティ、メソッドなどは、 すべて、C#の
+stringで利用可能です。
+
+今回は、代表的ないくつかのプロパティ、メソッドについて見ていきましょ
+う。
+
+■──────────────────────────────────
+■ staticフィールド、メソッド
+
+● Empty
+   空の文字列を表す、読み取り専用のフィールドです。
+   このフィールドの値は、長さ 0 の文字列 "" です。
+
+   例
+     string s = string.Empty;
+
+● Join
+   指定した文字列配列の各要素を、 指定した区切り記号で連結し、連結され
+   た単一の文字列を作成します。
+
+   例
+     string[] val = {"C#", "Java", "VB", "Ruby"};
+     string sep   = ", ";
+     string result = String.Join(sep, val);
+
+     結果は、
+       "C#, Java, VB, Ruby"
+     が、result に代入されます。
+
+● Format
+   指定した書式で、文字列を作成します。
+   この Formatメソッドは良く目にすると思いますので、ここではいくつかの例
+   を示すに止めます。
+
+   string val = "C#";
+   string s = string.Format("{0} Magazine", val);
+
+   int grade = 3;
+   int classno = 5;
+   string s = string.Format("{0}年{1}組", grade, classno);
+
+   string s = string.Format("{0:f1}%", 56.789);
+
+   string s = string.Format("{0,5:00000}",123);
+
+   それぞれ、ｓには、
+     "C# Magazine"
+     "3年5組"
+     "56.8"
+     "00123"
+
+
+■──────────────────────────────────
+■ インスタンスプロパティ、インスタンスメソッド
+
+● Length プロパティ
+   文字列の長さを得ます。
+
+   int len = str.Length;
+
+● Chars  (stringクラスのインデクサ）
+   文字列の要素を取り出します。インデックスは 0から始まります。
+   char c = str[i];
+
+● ToLower, ToUpper メソッド
+    大文字、小文字の変換 をします。
+
+    string s = str.ToLower();
+    string s = str.ToUpper();
+
+● Trim メソッド
+    文字列の前後にある空白を除去します。
+
+    string s = str.Trim();
+
+● Remove メソッド
+    指定した位置から、任意の数の文字を削除します。
+
+    // 5文字目から3文字分を削除する
+    string str = "01234ABC567";
+    string s = str.Remove(5,3);
+
+    ※ 結果は、"01234567"
+
+● Insert メソッド
+    文字列に文字列を挿入します。
+
+    // strの２文字目から“abc” を挿入する (結果は、
+    string str = "01234";
+    string s = str.Insert(2,"abc");
+
+    ※ 結果は、"01abc234"
+
+● Replace メソッド
+    文字列の一部を別の文字列で置き換えます。
+
+    // wish を hope に変換
+    string s = str.Replace("wish","hope");
+
+● IndexOf メソッド
+    文字列の中を検査し、指定した文字列が最初に見つかった位置を返します。
+    見つからなかった倍は、-1 を返します。
+
+    // str に、"while"が含まれる位置をを調べる。
+    int n = str.IndexOf("while");
+
+● StartsWith メソッド
+    指定した文字列から開始されるかを判断します。戻り値の型は bool;
+
+    // strが、"<!-" で 始まるかをチェック
+    bool b = str.StartsWith("<!-"))
+
+● EndsWith メソッド
+    指定した文字列で終わるかどうかを判断する。戻り値の型は bool;
+
+    // strが、"-->" で 終わるかをチェック
+    bool b = str.EndsWith("-->");
+
+● ToCharArray メソッド
+    Unicode文字配列にコピーします。
+
+    // strに格納されている文字を、文字配列にコピーする。
+    char[] arr = str.ToCharArray();
+
+● Split メソッド
+    引数で指定された文字で、文字列を分割する
+
+    // 文字列を "," で区切り、区切られた部分文字列を配列にコピー
+    // "," そのものは、配列には入らない。
+    string str "123,abc,45678,wxyz";
+    string[] strList = str.Split(',');
+    foreach ( string s in strList ) {
+        Console.WriteLine(s);
+    }
+
+    結果は、
+
+    123
+    abc
+    4567
+    wxyz
+
+    と表示されます。
+
+┌─┬─────────────────────────┬─┬─┬─┐
+│☆│ C#プログラミングレッスン  (ぼぼ週刊）            │＿│□│×│
+├─┴─────────────────────────┴─┴─┴─┤
+│ Published by Gushwell  (Microsoft MVP for Visual C#)             │
+│ Copyright (C) 2004-2006 Gushwell All rights reserved.            │
+│-------------------- Gushwell's Page ---------------------------- │
+│ 窓際プログラマーの独り言  ：http://blog.livedoor.jp/gushwell/    │
+│ 窓際プログラマーの読書三昧：http://gushwell.jugem.jp/            │
+│             よろしかったらアクセスしてみてください！             │
+└─────────────────────────────────┘

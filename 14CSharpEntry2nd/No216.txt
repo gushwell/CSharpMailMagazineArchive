@@ -1,0 +1,355 @@
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━ No.216 ━□
+  
+ 「C#入門編 2nd」 -- メソッドとプロパティ(2)
+                                                         by Gushwell  
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+クラスの第3回目では、前回までの説明で説明しきれなかった、メソッドのオ
+ーバーロード、コンストラクタ、読み込み専用プロパティ、staticメソッドに
+ついて説明します。
+
+
+■□─────────────────────────────────
+■□ メソッドのオーバーロード
+
+.NET Framework を使っていると、 メソッド名が同じにも関わらず、引数の数
+や、引数の型が異なるメソッドがあるのに気が付きます。
+例えば、
+
+ MessageBox.Show("Hello world!");
+
+ MessageBox.Show("Hello world!", "HelloDialog");
+
+のように、同じShowメソッドでも引数の数が異なっています。これをメソッド
+のオーバーロードと言います。
+もし、このオーバーロード機能がないと、プログラマは、多くのメソッド名を
+使い分けなければなりません。これは結構大変です。
+
+また、クラスを作る側も、全てのメソッドを別の名前にする必要が出てくるた
+め、名前を考えるのがとても大変です。
+オーバーロード機能があることで、クラスを使う側も作る側も楽ができるとい
+うことです。
+
+では、このオーバーロード機能を自分が作成したクラスにも実装するにはどう
+するかというと、実はこれ、ものすごく簡単です。
+
+実際の例を見て見ましょう。
+
+class SampleClass {
+    public int MaxNumber(int x, int y) {
+        return x > y ? x : y;
+    }
+    public int MaxNumber(int x, int y, int z) {
+        if (x > y)
+            return x > z ? x : z;
+        else
+            return y > z ? y : z;
+    }
+    public int MaxNumber(int[] nums) {
+        int m = nums[0];
+        for (int i = 1; i < nums.Length; i++)
+            m = MaxNumber(m, nums[i]);
+        return m;
+    }
+}
+
+   ※ 「MaxNumberメソッドは、static にすべきだろう」、と突っ込みは
+      しないでください(^^;
+
+この例では、 ３つのMaxNumberメソッドを定義しています。それぞれ、引数の
+部分が異なっていることに注意してください。
+このように、単に同じ名前で引数の異なるメソッドを定義するだけでメソッド
+をオーバーロードすることができます。
+
+使う側は、
+
+    SampleClass sc = new SampleClass();
+    Console.WriteLine(sc.MaxNumber(10, 20));
+    Console.WriteLine(sc.MaxNumber(10, 20, 30));
+    int[] nums = { 10, 5, 40, 8, 30, 10 };
+    Console.WriteLine(sc.MaxNumber(nums));
+
+のように書けば、対応するメソッドが呼び出されます。
+
+なお、以下のように、戻り値だけが異なるメソッドをオーバーロードすること
+は出来ませんので、注意してください。
+
+   public int ToNumber(string s) { ... }
+   public float ToNumber(string s) { ... }
+
+
+■□─────────────────────────────────
+■□ コンストラクタとは
+
+コンストラクタとはクラスのインスタンスが生成される時に呼び出される特殊
+なメソッドです。
+
+  Person p = new Person();
+
+とすると、コンストラクタという特別なメソッドが呼ばれています。
+No.215で定義した Pseronクラスは、コンストラクタの定義をしていませんの
+で、デフォルトのコンストラクタが呼ばれています。
+インスタンスが生成される時に独自の初期化を行いたい場合には、自分でコン
+ストラクタを定義することになります。
+例えば、
+
+   Person p = new Person("夏目漱石", new Date(1867,2,9);
+
+のように、名前と生年月日を引数に与えて、Personインスタンスを初期化した
+いときには、以下のようにコンストラクタを定義します。
+
+    class Person {
+        public string Name { get; set; }
+        public DateTime Birthday { get; set; }
+        // コンストラクタの定義
+        public Person(string name, DateTime birthdy) {
+            Name = name;
+            Birthday = birthday;
+        }
+        ...以下超略
+    }
+
+コンストラクタの定義は、通常のメソッドとほぼ同じですが、名前が、そのク
+ラス名と同じであり、戻り値の指定がありません。
+
+なお、 独自のコンストラクタを定義すると、
+
+   Person p = new Person();
+
+とデフォルトコンストラクタを呼び出すことはできません。もし、呼び出した
+いのならば、
+
+    class Person {
+        public string Name { get; set; }
+        public DateTime Birthday { get; set; }
+        // 独自コンストラクタの定義
+        public Person(string name, DateTime birthdy) {
+            this.Name = name;
+            this.Birthday = birthday;
+        }
+        // デフォルトコンストラクタの定義
+        public Person() {
+        }
+        ...以下超略
+    }
+
+
+と引数のないコンストラクタも定義する必要があります。
+ ※でも、このPersonクラスでは不要ですね。
+必要ならば、引数なしコンストラクタ内で、初期化処理を書くことができます。
+
+■ thisキーワード
+
+上の例では、thisキーワードを使用しています。
+thisキーワードは、 クラスの現在のインスタンスを指し、コンストラクタや
+メソッド内でメンバ(フィールドやメソッド）にアクセスするために使用でき
+ます。
+先ほどの例では、thisは無くても良いのですが、Personクラスのメンバーであ
+るName,Birthdayであることを明示しています。thisキーワードは、メソッド
+の中でも利用できます。
+
+
+■□─────────────────────────────────
+■□読み込み専用プロパティ
+
+コンストラクタで、生年月日が指定できるようになったので、
+
+  p.Birthday = new DateTime(1988,5,29);
+
+のようなコードは不要になりました。人の生年月日が変わることは通常あり得
+ないですからね。
+
+そんな時に、プロパティを読み込み専用にすることができます。
+
+    class Person {
+        public string Name { get; set; }
+        public DateTime Birthday { get; private set; }
+        // コンストラクタの定義
+        public Person(string name, DateTime birthdy) {
+            this.Name = name;
+            this.Birthday = birthday;
+        }
+        ...以下超略
+    }
+
+privateにすることで、クラスの外側からBirthdayプロパティが見えなく
+なりますで、
+
+  p.Birthday = new DateTime(1988,5,29);
+
+と書くと、コンパイル時にエラーになり、不要な代入を防ぐことができます。
+
+もうひとつ、読み取り専用プロパティの例をお見せします。今度は、前回作成
+したGetAgeメソッドを読み取り専用プロパティにしてみます。
+
+
+ class Person {
+     ... 省略 ...
+     public int Age {
+         get {
+             DateTime today = DateTime.Today;
+             int age = today.Year - birthday.Year;
+             if (today.Month < birthday.Month)
+                 age--;
+             else if (today.Month == birthday.Month &&
+                      today.Day < birthday.Day)
+                 age--;
+             return age;
+         }
+     }
+ }
+
+
+このように、getアクセッサだけを持つプロパティを作成することでも、読み
+取り専用プロパティを作成することができます。
+
+
+■□─────────────────────────────────
+■□ static
+
+.NET FrameworkにはDateTimeが存在するので、その必要性もあまりないのです
+が、あなたは日付を扱うDateクラスを作成したとしましょう。
+
+    public class Date {
+        public Date(int year,int month, int day) {
+            Year = year;
+            Month = month;
+            Day = day;
+        }
+        public int Year { get; set; }
+        public int Month { get; set; }
+        public int Day { get; set; }
+    }
+
+この日付クラスに、以下のように、うるう年かどうかを判定するIsLeapYearメ
+ソッドを追加したとします。
+
+    public class Date {
+        ...
+        public bool IsLeapYear() {
+            return ((Year % 4 == 0) &&
+                   ((Year % 100 != 0) || (Year % 400 == 0)));
+        }
+    }
+
+これを利用するコードは、こんな感じでしょうか。
+
+   Date dt = new Date(2009,1,1);
+   if ( dt.IsLeapYear() )
+       Console.WriteLine("閏年です");
+
+うーーん、閏年かどうかを調べるには、2009 年という情報だけが必要なのに、
+月と日の情報が必要と言うのは、ちょっと使い勝手が悪いですね。
+では、
+
+  public class Date {
+      ...
+      public bool IsLeapYear(int year) {
+          return ((Year % 4 == 0) &&
+                 ((Year % 100 != 0) || (Year % 400 == 0)));
+      }
+  }
+
+と引数で調べたい年を受け取るようにしたらどうでしょうか。
+
+   Date dt = new Date(1,1,1);
+   if ( dt.IsLeapYear(2009) )
+       Console.WriteLine("閏年です");
+
+うーーん、 さらに良く無いですね。1年1月1日というどうでも良い情報が必要
+になってしまいました。
+そもそも、Dateクラスのインスタンスを生成しなければ、閏年かどうかを調べ
+られない、ということ自体がおかしそうです。Dateクラスのインスタンスを生
+成せずに、閏年かどうかを判断できるのが自然ですよね。
+こんな時に使うのが static メソッドです。IsLeapYearを以下のように書き換
+えます。
+
+  public class Date {
+      ...
+      public static bool IsLeapYear(int year) {
+          return ((Year % 4 == 0) &&
+                 ((Year % 100 != 0) || (Year % 400 == 0)));
+      }
+  }
+
+このようにすると、IsLeapYearメソッドは、以下のように使えます。
+
+  if ( Date.IsLeapYear(2009) )
+       Console.WriteLine("閏年です");
+
+どこが違ったのかと言えば、IsLeapYearメソッドを呼び出すのに、変数名では
+なく、
+
+   Date.IsLeapYear(2009)
+
+とクラス名を先頭に付けるようにした点です。
+
+この連載でも何回も出てきた Console.WriteLine という記述も、WriteLineと
+いうメソッドが、Consoleクラスの staticメソッドであるということを示して
+います。
+
+■staticの意味
+
+staticの意味を考えてみたいと思います。
+意味的には、
+『IsLeapYearというメソッドは、個々のインスタンスに属するメソッドでは
+  なく、クラスに属するメソッドである』
+ということです。
+
+IsLeapYearを通常のメソッドとして定義した場合、どうもしっくりとこなかっ
+たのは、「閏年かどうかを調べる」という機能は、確かに日付という概念に属
+する機能でありますが、何年何月何日という個々のインスタンスに依存しない
+機能だからですね。
+
+このことが理解できれば、 staticメソッドから、通常のフィールド変数にア
+クセスできない理由もわかりますね。
+
+ちなみに、この static というキーワードは、メソッド以外にも、フィールド
+やプロパティにも指定することが可能です。
+
+
+■□─────────────────────────────────
+■□ MSDN ライブラリを活用しよう
+
+この入門編では、C#の文法を中心に解説をしてきましたが、実際のプログラム
+を作成する際は、文法だけ知っていてもプログラムを組むことはできません。
+.NET Frameworkで用意されている様々なクラスを利用する必要があります。
+入門編2ndにおいても、.NET Framework が用意しているクラスをいくつか利用
+しています。Console や List<T>は .NET Frameworkが用意しているクラスで
+す。
+これまでの説明でクラスについての基礎を説明しましたので、MSDNライブラリ
+に出てくる クラス、プロパティ、メソッド、コンストラクタなどが何を意味
+するかがお分かりになったと思います。
+
+MSDNライブラリはプログラマにとってまさに宝の宝庫です。是非、MSDN ライ
+ブラリと仲良くなって、プログラミングを楽しんでください。
+
+入門編2ndは、残すところあと２回となりました。だんだん高度な内容も含ま
+れるようになりましたが、できるだけ平易な説明を心がけたいと思います。で
+はまた (^^/。
+
+
+───────────────────────────────────
+『C#プログラミングレッスン』  (ぼぼ週刊）                             
+───────────────────────────────────
+ Published by Gushwell.                                               
+   Copyright (C) 2004-2009 Gushwell All rights reserved.              
+   Microsoft MVP - Visual C#(Apr 2005 - Mar 2010)                     
+
+ <<■ Gushwell's Page ■>>
+ 窓際プログラマ―の独り言  ：http://blog.livedoor.jp/gushwell/        
+ 窓際プログラマ―の読書三昧：http://gushwell.jugem.jp/                
+ Gushwell's F# Programming Diary : http://techbank.jp/gushwell/       
+ Gushwell's C# Programming Page  ：http://gushwell.ifdef.jp/          
+   C#デザインパタ―ン : http://gushwell.ifdef.jp/dp/csdpindex.html    
+
+ ☆メールマガジンの感想お待ちしています☆                             
+   http://gushwell.ifdef.jp/mail.html                                 
+
+ <<■ コミュニティtechbank.jp (http://techbank.jp/) ■>>
+ Gushwellが参加している技術系コミュニティです。
+ マイクロソフト系テクノロジー＆製品に特化したコミュニティで、Webサイト
+ では、VB、C#、VC++、SQL Server, BizTalk Server などの技術情報を公開し
+ ています。皆さんの参加をお待ちしています。
+ ブロガーさんも募集中です。
+───────────────────────────────────

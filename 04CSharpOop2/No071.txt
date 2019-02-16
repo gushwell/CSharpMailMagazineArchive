@@ -1,0 +1,148 @@
+┏━┳━━━━━━━━━━━━━━━━━━━━━━━━━┳━┳━┳━┓
+┃☆┃ C#プログラミングレッスン                         ┃＿┃□┃×┃
+┣━┻━━━━━━━━━━━━━━━━━━━━━━━━━┻━┻━┻━┫
+┃event(3) - 発行者クラスの作成 [後編]                       No.071 ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+今回は、先週の続きで、イベントを発行するクラスの定義です。
+
+■──────────────────────────────────
+■ イベントの宣言
+
+event キーワードを使って、 クラスにパブリックイベントメンバを定義しま
+す。
+
+class TextFinder {
+    public event TextFoundEventHandler TextFound;
+    ...
+}
+
+TextFoundEventHandlerが、先ほど宣言したdelegateの名前で、TextFoundがイ
+ベントの名前になります。
+
+
+■──────────────────────────────────
+■ On<EventName> メソッドの定義
+
+次に、イベント発行を一手に引き受けるprotectedメソッドを定義します。
+
+class TextFinder {
+    ...
+    protected virtual void OnTextFound(TextFoundEventArgs e){
+        if (TextFound != null) {
+            TextFound(this, e);
+        }
+    }
+}
+
+TextFoundが null のときだけ、TextFouned を呼び出しています。必ず、この
+ように nullかどうかの判断をしてください。
+TextFound は、TextFoundEventHandler の変数ですから、これで TextFoundに
+紐付けられたメソッドが呼び出されるのでしたね。
+TextFoundを呼び出す際は、必ず第1引数は thisを指定します。
+
+
+■──────────────────────────────────
+■ On<EventName>の呼び出しコードの記述
+
+最後に、通知したいイベントが発生したときに、OnEventName を呼び出すコー
+ドを記述します。
+
+
+class TextFinder {
+    ...
+    public void Execute(string target) {
+        using (StreamReader sr = new StreamReader(_filename)) {
+            string line;
+            while ((line = sr.ReadLine()) != null) {
+                if ( line.TrimStart().IndexOf(target) == 0 ) {
+                    TextFoundEventArgs e = new TextFoundEventArgs(line);
+                    OnTextFound(e);
+                }
+            }
+        }
+    }
+}
+
+この Executeメソッドは、STreamReaderクラスを使い、１行ずつ読み込み、読
+み込んだ行が、 引数で受け取った文字列で始まっていたら、OnTextFoundメソ
+ッドを呼ぶようになっています。
+なお、TrimStartメソッドを使い、先頭の空白を除去してから、検査を行って
+います。
+
+
+■──────────────────────────────────
+■ 完成したソース
+
+では、 完成したソースを以下に示します。是非、このコードを VS.NET上で動
+かし、ステップ実行しながら、どのようにプログラムが動くのかを確認してく
+ださい。
+
+using System;
+using System.IO;
+
+namespace No070 {
+    class Class1 {
+        [STAThread]
+        static void Main(string[] args) {
+            TextFinder tf = new TextFinder(@"D:\temp\test.cs");
+            tf.TextFound += new TextFoundEventHandler(tf_TextFoundEvent);
+            tf.Execute("class");
+            Console.ReadLine();
+        }
+
+        private static void tf_TextFoundEvent(object sender,
+                                              TextFoundEventArgs e) {
+            Console.WriteLine(e.Line);
+        }
+    }
+
+    public class TextFoundEventArgs : EventArgs {
+        private string _line;
+        public TextFoundEventArgs(string line) {
+            _line = line;
+        }
+        public string Line {
+            get { return _line; }
+        }
+    }
+
+    public delegate void TextFoundEventHandler(object sender,
+                                               TextFoundEventArgs e);
+
+    class TextFinder {
+        private string _filename;
+        public event TextFoundEventHandler TextFound;
+        public TextFinder(string filename) {
+            _filename = filename;
+        }
+        protected virtual void OnTextFound(TextFoundEventArgs e){
+            if (TextFound != null) {
+                TextFound(this, e);
+            }
+        }
+        public void Execute(string target) {
+            using (StreamReader sr = new StreamReader(_filename)) {
+                string line;
+                while ((line = sr.ReadLine()) != null) {
+                    if ( line.TrimStart().IndexOf(target) == 0 ) {
+                        TextFoundEventArgs e = new TextFoundEventArgs(line);
+                        OnTextFound(e);
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+┌─┬─────────────────────────┬─┬─┬─┐
+│☆│ C#プログラミングレッスン  (ぼぼ週刊）            │＿│□│×│
+├─┴─────────────────────────┴─┴─┴─┤
+│ Published by Gushwell  (Microsoft MVP for Visual C#)             │
+│ Copyright (C) 2004-2005 Gushwell All rights reserved.            │
+│-------------------- Gushwell's Page ---------------------------- │
+│ 窓際プログラマーの独り言  ：http://blog.livedoor.jp/gushwell/    │
+│ 窓際プログラマーの読書三昧：http://gushwell.jugem.jp/            │
+│             よろしかったらアクセスしてみてください！             │
+└─────────────────────────────────┘

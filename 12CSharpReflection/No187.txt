@@ -1,0 +1,124 @@
+┏━┳━━━━━━━━━━━━━━━━━━━━━━━━━┳━┳━┳━┓
+┃☆┃ C#プログラミングレッスン                         ┃＿┃□┃×┃
+┣━┻━━━━━━━━━━━━━━━━━━━━━━━━━┻━┻━┻━┫
+┃リフレクション-応用(1) 型に依存しない処理                   No.187┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+■──────────────────────────────────
+■リフレクションを利用する場面
+
+これまでは、リフレクションの基礎的な内容を説明してきましたが、今回から
+は、実際にどういった時に使うとのかについて、もうすこし具体的に説明して
+いきたいと思います。
+
+リフレクションの最初に、次のような場面で利用するということを書きました。
+
+ 1.型が特定できない場面で、統一的な処理を行いたい場合
+ 2.カスタム属性を定義し、その属性を利用したプログラムを作成する場合
+ 3.プラグイン可能なプログラムを作成する場合
+ 4.開発ツールを作成する場合。
+
+これら1-3について、順に見ていこうと思います。
+ただ、ここに示すサンプルは、あくまでも説明用なので実務でそのまま利用で
+きるようなものではありませんのでご注意ください。
+
+※4については、皆さんの宿題に残しておきますね(^ ^;
+
+今回は、「型が特定できない場面で、統一的な処理を行いたい場合」について
+説明します。
+
+■──────────────────────────────────
+■例外クラスの詳細を表示する。
+
+たとえば、例外クラスの詳細をログファイルに出力する場面を考えてみましょ
+う。
+例外クラスは、アプリケーションプログラマが独自に例外クラスを定義できる
+ためどんなプロパティ名があるかを事前に知ることはできません。
+しかし、独自に定義されたプロパティには、例外発生の原因を特定する重要な
+手がかりになる値が格納されている可能性があります。そのため、この独自に
+定義されたプロパティの値もログに出力できる汎用的なメソッドを作りたいと
+仮定しましょう。
+
+こんな時に、リフレクションを使えば、独自に定義されたプロパティの値も表
+示することが可能になります。
+No.185で説明した機能を使えばこれを実現できますよね。
+
+ void PrintExceptionInfo(Exception ex) {
+     Type type = ex.GetType();
+     var props = type.GetProperties();
+     foreach (var m in props) {
+         object val = m.GetValue(ex, null);
+         if (val !=null)
+             Console.WriteLine("{0} = {1}", m.Name, val);
+     }
+     Console.WriteLine();
+ }
+
+まず、GetType()メソッドで、例外オブジェクトの Type情報を取得し、そこか
+らGetProperties()メソッドで、プロパティ一覧を取得します。
+このプロパティ一覧のなかの、各PropertyInfoに対し、GetValueでプロパティ
+の値を取り出します。値が、null 以外だったら、その値をConsole.WriteLine
+で出力しています。
+
+このメソッドは、Exceptionとその派生クラスならばどんなオブジェクトでも
+受け取れます。
+もちろん、独自に定義した例外クラスの独自プロパティについても内容を表示
+することができます。
+これは、リフレクションを使わないと実現できない処理ですね。
+
+このメソッドの動作を確認するコードを示します。
+
+  try {
+      throw new MyException("error", 123);
+  } catch (Exception ex) {
+      PrintExceptionInfo(ex);
+  }
+ 
+ ...
+ class MyException : Exception {
+    public MyException(string message, int number) : base(message) {
+        Number = number;
+    }
+    public int Number { get; set; }
+ }
+
+..NET Frameworkの中でも、こうしたリフレクションの機能を利用したクラスが
+あります。代表的クラスに、DataSet関連のクラスや、XmlSerializerクラスが
+あります。
+
+ 
+■──────────────────────────────────
+■ おまけ
+ 
+ PrintExceptionInfoをLINQ を使って書いてみました。
+ 
+  void PrintExceptionInfo(Exception ex) {
+     Type type = ex.GetType();
+     var props = type.GetProperties();
+     props.Select(m => new { m.Name, Value = m.GetValue(ex, null) })
+          .Where(x => x.Value != null)
+          .ToList()
+          .ForEach(x => {
+              Console.WriteLine("{0} = {1}", x.Name, x.Value);
+          });
+     Console.WriteLine();
+ }
+ 
+ うーん、ちょっと冗長ですね。
+
+┌─┬─────────────────────────┬─┬─┬─┐
+│☆│ C#プログラミングレッスン  (ぼぼ週刊）            │＿│□│×│
+├─┴─────────────────────────┴─┴─┴─┤
+│ Published by Gushwell.                                           │
+│ Copyright (C) 2004-2008 Gushwell All rights reserved.            │
+│ Microsoft MVP Visual Developer - Visual C#(Apr 2005 - Mar 2009)  │
+│-------------------- Gushwell's Page ---------------------------- │
+│ 窓際プログラマーの独り言  ：http://blog.livedoor.jp/gushwell/    │
+│ 窓際プログラマーの読書三昧：http://gushwell.jugem.jp/            │
+│ Gushwell's C# Programing Page：http://gushwell.ifdef.jp/         │
+│ C#デザインパターン :                                             │
+│  『増補改訂版Java言語で学ぶデザインパターン入門 / 結城 浩(著)』  │
+│   のサンプルコードをC#に移植したものを掲載しています。           │
+│   移植後のコードの公開は、結城氏の了解を得ています。             │
+│   http://gushwell.ifdef.jp/dp/csdpindex.html                     │
+└─────────────────────────────────┘

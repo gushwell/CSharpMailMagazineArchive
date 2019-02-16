@@ -1,0 +1,108 @@
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━ No.222 ━□
+  
+ 「FxCopに学ぶ編」 --  CA1012: 
+                       Abstract types should not have constructors
+                                                         by Gushwell  
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+
+■□─────────────────────────────────
+■□  CA1012: Abstract types should not have constructors
+
+次のコード（クラス）の問題はどこにあるでしょうか。
+クラスがabstract指定になっているのに注意してください。
+
+    public abstract class AbstractSample {
+        public string Name { get; set; }
+        public AbstractSample() {
+            Console.WriteLine("コンストラクタ");
+            Name = "none";
+        }
+        public void Execute() {
+            Console.WriteLine(Hoge(Name));
+        }
+        protected abstract string Hoge(string Name);
+    }
+
+答えは、
+  「コンストラクタを public とするのはおかしい」
+です。
+
+abstract(抽象)クラスは、複数のクラスの共通の性質を持っており、直接イン
+スタンスを生成して利用されることを目的としていません。
+必ずサブクラスを継承して利用することを想定しています。
+
+つまり、abstract(抽象)クラスは、インスタンスの生成ができないクラスとい
+うことです。そのため、呼び出すことのできないコンストラクタを public と
+するのはおかしいということになります。
+
+実際に、
+
+ AbstractSample obj = new AbstractSample();
+
+というコードは、コンパイルエラーになり、インスタンスの生成はできなくな
+っています。
+
+そういう意味では、上記クラスは動作上問題になることはまずありませんので、
+AbstractSampleクラスの定義はこのままでも良いのですが、意味的には、コン
+ストラクタをpublicにするのは好ましくないので、コンストラクタを
+protectedとするのが良いと思われます。
+
+    public abstract class AbstractSample {
+        public string Name { get; set; }
+        protected AbstractSample() {
+            Console.WriteLine("コンストラクタ");
+            Name = "none";
+        }
+        public void Execute() {
+            Console.WriteLine(Hoge(Name));
+        }
+        protected abstract string Hoge(string Name);
+    }
+
+とコンストラクタのpublic を abstractに変更するだけです。こうしておけば、
+Visual StudioのIDEのインテリセンスで、AbstractSampleが出てこなくなりま
+す（厳密には、サブクラスの中でのみインテリセンスが効くことになります）。
+
+派生クラスでは、
+
+ public class Sample : AbstractSample {
+     public Sample() : base() {
+         Console.WriteLine("Sample：コンストラクタ");
+     }
+ }
+
+と baseキーワードを使うことで、派生元のコンストラクタを呼び出すことが
+できます。
+
+■ 参照MSDNページ
+
+CA1012: 抽象型にはコンストラクタを含めないでください
+http://msdn.microsoft.com/ja-jp/library/ms182126.aspx
+
+
+
+───────────────────────────────────
+『C#プログラミングレッスン』  (ぼぼ週刊）
+───────────────────────────────────
+ Published by Gushwell.
+  Copyright (C) 2004-2009 Gushwell All rights reserved.
+  Microsoft MVP - Visual C#(Apr 2005 - Mar 2010)
+
+ <<■ Gushwell's Page ■>>
+ 窓際プログラマ─の独り言  ：http://blog.livedoor.jp/gushwell/
+ 窓際プログラマ─の読書三昧：http://gushwell.jugem.jp/
+ Gushwell's F# Programming Diary : http://techbank.jp/gushwell/
+ Gushwell's C# Programming Page  ：http://gushwell.ifdef.jp/
+  C#デザインパタ─ン : http://gushwell.ifdef.jp/dp/csdpindex.html
+
+ ☆メールマガジンの感想お待ちしています☆
+  http://gushwell.ifdef.jp/mail.html
+
+ <<■ コミュニティtechbank.jp (http://techbank.jp/Community/) ■>>
+ Gushwellが参加している技術系コミュニティです。
+ マイクロソフト系テクノロジー＆製品に特化したコミュニティで、Webサイト
+ では、VB、C#、VC++、SQL Server, BizTalk Server などの技術情報を公開し
+ ています。皆さんの参加をお待ちしています。
+ ブロガーさんも募集中です。
+───────────────────────────────────

@@ -1,0 +1,154 @@
+
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━━━ No.261 ━□
+  
+ 「LINQ to SQL編」-- リレーションシップ(2)
+                                                             by Gushwell  
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+前回に引き続いて今回もリレーションシップのお話です。
+
+
+■□───────────────────────────────────
+■□ リレーションを使った４つの例
+
+いくつかリレーションシップを使った例を紹介しましょう。
+
+■サンプル１
+
+ここでは、Order_Detailsテーブルを使いますので、サーバーエクスプローラーか
+らNORTHWND.MDFのOrder_Detailsテーブルを O/Rデザイナー画面に D&Dした後に以
+下のコードを記述してください。
+
+ using (var db = new NorthwindDataContext()) {
+     db.Log = Console.Out;
+     var query = from p in db.Products
+                 where p.Category.CategoryName == "Condiments"
+                 select p;
+     foreach (var p in query) {
+         if (p.Order_Details.Sum(s => s.Quantity) >= 200) // ★
+             Console.WriteLine("{0} | {1}",
+                        p.ProductID, p.ProductName);
+     }
+ }
+
+"Condiments"カテゴリに属する製品のうち、200個以上売上げのあった製品を抜き
+出しています。
+このように書けるというのは、SQL文に疎い僕には夢のようです。
+ただ、このコードは、何度もSQL文が発行されてしまいます。★の行で、取り出し
+た p に関連づけされた Order_Details が参照された時点で、Order_Details テー
+ブルへのアクセスが発生します。
+Consoleアプリケーションとして実際に動かしていただければ、それが確認できま
+す。パフォーマンスが要求される場面では、ちょっといただけません。
+以下のように書きなおせば、SQLの発行回数を１回にすることができます。
+
+ using (var db = new NorthwindDataContext()) {
+     db.Log = Console.Out;
+     var query = from p in db.Products
+                 where p.Category.CategoryName == "Condiments"
+                 select p;
+     var query2 = from p in query
+                  where p.Order_Details.Sum(s => s.Quantity) >= 200
+                  select p;
+     foreach (var p in query2) {
+         Console.WriteLine("{0} | {1}",
+                    p.ProductID, p.ProductName);
+     }
+ }
+
+
+■サンプル２
+
+今度は、もう少し複雑な例です。
+
+ using (var db = new NorthwindDataContext()) {
+     db.Log = Console.Out;
+     var query = (from product in db.Products
+                  where product.UnitPrice <= 10
+                  from order in product.Order_Details
+                  where order.Discount > 0
+                  select product).Distinct();
+     foreach (var p in query)
+         Console.WriteLine("{0} | {1} | {2}",
+                           p.ProductID, p.ProductName, p.UnitPrice);
+ }
+
+UnitPrice が 10 以下の製品で、割り引き有りで売られたことのある製品を抜き出
+す例です。
+同じ製品が複数取り出されてしまわないように、Distinct()メソッドで重複を除去
+しています。
+
+
+■サンプル３
+
+次は、サンプル２と同じ結果を得る別の書き方です。たぶん、こちらの方が理解し
+やすいと思います。
+
+ using (var db = new NorthwindDataContext()) {
+     db.Log = Console.Out;
+     var query = (from product in db.Products
+                  where product.UnitPrice <= 10 &&
+                        product.Order_Details.Any(o => o.Discount > 0)
+                  select product);
+     foreach (var p in query)
+         Console.WriteLine("{0} | {1} | {2}",
+                           p.ProductID, p.ProductName, p.UnitPrice);
+ }
+
+
+発行されているSQL文を見てみると、Anyメソッドは、SQLのEXIST関数に置き換え
+られているのが分かります。
+皆さん、実際に動かしてみて発行されるSQLを確認してください。
+
+■サンプル４
+
+今度は、OrderテーブルもO/Rデザイナーに追加してください。
+CategoryNameが"Condiments"のうち、1996/9/1より前に売上げがあった製品を抜き
+出している例です。
+
+Order_Detailsは、Orderテーブルと関連がありますから、さらにリンクをたどり、
+４つのテーブルを参照しています。
+
+ using (var db = new NorthwindDataContext()) {
+     db.Log = Console.Out;
+     DateTime date = new DateTime(1996,9,1)
+     var query = from p in db.Products
+                 where p.Category.CategoryName == "Condiments"
+                 select p;
+     var query2 = from p in query
+                  where p.Order_Details
+                         .Any(o => o.Order.OrderDate < date == true)
+                  select p;
+     foreach (var p in query2) {
+         Console.WriteLine("{0} | {1} | {2}",
+                        p.ProductID, p.ProductName, p.CategoryID);
+     }
+ }
+
+LINQ to SQL では、このようなクエリも、それほど苦労なく書くことができます。
+とても便利です。
+
+---- PR ----------------------------------------------------------------
+書籍名： はじめてのVisual Studio 2010 (TECHNICAL MASTER)
+著者  ： techbank.jp
+出版社： 秀和システム
+定価  ： 3150円 
+http://www.amazon.co.jp/exec/obidos/ASIN/4798026662/gaius-22/
+
+─────────────────────────────────────
+『C#プログラミングレッスン』  (ぼぼ週刊）                                 
+ ☆皆さまからの感想をお待ちしています。http://gushwell.ifdef.jp/mail.html 
+─────────────────────────────────────
+ Published by Gushwell.                                                   
+   Copyright (C) 2004-2010 Gushwell All rights reserved.                  
+   Microsoft MVP for Visual C#(Apr 2005 - Mar 2011)                       
+                                                                          
+ ■Gushwell's Page                                                        
+ 窓際プログラマ─の独り言        : http://gushwell.ldblog.jp/             
+ Gushwell's C# Programming Page  : http://gushwell.ifdef.jp/              
+ Gushwell's F# Programming Diary : http://techbank.jp/gushwell/           
+ Gushwellの読書ノート            : http://gushwell.jugem.jp/              
+                                                                          
+ ■コミュニティtechbank.jp (http://techbank.jp/)                          
+ Gushwellが参加している技術系コミュニティです。                           
+ 有志メンバーによるBlogでの技術情報発信も行っています。                   
+─────────────────────────────────────

@@ -1,0 +1,128 @@
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━━━ No.351 ━□
+
+「暗号化編」-- 共有キー暗号方式(2)
+                                                            by Gushwell  
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+お詫び
+ 前号では、復号と記述すべきところを、複合と記述している箇所がありました。
+ お詫びして訂正いたします。
+
+--------------------------------------------------------------------------
+
+前回は、共有キー暗号方式についての概要を説明しました。今回は、具体的なコー
+ドを見ていきましょう。
+
+前回説明しました通り、暗号化の手順は、以下の手順に従います。
+(1)CryptoServiceProvider のインスタンス（csp とする）を生成
+(2)csp.Key, csp.IV プロパティの設定
+(3)csp.CreateEncryptorメソッドで、ICryptoTransformインスタンスを得る。
+(4)ICryptoTransformのTransformFinalBlockで暗号化する。
+
+以下、文字列を暗号化するメソッドです。
+ここでは、DES (Data Encryption Standard) アルゴリズムの暗号サービス プロ
+バイダ (CSP : Cryptographic Service Provider) を利用し暗号化しています。
+
+ using System.Security.Cryptography;
+ ...
+  public static string EncryptString(string str, string sKey, string sIv) {
+      using (SymmetricAlgorithm csp = new DESCryptoServiceProvider()) {
+          csp.Key = ASCIIEncoding.ASCII.GetBytes(sKey);
+          csp.IV = ASCIIEncoding.ASCII.GetBytes(sIv);  
+          using (ICryptoTransform transform = csp.CreateEncryptor()) {
+              byte[] source = Encoding.UTF8.GetBytes(str);
+              byte[] encrypted = transform.TransformFinalBlock(
+                                          source, 0, source.Length);
+              return Convert.ToBase64String(encrypted);
+          }
+      }
+  }
+
+
+Key, IV ともに、メソッドの引数で渡してもらうようにしています。
+DESは64ビットのキーを利用します。そのため、１バイト系文字で8文字分の
+文字列を、sKey, sIVにしています。ASCIIEncoding.ASCII.GetBytes でbyte配列に
+していますので、byte配列も 64ビットとなります。
+※ DESでは、8ビットはパリティとして使うため実際のカギは、56ビットです。
+
+暗号化を行うメソッドTransformFinalBlockは、暗号元データをbyte配列として受
+け取りますので、Encoding.UTF8.GetBytesで、byte配列に変換し、その結果を
+TransformFinalBlockに渡しています。
+得られた暗号化データも、byte配列です。これをConvert.ToBase64String
+で文字列として可視化しています。
+
+このメソッドの使用例を示します。
+
+ string str = "このテキストを暗号化します";
+ var key = "gushwell";
+ var iv  = "windows8";
+ var s = EncryptString(str, key, iv);
+ Console.WriteLine(s);
+
+このコードを実行すると、以下の暗号化された文字列が得られます。
+
+ 01GRfbjBDXX/0SDrSFmF4RoobGIgPMLZ3Y5kHuf1UJ4=
+
+もう一つ、暗号化のコードをお見せします。今度は、高度暗号化標準 (AES:
+Advanced Encryption Standard) 対称暗号化アルゴリズムを利用した例です。先
+ほどの EncryptStringメソッドと見比べてほしいのですが、SymmetricAlgorithm
+オブジェクトを生成している最初の行以外は全く同じです。このように、暗号化
+アルゴリズムを簡単に取り替え可能になっています。
+
+ using System.Security.Cryptography;
+ ...
+
+  public static string AesEncryptString(string str, string sKey, string sIv) {
+      using (SymmetricAlgorithm csp = new AesManaged()) {
+          csp.Key = ASCIIEncoding.ASCII.GetBytes(sKey);
+          csp.IV = ASCIIEncoding.ASCII.GetBytes(sIv);  
+          using (ICryptoTransform transform = csp.CreateEncryptor()) {
+              byte[] source = Encoding.UTF8.GetBytes(str);
+              byte[] encrypted = transform.TransformFinalBlock(
+                                          source, 0, source.Length);
+              return Convert.ToBase64String(encrypted);
+          }
+      }
+  }
+
+高度暗号化標準 (AES: Advanced Encryption Standard) 対称暗号化アルゴリズム
+では、128 ビット、192 ビット、256 ビットのキー長をサポートしていますので、
+キー長にあった ket, IV を与えます。
+例えば、こんな感じです。
+
+  string str = "このテキストを暗号化します";
+  var key = "gushwell20130115";
+  var iv  = "windows820121026";
+  var s = AesEncryptString(str, key, iv);
+
+
+なお、ここでは、iv, key をコードで直接指定しましたが、SymmetricAlgorithmク
+ラスのGenerateKey GenerateIV メソッドでランダムにキーを生成することもできま
+す。
+ただし、復号化するときにも、このKey と IV が必要になりますので、それを何ら
+かの形で保持しておく必要があります。
+
+--------------------------------------------------------------------------
+
+暗号化のコードだけ示して、まだ復号化のコードを示せていませんが、今号が、今
+年最後のメールマガジンです。
+
+また、来年お会いしましょう。
+
+それでは、皆さん良いお年をお迎えください。
+
+─────────────────────────────────────
+『C#プログラミングレッスン』  (ほぼ週刊）                                 
+☆皆さまからの感想をお待ちしています。http://gushwell.ifdef.jp/mail.html  
+─────────────────────────────────────
+Published by Gushwell.                                                    
+Copyright (C) 2012 Gushwell All rights reserved.                          
+Microsoft MVP for Visual C#(Apr 2005 - Mar 2013)                          
+                                                                          
+■Gushwell's Page                                                         
+facebook Page                     : http://www.facebook.com/CSharpLesson  
+Gushwell's C# Dev Notes           : http://gushwell.ldblog.jp/            
+Gushwell's C# Programming Page    : http://gushwell.ifdef.jp/             
+Gushwellの読書ノート              : http://gushwell.jugem.jp/             
+Twitterアカウント                 : @gushwell                             
+─────────────────────────────────────

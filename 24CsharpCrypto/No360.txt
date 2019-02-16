@@ -1,0 +1,123 @@
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━━━ No.360 ━□
+
+「暗号化編」-- XMLへのデジタル署名とその検証
+                                                           by Gushwell  
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+System.Security.Cryptography.Xml 名前空間のSignedXmlクラス等を使用するこ
+とで、XML ドキュメントまたは XML ドキュメントの一部にデジタル署名で署名す
+ることができます。
+署名されたXMLは、署名後にデータが変更されなかったことを確認できます。ここ
+では、RSAアルゴリズムを使い、XMLドキュメントに署名し、検証するコードを示
+したいと思います。
+XMLへのデジタル署名の詳細については、説明は省かせてもらいます(^^;;通常は、
+使い方を覚えるだけで問題ないでしょう。
+
+■□───────────────────────────────────
+■□ XMLへのデジタル署名する
+
+まずは、署名するコードです。
+
+ private static void RsaSignXml(XmlDocument xmldoc, string containerName) {
+     // コンテナキーを指定し、RSAインスタンスを生成します。
+     // キーはコンテナに自動保存さます。
+     CspParameters cspParams = new CspParameters();
+     cspParams.KeyContainerName = containerName;
+     var rsa = new RSACryptoServiceProvider(cspParams);
+
+     // XmlDocument オブジェクトを引数にして、SignedXml オブジェクトを作成
+     SignedXml signedXml = new SignedXml(xmldoc);
+     signedXml.SigningKey = rsa;
+
+     // 署名の内容を示す Reference オブジェクトを作成します。
+     // "" を指定すると、ドキュメント全体に署名することになります。
+     Reference reference = new Reference("");
+     reference.AddTransform(new XmlDsigEnvelopedSignatureTransform());
+
+     // 上記refernceを追加することで、どのように検証すべきかがわかるようになる。
+     signedXml.AddReference(reference);
+
+     // 署名して、そのXmlElement(Signature要素)を得る
+     signedXml.ComputeSignature();
+     XmlElement xmlDigitalSignature = signedXml.GetXml();
+
+     // 元のXMLにSignature要素を追加する。
+     xmldoc.DocumentElement.AppendChild(xmldoc.ImportNode(xmlDigitalSignature, true));
+ }
+
+このメソッドを利用するコード例を示します。
+
+   XmlDocument xmldoc = LoadXml("sample.xml");
+   RsaSignXml(xmldoc, "XmlDigitalSigKey");
+   xmldoc.Save("sample.xml");
+
+sample.xmlは、以下のような Signature 要素が追加されます。
+
+ <Signature xmlns="http://www.w3.org/2000/09/xmldsig#">
+   <SignedInfo><CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315" />
+   <SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1" />
+     <Reference URI="">
+       <Transforms>
+         <Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature" />
+       </Transforms>
+       <DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1" />
+       <DigestValue>ZtONUyDBmQ0A9loxpm22pcOxKO8=</DigestValue>
+     </Reference>
+   </SignedInfo>
+   <SignatureValue>BOVIqRFnD5o/ZQUZb1VmQoPBU5Oc7vQVuunfQoYR88h7oj3Zn2ADGePXML
+9EVxPlgdK2rtpc1lPUYFoELK8xkW5lDINrf72w2Foc6LRO0vs7vgLEo0QyLUQLRFUhIq/BUMyIx4F
+/LmvmVZTy1Tb2XgSUPPKsFYmWuFniNCvIGMU=</SignatureValue>
+ </Signature>
+
+ ※ 記事の都合上、途中で改行しています。
+
+
+■□───────────────────────────────────
+■□ XMLのデジタル署名を検証する
+
+次に検証するコードを示します。
+
+ private static bool RsaVerifyXml(XmlDocument xmldoc, string containerName) {
+     // コンテナキーを指定し、RSAインスタンスを生成します。
+     // キーはコンテナから自動取得されます。
+     CspParameters cspParams = new CspParameters();
+     cspParams.KeyContainerName = containerName;
+     var rsa = new RSACryptoServiceProvider(cspParams);
+
+     // XmlDocument オブジェクトを引数にして、SignedXml オブジェクトを作成
+     SignedXml signedXml = new SignedXml(xmldoc);
+
+     // Signature要素を取り出し、signedXmlにロードします。
+     XmlNodeList nodeList = xmldoc.GetElementsByTagName("Signature");
+     signedXml.LoadXml((XmlElement)nodeList[0]);
+     // 署名を検証します。
+     return signedXml.CheckSignature(rsa);
+ }
+
+このメソッドを利用するコード例を示します。
+
+  XmlDocument xmldoc = LoadXml("sample.xml");
+  bool result = RsaVerifyXml(xmldoc, "XmlDigitalSigKey");
+  if (result) {
+      Console.WriteLine("OK");
+  } else {
+      Console.WriteLine("NG");
+  }
+
+sample.xmlは、署名済みのxmlファイルです。
+
+─────────────────────────────────────
+『C#プログラミングレッスン』  (ほぼ週刊）                                 
+☆皆さまからの感想をお待ちしています。http://gushwell.ifdef.jp/mail.html  
+─────────────────────────────────────
+Published by Gushwell.                                                    
+Copyright (C) 2013 Gushwell All rights reserved.                          
+Microsoft MVP for Visual C#(Apr 2005 - Mar 2013)                          
+
+■Gushwell's Page                                                         
+facebook Page                     : http://www.facebook.com/CSharpLesson  
+Gushwell's C# Dev Notes           : http://gushwell.ldblog.jp/            
+Gushwell's C# Programming Page    : http://gushwell.ifdef.jp/             
+Gushwellの読書ノート              : http://gushwell.jugem.jp/             
+Twitterアカウント                 : @gushwell                             
+─────────────────────────────────────

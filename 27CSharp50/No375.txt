@@ -1,0 +1,139 @@
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━━━ No.375 ━□
+
+「C#5.0編」-- async, awaitによる非同期処理(5)
+                                                           by Gushwell
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+今回は、async, awaitによる非同期処理の最後の話題として、HttpClientクラスを
+つかった非同期処理についてみていきます。
+
+
+■□───────────────────────────────────
+■□ HttpClientの簡単な例
+
+WebClientによる HTTPクライアントアプリの作成について説明しましたが、今日
+は、非同期処理の応用として、.NET Framework 4.5 に追加された、 HttpClient
+による非同期処理について説明します。
+
+まずは、単純なWebページの取得から
+
+  static void Main(string[] args) {
+      var s = GetPage();
+      Console.WriteLine(s);
+      Console.ReadLine();
+  }
+
+  private static string GetPage() {
+      var hc = new HttpClient();
+      var response = hc.GetAsync(@"http://www.bing.com/").Result;
+      return response.Content.ReadAsStringAsync().Result;
+  }
+
+
+このHttpClientクラスが公開する Get系メソッドは、すべてが非同期メソッドと
+なっています。上のコードでも、Asyncと名前がつくメソッドを呼び出しています
+が、 完全な同期処理として書いています。
+
+ここでは、まだ、async wait キーワードは出てきていません。
+では、この GetPage()をasync await キーワードをつかったコードに直してみま
+す。
+
+   private static async Task<string> GetPageAsync(string urlstr) {
+       var hc = new HttpClient();
+       HttpResponseMessage response = await hc.GetAsync(urlstr);
+       string str = await response.Content.ReadAsStringAsync();
+       return str;
+   }
+
+これで、GetPageAsyncメソッドは、非同期メソッドとなりましたので、
+Button_clickも以下のように変更します。
+
+ private async void button2_Click(object sender, EventArgs e) {
+     var s = await 
+         GetPageAsync(@"http://msdn.microsoft.com/ja-jp/");
+     textBox1.Text = s;
+ }
+
+
+■□───────────────────────────────────
+■□ HttpClientの並列処理
+
+これだけでは、非同期メソッドの良さがわかりませんので、２つのページを同時
+に取得するように変更してみましょう。
+
+  private async void button3_Click(object sender, EventArgs e) {
+      var t1 = GetPageAsync(@"http://www.bing.com/");
+      var t2 = GetPageAsync(@"http://msdn.microsoft.com/ja-jp/");
+
+      var s1 = await t1;
+      var s2 = await t2;
+      textBox1.Text =  
+          s1.Substring(0, 300) + 
+          Environment.NewLine + Environment.NewLine +
+          s2.Substring(0, 300);
+  }
+
+これで、２つのページ取得処理が並行で動作するようになりました。
+ThreadクラスやhreadPoolの利用に慣れている人には、かえって面倒だと感じるか
+もしれませんが、慣れてくればとても便利な機能ですし、Windowsストアアプリで
+は、WebClientクラスではなく、このHttpClientクラスのみが利用可能ですので、
+.NET Framework4.5で開発する場合には、HttpClientを使うのが良いと思います。
+
+
+■□───────────────────────────────────
+■□ HttpClientの応用
+
+最後に、「HTTPクライアント編 - Wikipedia API No.367」で紹介したWikipedia
+のデータにアクセスするコードを HttpClientで書き直したものを載せます。
+
+
+  static void Main(string[] args) {
+      string keyword = "クリーンルーム設計";
+      var content = GetFromWikipediaAsync(keyword);
+      if (content.Result == null)
+          Console.WriteLine("見つかりませんでした");
+      else
+          Console.WriteLine(content.Result);
+      Console.ReadLine();
+  }
+  private async static Task<string> GetFromWikipediaAsync(string keyword) {
+      var hc = new HttpClient();
+      string param = string.Format(
+                "?action=query&prop=revisions&rvprop=content&redirects=1&format=xml&titles={0}",
+                HttpUtility.UrlEncode(keyword, Encoding.UTF8));
+      var result = await hc.GetStringAsync(@"http://ja.wikipedia.org/w/api.php" + param);
+      result = result.Replace(@"\", @"%");
+      result = System.Web.HttpUtility.UrlDecode(result);
+
+      var xmldoc = XDocument.Parse(result);
+      var rev = xmldoc.Root.Descendants("rev").FirstOrDefault();
+      if (rev == null)
+          return null;
+      return rev.Value;
+  }
+
+WebClientでは、NameValueCollectionを使いパラメータを組み立てましたが、
+HttpClientでは、NameValueCollectionを使ったパラメータ組み立てができないよ
+うです。
+そのため、べたにURLクエリパラメータを文字列として組み立てています。
+
+
+
+----
+次回以降は、async, await以外の話題を取り扱います。
+
+─────────────────────────────────────
+『C#プログラミングレッスン』  (ほぼ週刊）
+☆皆さまからの感想をお待ちしています。http://gushwell.ifdef.jp/mail.html
+─────────────────────────────────────
+Published by Gushwell.
+Copyright (C) 2013 Gushwell All rights reserved.
+Microsoft MVP for Visual C#(Apr 2005 - Mar 2014)
+
+■Gushwell's Page
+facebook Page                     : http://www.facebook.com/CSharpLesson
+Gushwell's C# Dev Notes           : http://gushwell.ldblog.jp/
+Gushwell's C# Programming Page    : http://gushwell.ifdef.jp/
+気ままな読書ノート                : http://gwbooks.hatenablog.com/
+Twitterアカウント                 : @gushwell
+─────────────────────────────────────

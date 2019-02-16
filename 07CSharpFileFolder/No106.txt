@@ -1,0 +1,109 @@
+┏━┳━━━━━━━━━━━━━━━━━━━━━━━━━┳━┳━┳━┓
+┃☆┃ C#プログラミングレッスン                         ┃＿┃□┃×┃
+┣━┻━━━━━━━━━━━━━━━━━━━━━━━━━┻━┻━┻━┫
+┃FileInfoを使ったファイル情報の操作                          No.106┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+FileInfoには様々なメソッド、プロパティが用意されていますが、ここでは、
+ファイルの属性や更新日時の取得、設定を中心に説明します。
+
+■──────────────────────────────────
+■ 属性の取得
+
+  1:using System;
+  2:using System.IO;
+  3:
+  4:    const string FileName = @"sample.txt";
+  5:    FileInfo finfo = new FileInfo(FileName);
+  6:    FileAttributes attr = finfo.Attributes;
+  7:    if ( (attr & FileAttributes.ReadOnly) ==  
+                                       FileAttributes.ReadOnly ) {
+  8:        Console.WriteLine("ReadOnly");
+  9:    }
+ 10:    if ( ( attr & FileAttributes.Hidden ) == 
+                                       FileAttributes.Hidden ) {
+ 11:        Console.WriteLine("Hidden");
+ 12:    }
+
+5行目:
+  FileInfo クラスのインスタンスを生成します。
+
+6行目:
+  FileInfoのAttributesプロパティで、FileAttributes の値を得ます。
+
+
+7行目, 10行目
+  属性の値を調べます。
+  & 演算子で、AND を取ってから比較します。
+
+  if ( attr == FileAttributes.Hidden ) {
+
+  と書くと、正しく動作しませんので、注意してください。
+
+
+■──────────────────────────────────
+■ 属性の設定
+
+既存ファイルに、ReadOnly属性を付加する例を示します。
+
+  1:  FileInfo finfo = new FileInfo(FileName);
+  2:  FileAttributes attr = finfo.Attributes;
+  3:  attr |= FileAttributes.ReadOnly;
+  4:  finfo.Attributes = attr;
+
+2行目:
+  Attributesプロパティで、現在のファイル属性を取得しています。
+
+3行目:
+  |= 演算子で、属性を付加していいます。
+
+4行目:
+  Attributes プロパティに、新しい属性値を代入することで、ファイルの属
+  性を変更しています。
+
+
+■──────────────────────────────────
+■ 更新時刻の取得
+
+  1:  FileInfo finfo = new FileInfo(FileName);
+  2:  DateTime lastWriteTime = finfo.LastWriteTime;
+  3:  Console.WriteLine(lastWriteTime.ToShortDateString());
+  4:  Console.WriteLine(lastWriteTime.ToLongTimeString());
+
+2行目のLastWriteTimeプロパティで、最終の更新時刻を取得しています。
+
+LastCreationTimeプロパティを参照すれば、ファイルの作成時刻も取得できま
+す。
+
+  1:  FileInfo finfo = new FileInfo(FileName);
+  2:  DateTime lastWriteTime = finfo.LastCreationTime;
+
+
+■──────────────────────────────────
+■ 更新時刻の変更
+
+ファイルの更新時刻を変更するコード例です。
+
+  1:  FileInfo finfo = new FileInfo(FileName);
+  2:  finfo.LastWriteTime = new DateTime(2006,11, 21, 1, 30, 40);
+
+2行目でLastWriteTimeプロパティにDateTime型の値(2006年11月21日 1時30分
+40秒）を設定しています。これだけで、ファイルの更新時刻を変更できます。
+実際に変更されたかどうかは、エクスプローラで確認してください。
+
+┌─┬─────────────────────────┬─┬─┬─┐
+│☆│ C#プログラミングレッスン  (ぼぼ週刊）            │＿│□│×│
+├─┴─────────────────────────┴─┴─┴─┤
+│ Published by Gushwell.                                           │
+│ Copyright (C) 2004-2006 Gushwell All rights reserved.            │
+│ Microsoft MVP Visual Developer - Visual C#(Apr 2006 - Mar 2007)  │
+│-------------------- Gushwell's Page ---------------------------- │
+│ 窓際プログラマーの独り言  ：http://blog.livedoor.jp/gushwell/    │
+│ 窓際プログラマーの読書三昧：http://gushwell.jugem.jp/            │
+│ C#デザインパターン :                                             │
+│  『増補改訂版Java言語で学ぶデザインパターン入門 / 結城 浩(著)』  │
+│   のサンプルコードをC#に移植したものを掲載しています。           │
+│   移植後のコードの公開は、結城氏の了解を得ています。             │
+│   http://blog.livedoor.jp/gushwell/archives/50333227.html        │
+└─────────────────────────────────┘
+ 

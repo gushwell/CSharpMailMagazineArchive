@@ -1,0 +1,127 @@
+┏━┳━━━━━━━━━━━━━━━━━━━━━━━━━┳━┳━┳━┓
+┃☆┃ C#プログラミングレッスン                         ┃＿┃□┃×┃
+┣━┻━━━━━━━━━━━━━━━━━━━━━━━━━┻━┻━┻━┫
+┃BinaryReader                                                No.114┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+■──────────────────────────────────
+■ BinaryReaderのサンプルコード
+
+もう一度、前回作成したコードを掲載します。
+
+using System.IO;
+...
+  using ( BinaryWriter binWriter = new BinaryWriter(
+                       File.Open("binary.dat", FileMode.Create)) ) {
+      int intNum = 123;
+      double doubleNum = 987.654;
+      byte[] byteArray = { 0x31, 0x32, 0x33, 0x34, 0x35 };
+      bool boolVal = true;
+      string stringVal = "abcdefg";
+      binWriter.Write(intNum);
+      binWriter.Write(doubleNum);
+      binWriter.Write(byteArray);
+      binWriter.Write(boolVal);
+      binWriter.Write(stringVal);
+  }
+
+このプログラムで作成されたバイナリファイルを読み込むコードは以下のよう
+になります。
+
+
+using System.IO;
+...
+  using ( BinaryReader binReader = new BinaryReader(
+　　　　　　　　　　　File.Open("binary.dat", FileMode.Open)) ) {
+      Console.WriteLine(binReader.ReadInt32());
+      Console.WriteLine(binReader.ReadDouble());
+      byte[] bs = binReader.ReadBytes(5);
+      Console.WriteLine(BitConverter.ToString(bs));
+    
+      Console.WriteLine(binReader.ReadBoolean());
+      Console.WriteLine(binReader.ReadString()); 
+  }
+
+結果は、
+
+ 123
+ 987.654
+ 31-32-33-34-35
+ True
+ abcdefg
+
+です。
+byte 配列については、BitConverter クラスを使い、16 進の文字列で表示して
+います。
+
+
+■──────────────────────────────────
+■コンストラクタ
+
+BinaryReaderのコンストラクタは、
+
+  BinaryReader (Stream) 
+
+  BinaryReader (Stream, Encoding) 
+
+の２つがありますが、ここでは、引数を一つ取るコンストラクタを利用してい
+ます。
+サンプルコードで利用したコンストラクタは、  文字列のエンコードとして  
+UTF-8  を使用して、BinaryReader クラスの新しいインスタンスを初期化しま
+す。文字列が、Shift-JIS など他のエンコードが利用されている場合に、２つ
+めのコンストラクタを利用します。
+
+File.Openで新たなStreamのインスタンスを生成し、BinaryReaderに渡します。
+これで、"binary.dat"を、バイナリファイルとして扱うことが可能となります。
+
+
+■──────────────────────────────────
+■ Read系メソッド
+
+データを読み込むには、Readで始まるメソッドを利用します。
+今回は、ReadInt32, ReadDouble, ReadBytes, ReadBoolen, ReadString の５つ
+のメソッドを利用しています。
+
+また、
+public virtual int Read (
+byte[] buffer,
+int index,
+int count
+)
+
+というメソッドも用意されています。このメソッドを使うと、index をバイト
+配列内の開始点として、ストリームから count で指定したバイト数分のバイト
+を読み取り、結果を、buffer に格納します。
+なお、buffer には、データが格納されるのに、十分な領域が事前に割り当てら
+れている必要があります。
+
+
+■──────────────────────────────────
+■ 注意点
+
+BinaryReader を利用するには、読み込むファイルのレイアウトを知っていなけ
+ればなりません。どんなデータをどの順番で出力したのかを知っていないと、
+正しく読み込むことができません。
+
+今回示したコードも、int, double, byte[], bool, string の順番を間違える
+と正しく読むことができませんし、配列の場合は、その個数も知っている必要
+があります。
+
+そういった意味では、BinaryReader, BinaryWriter を使ったバイナリファイル
+の利用というのはかなり限定されたものになると思います。
+
+┌─┬─────────────────────────┬─┬─┬─┐
+│☆│ C#プログラミングレッスン  (ぼぼ週刊）            │＿│□│×│
+├─┴─────────────────────────┴─┴─┴─┤
+│ Published by Gushwell.                                           │
+│ Copyright (C) 2004-2006 Gushwell All rights reserved.            │
+│ Microsoft MVP Visual Developer - Visual C#(Apr 2006 - Mar 2007)  │
+│-------------------- Gushwell's Page ---------------------------- │
+│ 窓際プログラマーの独り言  ：http://blog.livedoor.jp/gushwell/    │
+│ 窓際プログラマーの読書三昧：http://gushwell.jugem.jp/            │
+│ C#デザインパターン :                                             │
+│  『増補改訂版Java言語で学ぶデザインパターン入門 / 結城 浩(著)』  │
+│   のサンプルコードをC#に移植したものを掲載しています。           │
+│   移植後のコードの公開は、結城氏の了解を得ています。             │
+│   http://blog.livedoor.jp/gushwell/archives/50333227.html        │
+└─────────────────────────────────┘

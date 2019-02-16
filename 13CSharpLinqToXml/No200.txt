@@ -1,0 +1,137 @@
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━ No.200 ━□
+  
+   「LINQ to XML編」 -- XDocumentオブジェクトを生成する様々な方法
+                                                         by Gushwell  
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+
+■□─────────────────────────────────
+■□Parseメソッド
+
+これまでは、
+
+ XDocument xdoc = XDocument.Load("sample.xml");
+ 
+と、Loadメソッドを使い、XMLファイルを読み込んでいました。
+今回は、文字列から XDocumentオブジェクトを作成する方法を見てみます。
+
+ static string xmlstring = 
+  @"<?xml version=""1.0"" encoding=""utf-8"" ?>
+  <books>
+      <book isbn=""978-4873112213"">
+          <title>XML Hacks</title>
+          <publisher>Oreilly</publisher>
+          <authers>
+              <auther>Michael Fitzgerald</auther>
+          </authers>
+          <price>3360</price>
+      </book>
+  </books>";
+ XDocument doc = XDocument.Parse(xmlstring);
+ Console.WriteLine(doc.ToString());
+
+XMLを扱う場面は、ファイルから読み込むだけではなく、メモリ内の文字列に
+XMLが格納されていて、それを操作したいこともよくあります。そのような時
+に、Parseメソッドを使うことで、XMLの文字列から XDocumentを作成できます。
+
+また、
+
+ static string elmstring =
+   @"<book isbn=""978-4873112213"">
+       <title>XML Hacks</title>
+       <publisher>Oreilly</publisher>
+       <authers>
+           <auther>Michael Fitzgerald</auther>
+       </authers>
+       <price>3360</price>
+   </book>";
+ XElement elem = XElement.Parse(elmstring);
+ Console.WriteLine(elem.ToString());
+
+とXMLの要素が入った文字列から、 XElementオブジェクトを生成することも
+できます。
+
+
+■□─────────────────────────────────
+■□配列からXDocumentを作成する
+
+記念すべき200号が、これだけだとあまりにも中身がないので、もうひとつ
+話題を。
+以前、No197で、LINW to XML のクエリ結果を配列にする方法について説明し
+ましたが、今回はその逆で、配列から XDocumentを作成する方法をお見せしま
+す。
+
+ static void Main(string[] args) {
+     Book[] books = new Book[5];
+     ... ここで、booksの中身を設定 5冊分 (コードは省略）
+     
+
+     var xelem = new XElement("books",
+         from b in books 
+         select new XElement("book", 
+             new XAttribute("isbn", b.Isbn), 
+             new XElement("title", b.Title), 
+             new XElement("publisher", b.Publisher),
+             CreateAuthersElement(b.Authers),
+             new XElement("price", b.Price)
+         )       
+     ); 
+     XDocument xdoc = new XDocument(xelem);
+     xdoc.Save("Sample.xml");
+ } 
+ 
+ private static XElement CreateAuthersElement(
+                                 IEnumerable<string> authers) {
+     var elem = new XElement("authers",
+                  from a in authers
+                  select new XElement("auther",a)
+                );
+     return elem;
+ }
+        
+Mainメソッドのなかでは、XElementのコンストラクタを呼び出しています。こ
+の第１引数として、ル―トの要素名を、第２引数に、LINQ クエリから取得し
+た要素の内容を渡します。
+第２引数内で記述してあるLINQ クエリ式は、LINQ to Objectのクエリ式で、
+操作の対象は、books変数です。つまり、Bookオブジェクトの配列です。
+select句で、XElementオブジェクトを生成して返しています。これで、Books
+ル―ト要素からなるXElementが生成できます。
+
+Authers要素は、CreateAuthersメソッドで同様の手法で XElementを作成して
+います。 
+このサンプルでは、最後に、
+
+ xdoc.Save("Sample.xml");
+ 
+として、XMLファイルをファイルに書きだしています。
+ 
+なお、ここでは、XDocumentオブジェクトを作成しましたが、LINQ to XMLが用
+意している様々なメソッドは、XElementを直接操作することができます。
+そのため、
+
+ XDocument xdoc = new XDocument(xelem);
+
+は不要かもしれません。
+実際、この例では、
+
+   xelem.Save("Sample.xml");
+   
+と書くことができます。
+
+───────────────────────────────────
+『C#プログラミングレッスン』  (ぼぼ週刊）                             
+───────────────────────────────────
+ Published by Gushwell.                                               
+   Copyright (C) 2004-2009 Gushwell All rights reserved.              
+   Microsoft MVP - Visual C#(Apr 2005 - Mar 2009)                     
+
+ <<■ Gushwell's Page ■>>
+ 窓際プログラマ―の独り言  ：http://blog.livedoor.jp/gushwell/        
+ 窓際プログラマ―の読書三昧：http://gushwell.jugem.jp/                
+ Gushwell's C# Programming Page：http://gushwell.ifdef.jp/            
+ C#デザインパタ―ン :                                                 
+  『増補改訂版Java言語で学ぶデザインパタ―ン入門 / 結城 浩(著)』      
+   のサンプルコ―ドをC#に移植したものを掲載しています。               
+   移植後のコ―ドの公開は、結城氏の了解を得ています。                 
+   http://gushwell.ifdef.jp/dp/csdpindex.html                         
+───────────────────────────────────

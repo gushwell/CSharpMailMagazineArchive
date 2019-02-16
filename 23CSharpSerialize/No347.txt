@@ -1,0 +1,96 @@
+
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━━━ No.347 ━□
+
+「シリアライズ編」-- XMLシリアル化(4)
+                                                           by Gushwell  
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+
+■□───────────────────────────────────
+■□ シリアル化するXMLの要素名をカスタマイズする。
+
+MLシリアル化では、他のアプリケーションとのデータの受け渡しが利用シーンと
+して想定されますので、XMLにシリアル化する際に、XMLの要素名をクラスのメン
+バーとは異なる名前にしたい場合があります。
+
+そのような時に利用できるのが、XmlElement属性です。
+以下のその例を示します。
+
+  public class Book {
+      [XmlElement(ElementName="BookTitle")]
+      public string title;
+      public string author;
+      public int price;
+  }
+
+  ...
+
+  Book obj = new Book {
+      title = "銀河鉄道の夜",
+      author = "宮沢賢治",
+      price = 450
+  };
+  XmlSerializer serializer = new XmlSerializer(typeof(Book));
+  using (Stream stream = new FileStream("book.xml", FileMode.Create,
+                                                    FileAccess.Write)) {
+      serializer.Serialize(stream, obj);
+  }
+
+
+このようにクラスのメンバーに XmlElement属性のElementNameプロパティを設定
+することで要素名を変更できます。
+
+上のコードを実行すると、以下のようなXMLが作成されます。
+
+ <?xml version="1.0"?>
+ <Book xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+       xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+   <BookTitle>銀河鉄道の夜</BookTitle>
+   <author>宮沢賢治</author>
+   <price>450</price>
+ </Book>
+
+
+■□───────────────────────────────────
+■□ XmlRoot属性
+
+XmlRoot属性を使えば、ルートの要素名を変更することも可能です。
+XmlRoot属性は、クラスに付加します。
+
+以下にその例を示します。ここでは、ルート要素を Book から BookInfo に変更
+しています。
+
+
+  [XmlRoot("BookInfo")]
+  public class Book {
+      [XmlElement(ElementName="BookTitle")]
+      public string title;
+      public string author;
+      public int price;
+  }
+
+出力されるXMLを示します。
+
+ <?xml version="1.0"?>
+ <BookInfo xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+           xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+   <BookTitle>銀河鉄道の夜</BookTitle>
+   <author>宮沢賢治</author>
+   <price>450</price>
+ </Book>
+
+─────────────────────────────────────
+『C#プログラミングレッスン』  (ほぼ週刊）                                 
+☆皆さまからの感想をお待ちしています。http://gushwell.ifdef.jp/mail.html  
+─────────────────────────────────────
+Published by Gushwell.                                                    
+Copyright (C) 2012 Gushwell All rights reserved.                          
+Microsoft MVP for Visual C#(Apr 2005 - Mar 2013)                          
+                                                                          
+■Gushwell's Page                                                         
+facebook Page                     : http://www.facebook.com/CSharpLesson  
+Gushwell's C# Dev Notes           : http://gushwell.ldblog.jp/            
+Gushwell's C# Programming Page    : http://gushwell.ifdef.jp/             
+Gushwellの読書ノート              : http://gushwell.jugem.jp/             
+Twitterアカウント                 : @gushwell                             
+─────────────────────────────────────

@@ -1,0 +1,184 @@
+┏━┳━━━━━━━━━━━━━━━━━━━━━━━━━┳━┳━┳━┓
+┃☆┃ C#プログラミングレッスン                         ┃＿┃□┃×┃
+┣━┻━━━━━━━━━━━━━━━━━━━━━━━━━┻━┻━┻━┫
+┃staticメソッド                                             No.028 ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+今回も、日付クラスMyDateを題材にクラスの解説です。
+
+■──────────────────────────────────
+■ staticメソッド
+
+閏年かどうかを調べるメソッドを MyDate クラスに定義してみましょう。
+
+  public class MyDate {
+      ...
+      public bool IsLeapYear() {
+          return ((year % 4 == 0) &&
+                 ((year % 100 != 0) || (year % 400 == 0)));
+      }
+  }
+
+これを使うには、どうすればよいでしょうか。
+
+   MyDate dt = new MyDate(2004,1,1);
+   if ( dt.IsLeapYear() )
+       Console.WriteLine("閏年です");
+
+うーーん、閏年かどうかを調べるには、2004 年という情報だけが必要なのに、
+月と日の情報が必要と言うのは、ちょっと使い勝手が悪いですね。
+では、
+
+  public class MyDate {
+      ...
+        public bool IsLeapYear(int year) {
+            return ((year % 4 == 0) &&
+                   ((year % 100 != 0) || (year % 400 == 0)));
+        }
+  }
+
+と引数で調べたい年を受け取るようにしたらどうでしょうか。
+
+   MyDate dt = new MyDate(1,1,1);
+   if ( dt.IsLeapYear(2004) )
+       Console.WriteLine("閏年です");
+
+うーーん、 さらに良く無いですね。1年1月1日というどうでも良い情報が必要
+になってしまいました。
+そもそも、MyDateクラスのインスタンスを生成しなければ、閏年かどうかを調
+べられない、ということ自体がおかしそうです。MyDateクラスのインスタンス
+を生成せずに、閏年かどうかを判断できれば、便利そうです。
+このような時に static メソッドを使います。
+
+  public class MyDate {
+      ...
+      public static bool IsLeapYear(int year) {
+          return ((year % 4 == 0) &&
+                 ((year % 100 != 0) || (year % 400 == 0)));
+      }
+  }
+
+static を付けた IsLeapYearメソッドは、以下のように使えます。
+
+  if ( MyDate.IsLeapYear(2004) )
+       Console.WriteLine("閏年です");
+
+どこが違ったのかと言えば、IsLeapYearメソッドを呼び出すのに、変数名では
+なく、
+
+   MyDate.IsLeapYear(2004)
+
+とクラス名を先頭に付けるようにした点です。
+
+ ┌─────────────────────────────────┐
+ │ staticメソッドを呼び出すには、<クラス名>.<メソッド名>とする。    │
+ └─────────────────────────────────┘
+
+staticにすれば、インスタンスを生成しなくても呼び出せるようになります。
+
+
+■──────────────────────────────────
+■ static の意味
+
+staticの意味を再度考えてみたいと思います。
+意味的には、
+『IsLeapYearというメソッドは、個々のインスタンスに属するメソッドでは
+  なく、クラスに属するメソッドである』
+ということです。
+
+IsLeapYearを通常のメソッドとして定義した場合、どうもしっくりとこなかっ
+たのは、「閏年かどうかを調べる」という機能は、確かに日付という概念に属
+する機能でありますが、何年何月何日という個々のインスタンスに依存しない
+機能だからですね。
+
+このように、メソッドを定義する場合には、それが、インスタンスに属するメ
+ソッドなのかクラスに属するメソッドなのかを良く考える必要があります。
+
+ちなみに、この static というキーワードは、メソッド以外にも、フィールド
+やプロパティにも指定することが可能です。
+
+
+■──────────────────────────────────
+■ staticメソッドと通常のメソッドのオーバーロード
+
+場合によっては、現在のMyDateインスタンスの日付に対して、閏年かどうかを
+調べたいという要求もあるかもしれません。
+その時には、
+
+    MyDate dt = new MyDate(2004,3,7);
+    if ( MyDate.IsLeapYear(dt.Year) )
+       Console.WriteLine("閏年です");
+
+と記述することになります。あるいは、
+
+    public bool IsLeapYear() {
+        return MyDate.IsLeapYear(this.year);
+    }
+
+のように、通常のメソッドとしても、IsLeapYearを定義（オーバーロード）し
+ておけば、
+
+    MyDate dt = new MyDate(2004,3,7);
+    if ( dt.IsLeapYear() )
+       Console.WriteLine("閏年です");
+
+のように、記述することも可能になります。
+
+
+-----------------------------------------------------------------------
+●今日のソースコード
+
+using System;
+
+class Program {
+    static void Main() {
+        string s = Console.ReadLine();
+        int year = int.Parse(s);
+        if (MyDate.IsLeapYear(year))
+            Console.WriteLine("{0}年は閏年です。",year);
+        else
+            Console.WriteLine("{0}年は閏年ではありません。", year);
+    }
+}
+
+class MyDate {
+    private int year;
+    private int month;
+    private int day;
+    public MyDate(int year, int month, int day) {
+        this.year = year;
+        this.month = month;
+        this.day = day;
+    }
+    public static bool IsLeapYear(int year) {
+        return ((year % 4 == 0) &&
+               ((year % 100 != 0) || (year % 400 == 0)));
+    }
+    public bool IsLeapYear() {
+        return MyDate.IsLeapYear(this.year);
+    }
+    public string Format() {
+        return string.Format("{0}年{1}月{2}日",year, month, day);
+    }
+    public int Year {
+        get { return year; }
+    }
+    public int Month {
+        get { return month; }
+    }
+    public int Day {
+        get { return day; }
+    }
+}
+
+┌─┬─────────────────────────┬─┬─┬─┐
+│☆│ C#プログラミングレッスン                         │＿│□│×│
+├─┴─────────────────────────┴─┴─┴─┤
+│ Published by GushWell                                            │
+│ Copyright (C) 2004-2005 GushWell All rights reserved.            │
+│-------------------- GushWell's Page ---------------------------- │
+│ 窓際プログラマーの独り言  ：http://blog.livedoor.jp/gushwell/    │
+│ 窓際プログラマーの読書三昧：http://gushwell.jugem.jp/            │
+│             よろしかったらアクセスしてみてください！             │
+└─────────────────────────────────┘
+

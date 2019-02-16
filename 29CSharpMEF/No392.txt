@@ -1,0 +1,167 @@
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━━━ No.392 ━□
+
+「MEF編」-- リビルドしないで機能を差し替える
+                                                           by Gushwell
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+
+前回は、ITextConverterの具象クラスを差し替える方法を示しましたが、プロジェ
+クトを再度ビルドしなおさないといけないという問題がありました。
+
+今回は、ソースを複数のプロジェクトに分解することで、既存のプロジェクトにつ
+いては、再ビルドせずに、新しく追加したプロジェクトだけをビルドすれば実効で
+きるようにしてみましょう。
+
+
+■□───────────────────────────────────
+■□ プログラムの骨格を作成する
+
+まずは、リビルドしないで機能を差し替えることのできるプログラムの骨格を作成
+します。
+
+以下、手順を示します。
+
+1. 新規プロジェクト（コンソールアプリケーション）を作成します。
+   名前は、MEFSampleとでもしておきましょう。
+   MEFSampleという名前で、コンソールアプリケーションプロジェクトが作成され
+   ますが、とりあえずこのままとしておきます。
+
+2. ITextConverter プロジェクトを追加します。
+   プロジェクトのタイプは、クラスライブラリとしてください。
+   ここで定義するのは、ITextConverter インターフェースだけです。
+
+    namespace MEFSample {
+        public interface ITextConverter {
+            string Convert(string s);
+        }
+    }
+
+3. MEFSampleプロジェクトに参照設定を追加します。
+   追加するのは、以下の２つです。
+
+     System.ComponentModel.Composition
+     ITextConverter
+
+4. MEFSampleプロジェクトのProgram.csのMainメソッドを記述します。
+
+    using System;
+    using System.ComponentModel.Composition.Hosting;
+
+    namespace MEFSample {
+        class Program {
+            static void Main(string[] args) {
+                var catalog = new DirectoryCatalog("Plugin");
+                var container = new CompositionContainer(catalog);
+                var obj = container.GetExportedValue<ITextConverter>();
+                string s = Console.ReadLine();
+                string dst = obj.Convert(s);
+                Console.WriteLine(dst);
+                Console.ReadLine();
+            }
+        }
+    }
+
+    前回までと異なるのは、カタログを生成する箇所です。ここでは、
+    DirectoryCatalogを使い、"Plugin"ディレクトリにあるアセンブリからパーツ
+    を検索するようにします。
+
+    コードを単純化するために、実行時のカレントディレクトリがこのプログラム
+    （exeファイル）が存在するディレクトリであると仮定しています。
+
+これで、プログラムの骨格が作成できました。ビルドは正常に終了するはずですが、
+まだ実行はできません。この状態で実行すると例外が発生します。
+これはPluginフォルダに、ITextConverterを実装したアセンブリが無いためです。
+
+
+■□───────────────────────────────────
+■□ 具象クラスを定義し、プログラムを実行可能にする。
+
+では、実行できるように、ITextConverterの具象クラスを実装しましょう。
+手順を示します。
+
+1. ソリューションに、新しいソリューションフォルダを追加します。
+   名前は、Plugin とします。
+
+2. このPluginフォルダの下に、新規プロジェクトを追加します。
+   プロジェクトのタイプはクラスライブラリとし、プロジェクトの名前は、
+   TextUpper とし、ここにTextUpper.csファイルを追加し、以下のコードを記述し
+   ます。
+
+    using System.ComponentModel.Composition;
+
+    namespace MEFSample {
+
+        [Export(typeof(ITextConverter))]
+        public class TextUpper : ITextConverter {
+            public string Convert(string s) {
+                return s.ToUpper();
+            }
+        }
+    }
+
+   なお、参照設定に System.ComponentModel.Composition と ITextConverter を
+   追加するのを忘れないでください。
+
+3. ソリューションをビルドします。
+
+4. MEFSampleの実行ファイルが格納されるフォルダ(bin\Debug)に移動し、そこに、
+   Pluginフォルダを作成します。
+
+5. このPluginフォルダに、ビルドで作成された TextUpper.dllをコピーします。
+   TextUpper.dllは、TextUpper フォルダの下の bin\debugフォルダにあります。
+
+これで、MEFSample.exeを実行してください。コンソール画面で任意の文字列を入力
+し、Enterキーを押せば、TextUpper.dllのConvertメソッドが動作し、入力した文字
+列が大文字化されるのが確認できるはずです。
+
+
+■□───────────────────────────────────
+■□ 機能を差し替える
+
+同様に、Pluginソリューションフォルダの下に、AddBracketsプロジェクトも作成し
+ましょう。
+
+    using System.ComponentModel.Composition;
+
+    namespace MEFSample {
+        [Export(typeof(ITextConverter))]
+        public class Addbrackets : ITextConverter {
+            public string Convert(string s) {
+                return "[" + s + "]";
+            }
+        }
+    }
+
+
+このAddBracketsプロジェクトをビルドし、先ほどTextUpper.dllをコピーした
+Pluginフォルダに、AddBrackets.dllをコピーします。
+
+TextUpper.dllは削除しておきます。
+
+実行してください。コンソール画面で任意の文字列を入力し、Enterキーを押せば、
+文字列の前後が [ ] でっ括られた文字列が表示されますので、TextUpper.dllの
+Convertメソッドが動作していることが分かります。
+
+なお、TextUpper.dllは削除しないと、「一致するエクスポートが複数見つかりまし
+た」という例外が発生して実行できません。
+
+プログラムをビルドしなおさずに、Pluginフォルダのdllを差し替えるだけで、
+機能を置き換えることができることが確認できました。
+
+次回は、複数のアセンブリを読み込み、実行する方法についてみていきます。
+
+─────────────────────────────────────
+『C#プログラミングレッスン』  (ほぼ週刊）
+☆皆さまからの感想をお待ちしています。http://gushwell.ifdef.jp/mail.html
+─────────────────────────────────────
+Published by Gushwell.
+Copyright (C) 2014 Gushwell All rights reserved.
+Microsoft MVP for Visual C#(Apr 2005 - Mar 2015)
+
+■Gushwell's Page
+facebook Page                     : http://www.facebook.com/CSharpLesson
+Gushwell's C# Dev Notes           : http://gushwell.ldblog.jp/
+Gushwell's C# Programming Page    : http://gushwell.ifdef.jp/
+気ままな読書ノート                : http://gwbooks.hatenablog.com/
+Twitterアカウント                 : @gushwell
+─────────────────────────────────────

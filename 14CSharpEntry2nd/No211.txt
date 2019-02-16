@@ -1,0 +1,257 @@
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━ No.211 ━□
+  
+ 「C#入門編 2nd」 -- 繰り返し処理
+                                                         by Gushwell  
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+今回は、繰り返し処理について学びます。
+
+■□─────────────────────────────────
+■□ while
+
+whileは、繰り返し処理をする時に利用する構文です。
+while の構文は、
+
+   while ( 条件式 ) {
+       ...
+   }
+
+で、() の中の条件式が成り立っている間、{ と } で囲まれた部分を繰り返し
+ます。
+早速、whileを使ったコードを示します。
+
+using System;
+
+namespace ConsoleApplication1 {
+    class Program {
+        static void Main(string[] args) {
+            Console.WriteLine("平成  西暦 ");
+            int year = 1;
+            while (year <= 20) {
+                Console.WriteLine(" {0}   {1}", year, year + 1988);
+                year = year + 1;
+            }
+
+        }
+    }
+}
+
+今回のプログラムでは、
+
+    year <= 20
+
+と条件を指定していますから、year という変数の値（初期値は 1）が、20 以
+下の間は、 { } 内の処理が実行され、20 より大きくなったら、繰り返しから
+抜け出します。
+
+結果は、
+
+ 平成  西暦
+  1   1989
+  2   1990
+  3   1991
+  4   1992
+  ... 省略 ...
+  18   2006
+  19   2007
+  20   2008
+
+と表示されます。
+
+
+■□─────────────────────────────────
+■□ for
+
+for文も繰り返し処理を記述する時に使えます。
+先ほどのプログラムを for文を使って書き変えると、
+
+using System;
+
+namespace ConsoleApplication1 {
+    class Program {
+        static void Main(string[] args) {
+            Console.WriteLine("平成  西暦 ");
+            for (int year = 1; year <= 20;year = year + 1) { 
+                Console.WriteLine(" {0}   {1}", year, year + 1988);
+            }
+        }
+    }
+}
+
+と書けます。while文よりも少ない行数で書け、ｎ回繰り返すときによく使わ
+れます。
+
+for 文の形式は次の通りです。
+
+  for ([initializers]; [expression]; [iterators]) 
+      statement
+  
+この for 文は、以下の while 文と等価です。
+
+   [initializers];
+   while ( [expression] ) {
+       statement
+       [iterators];
+   }
+
+[initializers]
+  ループ開始時に１回だけ実行されます。通常、ループカウンタの初期化を行
+  います。C#では、変数の宣言も行えますので、
+    int year = 1;
+  とループカウンタは、ここで宣言するのが普通です。
+
+[expression]
+  この式は、ループを繰り返すかどうかををテストします。記述した式が「真」
+  の間は、ループを繰り返します。
+
+[iterators]
+  ループ カウンタをインクリメントまたはデクリメントする式を書きます。 
+  ループ内の[statement]の実行が終わると、 [iterators] の処理を実行し、
+  その後、[expression]で書かれた条件テストが行われます。
+
+なお、
+  year = year + 1
+
+は、
+ year += 1
+または
+ year++
+のようにも書けます。
+その他、以下のような演算子があります。
+
+  演算子   意味              使用例
+   ++     インクリメント     a++;
+   --     デクリメント       a--;
+   +=     加算代入           a += 2;
+   -=     減算代入           a -= 2;
+   *=     乗算代入           a *= 2;
+   /=     除算代入           a /= 2;
+
+
+■□─────────────────────────────────
+■□ do-while
+
+C#のもう一つのループ制御文 do-while を使うと、上のコードは、以下のよう
+になります。
+
+using System;
+
+namespace ConsoleApplication1 {
+    class Program {
+        static void Main(string[] args) {
+            Console.WriteLine("平成  西暦 ");
+            int year = 1;
+            do {
+                Console.WriteLine(" {0}   {1}", year, year + 1988);
+                year++;
+            } while (year <= 20);
+        }
+    }
+}
+
+do-whileは、 while 文と似ていますが、while文が、繰り返しの前に終了条件
+をテストするのに対し、ループ内の処理が終わってから、終了条件をテストす
+る点が異なっています。
+このため、do-while 文は、どんな場合でも、最低1回はループ内の処理が行わ
+れることになります。
+一方、while文は、ループ内の処理が１回も行われないこともあります。
+do-while 文は、for, while 文と比較すると、使用頻度はかなり低くなります。
+
+
+■□─────────────────────────────────
+■□ break
+
+既に、switch文で、breakキーワードが出てきましたが、breakは、もう一つの
+使い方があります。それは、ループからの脱出での利用です。
+
+以下のサンプルコードでは、 "quit" が入力されるまで、ループが繰り返され
+ます。"quit"が入力されると、break 文が実行され、while ループから抜け出
+します。break は、for文 do-while文などの他のループ文でも利用できます。
+
+  string s = Console.ReadLine();
+  while (true) {
+      if (s == "quit")
+          break;         // ループから抜ける
+      Console.WriteLine(s.Length);
+      s = Console.ReadLine();
+  }
+
+
+実行結果
+
+ windows           <--- 入力した文字列
+ 7                 <--- 出力された結果
+ computer
+ 8
+ xml
+ 3
+ quit
+
+
+■□─────────────────────────────────
+■□ continue                                         
+
+ループ処理の中で使えるもう一つの制御キーワードが、continueです。
+continueに出会うと、それ以降の処理をスキップし、次の繰り返しが開始され
+ます。
+例えば、 次のコードでは、continue に出会うと、それ以降の処理がスキップ
+され、ループの先頭に戻り、次の iに対しての処理となります。
+
+  for (int i = 0; i < 100; i++) {
+      if (i % 13 != 0)
+          continue;  // ループの先頭に戻る i++ は実行される
+      Console.WriteLine("{0}は13で割り切れる数です", i);
+  }
+
+実行結果は以下のとおりです。
+
+ 0は13で割り切れる数です
+ 13は13で割り切れる数です
+ 26は13で割り切れる数です
+ 39は13で割り切れる数です
+ 52は13で割り切れる数です
+ 65は13で割り切れる数です
+ 78は13で割り切れる数です
+ 91は13で割り切れる数です
+
+
+なお、このコードは、
+
+  for ( int i = 0; i < 100; i++ ) {
+      if ( i % 13 == 0)
+          Console.WriteLine("{0}は13で割り切れる数です",i);
+  }
+
+と書いたのと同じことになります。
+この例ではあまり効果がありませんが、continueを使うと、プログラムの入れ
+子が深くなりすぎるのを避けることができますので、上手に使うと、プログラ
+ムを読み易すくする効果が有ります。
+ただ、continue文は、break文と比べると、使われる頻度は低いと思われます。
+
+なお、while や do-while でcontinueを安易に使うと、無限ループになってし
+まうバグが混入されてしまいますので、注意してください。
+
+───────────────────────────────────
+『C#プログラミングレッスン』  (ぼぼ週刊）                             
+───────────────────────────────────
+ Published by Gushwell.                                               
+   Copyright (C) 2004-2009 Gushwell All rights reserved.              
+   Microsoft MVP - Visual C#(Apr 2005 - Mar 2010)                     
+
+ <<■ Gushwell's Page ■>>
+ 窓際プログラマ―の独り言  ：http://blog.livedoor.jp/gushwell/        
+ 窓際プログラマ―の読書三昧：http://gushwell.jugem.jp/                
+ Gushwell's F# Programming Diary : http://techbank.jp/gushwell/       
+ Gushwell's C# Programming Page  ：http://gushwell.ifdef.jp/          
+   C#デザインパタ―ン : http://gushwell.ifdef.jp/dp/csdpindex.html    
+
+ ☆メールマガジンの感想お待ちしています☆                             
+   http://gushwell.ifdef.jp/mail.html                                 
+
+ <<■ コミュニティtechbank.jp (http://techbank.jp/) ■>>
+ Gushwellが参加している技術系コミュニティです。
+ マイクロソフト系テクノロジー＆製品に特化したコミュニティで、Webサイト
+ では、VB、C#、VC++、SQL Server, BizTalk Server などの技術情報を公開し
+ ています。皆さんの参加をお待ちしています。
+ ブロガーさんも募集中です。
+───────────────────────────────────

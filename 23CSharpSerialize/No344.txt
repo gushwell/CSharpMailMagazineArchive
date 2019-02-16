@@ -1,0 +1,108 @@
+
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━━━ No.344 ━□
+
+「シリアライズ編」-- XMLシリアル化(1)
+                                                           by Gushwell  
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+今回から、XMLシリアル化について説明します。
+
+■□───────────────────────────────────
+■□ XMLシリアル化
+
+XMLシリアル化は、オブジェクトをシリアル化した結果は、XML形式となります。
+XMLシリアル化を行うには、XmlSerializer クラスを利用します。このクラスの中
+心的なメソッドは、Serialize メソッドと Deserialize メソッドです。
+では、さっそく、以下のクラスのオブジェクトを例に実際のコードを見ていきま
+しょう。
+
+ public class MyObject {
+     public int n1 = 0;
+     public int n2 = 0;
+     public double d1 = 0.0;
+     public String str = null;
+     public DateTime date;
+ }
+
+以下、シリアル化するコードです。
+
+ MyObject obj = new MyObject {
+     n1 = 10,
+     n2 = 123,
+     d1 = 987.6,
+     str = "sample string",
+     date = new DateTime(2012, 9, 10),
+
+ };
+ XmlSerializer serializer = new XmlSerializer(typeof(MyObject));
+ using (Stream stream = new FileStream("sample.xml", FileMode.Create, FileAccess.Write)) {
+     serializer.Serialize(stream, obj);
+ }
+
+バイナリシリアル化の時に利用するBinaryFormatterクラスと、XmlSerializerは
+似ていますが、微妙に使い方が違っています。
+もっとも大きな違いが、Serializable 属性が不要であるという点です。
+もう一つが、XmlSerializer のコンストラクタで、シリアル化するオブジェクト
+の型情報を引数に渡している点です。Serializeメソッドは、同じ使い方ですね。
+
+このコードを実行すると、sample.xmlファイルが作成されます。このファイルの
+内容は以下のようになります。
+
+<?xml version="1.0"?>
+<MyObject xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+          xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <n1>10</n1>
+  <n2>123</n2>
+  <d1>987.6</d1>
+  <str>sample string</str>
+  <date>2012-09-10T00:00:00</date>
+</MyObject>
+
+
+■□───────────────────────────────────
+■□ XML逆シリアル化
+
+次ぎに、逆シリアル化のコードを示します。
+
+ XmlSerializer serializer = new XmlSerializer(typeof(MyObject));
+ MyObject obj = null;
+ using (Stream stream = new FileStream("sample.xml", FileMode.Open, 
+                                                      FileAccess.Read)) {
+     obj = (MyObject)serializer.Deserialize(stream);
+ }
+ // 以下、内容を確認するコード
+ Console.WriteLine("n1 = {0}", obj.n1);
+ Console.WriteLine("n2 = {0}", obj.n2);
+ Console.WriteLine("d = {0}", obj.d1);
+ Console.WriteLine("str = {0}", obj.str);
+ Console.WriteLine("data = {0}", obj.date);
+
+逆シリアル化する際は、本来の方にキャストしてあげる必要がありますが、それ
+以外の点については、シリアル化のコードがわかれば、こちらは特に説明する必
+要もないでしょう。
+
+結果は、以下の通りです。
+
+ n1 = 10
+ n2 = 123
+ d = 987.6
+ str = sample string
+ data = 2012/09/10 0:00:00
+
+
+─────────────────────────────────────
+『C#プログラミングレッスン』  (ほぼ週刊）                                 
+☆皆さまからの感想をお待ちしています。http://gushwell.ifdef.jp/mail.html  
+─────────────────────────────────────
+Published by Gushwell.                                                    
+Copyright (C) 2012 Gushwell All rights reserved.                          
+Microsoft MVP for Visual C#(Apr 2005 - Mar 2013)                          
+                                                                          
+■Gushwell's Page                                                         
+facebook Page                     : http://www.facebook.com/CSharpLesson  
+Gushwell's C# Dev Notes           : http://gushwell.ldblog.jp/            
+Gushwell's C# Programming Page    : http://gushwell.ifdef.jp/             
+Gushwellの読書ノート              : http://gushwell.jugem.jp/             
+Twitterアカウント                 : @gushwell                             
+─────────────────────────────────────
+

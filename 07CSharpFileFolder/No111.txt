@@ -1,0 +1,132 @@
+┏━┳━━━━━━━━━━━━━━━━━━━━━━━━━┳━┳━┳━┓
+┃☆┃ C#プログラミングレッスン                         ┃＿┃□┃×┃
+┣━┻━━━━━━━━━━━━━━━━━━━━━━━━━┻━┻━┻━┫
+┃EncodingとBOM                                               No.111┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+■──────────────────────────────────
+■ エンコーディングとは
+
+テキストファイルを扱う際に、必ず付いて回るのが、エンコーディングの問題
+です。
+C# で文字列を扱う際は、Unicode という文字体系が使われています。この文
+字列をテキストファイルに出力するときに指定するのが、エンコーディングの
+種類です。
+エンコーディングとは、ある文字セットをバイトシーケンスに変換するプロセ
+スです。
+Unicodeのエンコードには、次の UTF(Unicode Transformation Format)が利用
+されます。
+
+  UTF-8  ：各文字コードが、1 バイトから 4 バイトとして表現されます。
+           半角の英数記号は１バイトで表現さます。
+           殆どの漢字は３バイトになります
+  UTF-16 ：各文字コードが、２バイトまたは４バイトとして表現されます。
+           半角英数字も２バイトとして表現されます。
+  UTF-32 ：各文字コードが、４バイトとして表現されます。
+
+また、Shift_JIS というエコーディング種別もあります。このコード体系は、
+Windows の前の OS である DOS/V での標準コード体系であり、たぶん現在で
+も最も広く使われているコード体系です。Shift_JIS エンコーディングは、
+Shift-JIS のコード体系そのものが利用されます。
+
+"XYZ 株式会社" という文字列がどういったバイトシーケンスになるのかを以
+下に示します。
+
+UTF-8      58 59 5A E6 A0 AA E5 BC 8F E4 BC 9A E7 A4 BE 
+           X  Y  Z  株       式       会       社
+
+UTF-16     58 00 59 00 5A 00 2A 68 0F 5F 1A 4F 3E 79
+           X     Y     Z     株    式    会    社
+
+UTF-32     58 00 00 00 59 00 00 00 5A 00 00 00 2A 68 00 00
+           X           Y           Z           株
+           0F 5F 00 00 1A 4F 00 00 3E 79 00 00
+           式          会          社
+
+Shift_JIS  58 59 5A 8A 94 8E AE 89 EF 8E D0
+           X  Y  Z     株    式    会    社
+
+■──────────────────────────────────
+■ Shift_JISについて
+
+上記結果をみて、Shift_JISが一番サイズが小さいから、Shift_JISでのエンコ
+ーディングが一番よさそうだ、なんて思った方がいるかもしれません。しかし、
+Shift_JISで表現できる文字セットは、Unicodeのサブセットであるため、
+Shift_JISにない文字を出力しようとした場合、? に置き換えられてしまいま
+すので注意が必要です。
+
+
+■──────────────────────────────────
+■ BOMについて
+
+実は、UTF-16 と UTF-32 には、1 文字を整数として表現しているので、バイ
+トシーケンスにする際に、上位バイトから出力するのか、下位バイトから出力
+する２つの形式があります。
+
+そのため、どちらのエンディアンで記述されたデータなのかを判定するための
+マークをファイルの先頭に付加します。
+このマークを BOM(Byte Order Mark）と読んでいます。
+
+また、エンディアンの種別を自動判定するために、エンディアンの区別のない
+UTF-8 にも、BOM が付加されることがあります。
+下記のコードで、それを実際に確認してみましょう。
+
+  using ( StreamWriter writer = new StreamWriter("utf8.txt", false,
+                                               Encoding.UTF8) ) {
+      writer.WriteLine("XYZ株式会社");
+  }
+  using ( StreamWriter writer = new StreamWriter("utf16.txt", false,
+                                                Encoding.Unicode) ) {
+      writer.WriteLine("XYZ株式会社");
+  }
+  using ( StreamWriter writer = new StreamWriter("utf32.txt", false,
+                                                Encoding.UTF32) ) {
+      writer.WriteLine("XYZ株式会社");
+  }
+  using ( StreamWriter writer = new StreamWriter("shiftJIS.txt",false,
+                               Encoding.GetEncoding("Shift_JIS") ) ) {
+      writer.WriteLine("XYZ株式会社");
+  }
+
+上記コードで実際に出力されるファイルには、それぞれ、以下のBOMが付加さ
+れます。
+
+  UTF-8      EF BB BF
+  UTF-16     FF FE
+  UTF-32     FF FE 00 00
+  Shift_JIS  BOMなし
+
+  ※ 「Stirling」などのバイナリファイルエディタなどで確認してください。
+      http://www.vector.co.jp/soft/win95/util/se079072.html
+
+ちなみに、前回示したコードにようにエンコーディングの指定をしなかった場
+合はどうなるのでしょうか？
+
+  using ( StreamWriter writer = new StreamWriter("none.txt"))  {
+      writer.WriteLine("XYZ株式会社");
+  }
+
+この場合、UTF-8 でエンコーディングされますが、BOM は付加されません。
+
+======================================================================
+◆次号のお知らせ◆
+今号が今年最後のメルマガとなります。１年間ご購読ありがとうございました。
+次号は、来年１月９日を予定しています。
+では、良いお年を！
+
+┌─┬─────────────────────────┬─┬─┬─┐
+│☆│ C#プログラミングレッスン  (ぼぼ週刊）            │＿│□│×│
+├─┴─────────────────────────┴─┴─┴─┤
+│ Published by Gushwell.                                           │
+│ Copyright (C) 2004-2006 Gushwell All rights reserved.            │
+│ Microsoft MVP Visual Developer - Visual C#(Apr 2006 - Mar 2007)  │
+│-------------------- Gushwell's Page ---------------------------- │
+│ 窓際プログラマーの独り言  ：http://blog.livedoor.jp/gushwell/    │
+│ 窓際プログラマーの読書三昧：http://gushwell.jugem.jp/            │
+│ C#デザインパターン :                                             │
+│  『増補改訂版Java言語で学ぶデザインパターン入門 / 結城 浩(著)』  │
+│   のサンプルコードをC#に移植したものを掲載しています。           │
+│   移植後のコードの公開は、結城氏の了解を得ています。             │
+│   http://blog.livedoor.jp/gushwell/archives/50333227.html        │
+└─────────────────────────────────┘
+ 

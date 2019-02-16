@@ -1,0 +1,100 @@
+
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━━━ No.265 ━□
+  
+ 「LINQ to SQL編」-- 遅延ロード
+                                                             by Gushwell  
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+
+今回は「遅延ロード」について説明します。
+またまた、「遅延」という用語が出てきましたが、「遅延実行」「遅延読み込み」
+とは、別の概念ですので、注意してください。
+
+
+■□───────────────────────────────────
+■□ 遅延ロード
+
+「遅延ロード」とは、当該プロパティが参照されるまで、特定のカラム値の読み込
+みを遅延させる機能です。
+
+この機能を有効にするには、以下の手順に従います。
+
+1. Visual StudioでO/Rデザイナー画面を開き、遅延ロードを有効にしたいプロパ
+   ティ（カラム名）をマウスで選択します。
+
+2. プロパティウィンドウが開きますので、「遅延読み込み」の欄を Falseから
+   True に変更します。
+
+これで、遅延ロードが有効になります。
+
+Visual Studio の画面では「遅延読み込み」とありますが、No.262で説明したリレ
+ーションに関する「遅延読み込み」と重複するため、ここでは、「遅延ロード」と
+いう用語を使います。
+英語版では「Delay Loaded」という用語が使われています。ちなみに、「遅延読
+み込み」のほうは、「deferred loading 」だそうです。
+
+
+たとえば、CategoriesテーブルのPicture項目を遅延ロードに設定すれば、
+
+
+ using (var db = new NorthwindDataContext()) {
+     var categories = from c in db.Categories
+                      where c.CategoryID < 3
+                      select c;
+     foreach (var c in categories) {
+         Console.WriteLine(c.CategoryName);
+     }
+ }
+
+
+というコードを書いても、Picture項目を取得する SQL文は発行されません。
+実際、以下のようなSQLが発行されます。
+
+ SELECT [t0].[CategoryID], [t0].[CategoryName], [t0].[Description]
+ FROM [dbo].[Categories] AS [t0]
+ WHERE [t0].[CategoryID] < @p0
+
+Pictureプロパティに、遅延ロードの指定がないときのSQLは、
+
+ SELECT [t0].[CategoryID], [t0].[CategoryName], [t0].[Description], 
+        [t0].[Picture]
+ FROM [dbo].[Categories] AS [t0]
+ WHERE [t0].[CategoryID] < @p0
+
+となります。
+
+そして、次に示すように、Pictureを参照するコードが実行された時に、初めて
+Pictureカラムの値を取得する SQL文が発行されます。
+
+   foreach (var c in categories) {
+       byte[] pic = c.Picture.ToArray();
+       ...
+   }
+
+
+この機能を上手く使うことで、データの転送量を減らすことができますのでパフ
+ォーマンスの向上が見込めます。
+
+ADO.NET2.0で、NULLを許容しないカラムに対し、この遅延ロードをやろうとすると、
+直観的でない対応が必要だったと記憶していますが、LINQ to SQLでは、とても簡
+単にこの遅延ロードが実現できます。
+
+
+─────────────────────────────────────
+『C#プログラミングレッスン』  (ぼぼ週刊）                                 
+ ☆皆さまからの感想をお待ちしています。http://gushwell.ifdef.jp/mail.html 
+─────────────────────────────────────
+ Published by Gushwell.                                                   
+   Copyright (C) 2004-2010 Gushwell All rights reserved.                  
+   Microsoft MVP for Visual C#(Apr 2005 - Mar 2011)                       
+                                                                          
+ ■Gushwell's Page                                                        
+ 窓際プログラマ─の独り言        : http://gushwell.ldblog.jp/             
+ Gushwell's C# Programming Page  : http://gushwell.ifdef.jp/              
+ Gushwell's F# Programming Diary : http://techbank.jp/gushwell/           
+ Gushwellの読書ノート            : http://gushwell.jugem.jp/              
+                                                                          
+ ■コミュニティtechbank.jp (http://techbank.jp/)                          
+ Gushwellが参加している技術系コミュニティです。                           
+ 有志メンバーによるBlogでの技術情報発信も行っています。                   
+─────────────────────────────────────

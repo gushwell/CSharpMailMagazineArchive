@@ -1,0 +1,134 @@
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━ No.226 ━□
+  
+ 「FxCopに学ぶ編」 -- CA2200: Rethrow to preserve stack details
+
+                                                         by Gushwell  
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+■□─────────────────────────────────
+■□ CA2200: Rethrow to preserve stack details
+
+あるメソッドを呼び出したときに、例外が発生したかどうかをチェックし、何
+らかの例外処理を実施した後に再度、呼び出し元に例外を投げたい場合、どの
+ようなコードを書けばよいのでしょうか。
+
+
+例えばこんなコードはどうでしょう。
+
+ private static void Foo() {
+     try {
+         DoSomething(null);
+     } catch (System.ArgumentNullException e) {
+         Console.WriteLine("例外発生");
+         throw e;  // 発生した例外を呼び出し元に例外を投げる
+     }
+ }
+
+一見、何の問題も無さそうですが、
+
+ throw e;
+
+の部分が問題です。
+通常例外を発生させるには、
+
+  throw new System.NotImplementedException("ほにゃらら");
+
+のように、例外オブジェクトを指定しますので、e という例外オブジェクトを
+渡してもよさそうですが、これがなぜいけないのでしょうか。
+しかし、例外を再スローするならば、
+
+ throw;
+
+とすべきです。
+では、実際に、throw e; と throw; に違いをみてみましょう。
+
+ public static void Main() {
+     try {
+         Foo();     // throw e; を使い例外を発生させている
+     } catch (Exception e) {
+         Console.WriteLine(e);
+     }
+     Console.WriteLine();
+     try {
+         Bar();     // throw; を使い例外を再スローしている
+     } catch (Exception e) {
+         Console.WriteLine(e);
+     }
+ }
+
+ private static void Foo() {
+     try {
+         DoSomething(null);
+     } catch (System.ArgumentNullException e) {
+         Console.WriteLine("例外発生");
+         throw e;
+     }
+ }
+
+ private static void Bar() {
+     try {
+         DoSomething(null);
+     } catch (System.ArgumentNullException e) {
+         Console.WriteLine("例外発生");
+         throw;
+     }
+ }
+
+上記コードの結果、つまり Console.WriteLine(e) の出力は、
+
+ System.ArgumentNullException: 値を Null にすることはできません。
+    場所 XXXX.Foo() 場所 D:\...\SampleClass.cs:行 31
+    場所 XXXX.Main() 場所 D:\...\SampleClass.cs:行 10
+
+ System.ArgumentNullException: 値を Null にすることはできません。
+    場所 XXXX.DoSomething(Object o) D:\...\SampleClass.cs:行 24
+    場所 XXXX.Bar() 場所 D:\...\SampleClass.cs:行 39
+    場所 XXXX.Main() 場所 D:\...\SampleClass.cs:行 16
+
+となります。Bar()の方は、最初の例外が発生した個所から、スタックトレー
+スの情報が表示されていますが、Foo()のほうは、Barで例外が発生したという
+情報が無くなっています。つまり、
+
+  throw e;
+
+とすると、再スローの意味にはならず、スタックトレースの内容が、消えてし
+まうのです。この情報が消えてしまうと、デバッグ時に、どこで例外が発生し
+たのかがわからず、問題の原因を特定するのが難しくなってしまいます。
+このため、例外を再スローしたい場合は、throw; と書くようにしなければな
+りません。
+
+
+■ 参照MSDNページ
+  CA2200: スタックの詳細を保存するために再スローします
+  http://msdn.microsoft.com/ja-jp/library/ms182363.aspx
+
+  ※上記ルールの訳は、「スタックの詳細を保存するために再スローしてく
+    ださい」が適切だと思われます。
+
+
+
+───────────────────────────────────
+『C#プログラミングレッスン』  (ぼぼ週刊）
+───────────────────────────────────
+ Published by Gushwell.
+  Copyright (C) 2004-2009 Gushwell All rights reserved.
+  Microsoft MVP - Visual C#(Apr 2005 - Mar 2010)
+
+ <<■ Gushwell's Page ■>>
+ 窓際プログラマ─の独り言  ：http://gushwell.ldblog.jp/
+ 窓際プログラマ─の読書三昧：http://gushwell.jugem.jp/
+ Gushwell's F# Programming Diary : http://techbank.jp/gushwell/
+ Gushwell's C# Programming Page  ：http://gushwell.ifdef.jp/
+  C#デザインパタ─ン : http://gushwell.ifdef.jp/dp/csdpindex.html
+
+ ☆メールマガジンの感想お待ちしています☆
+  http://gushwell.ifdef.jp/mail.html
+
+ <<■ コミュニティtechbank.jp (http://techbank.jp/Community/) ■>>
+ Gushwellが参加している技術系コミュニティです。
+ マイクロソフト系テクノロジー＆製品に特化したコミュニティで、Webサイト
+ では、VB、C#、VC++、SQL Server, BizTalk Server などの技術情報を公開し
+ ています。皆さんの参加をお待ちしています。
+ ブロガーさんも募集中です。
+───────────────────────────────────
+

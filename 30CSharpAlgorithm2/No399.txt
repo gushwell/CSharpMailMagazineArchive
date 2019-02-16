@@ -1,0 +1,197 @@
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━━━ No.399 ━□
+
+「続・アルゴリズム編」-- スタック(1)
+                                                          by Gushwell
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+おはようございます。
+長雨のせいか、気分があまりすぐれないGushwellですが、皆さんはいかがお過ごし
+でしょうか。
+
+さて、先週に引き続き、スタックに関する問題を解いていきましょう。
+
+■□───────────────────────────────────
+■□ 問題 （スタック）
+
+MyQueueというクラス名で、2つのスタックを用いてキューを実装してください。
+
+ 出展：『世界で闘うプログラミング力を鍛える150問』
+ http://www.amazon.co.jp/exec/obidos/ASIN/4839942390/gaius-22/
+
+
+■□───────────────────────────────────
+■□ 具体的な例で考える
+
+後入れ先出しのスタックを２つ用いて、先入れ先出しのキューを実装するっていう
+問題です。
+キューを実装するということですから、最低でも Enqueue, Dequeueという2つのメソ
+ッドが必要ですね。
+※ キューにデータを入れることをEnqueue（エンキュー）、
+   取り出すことを Dequeue（デキュー）といいます。
+
+この問題、どこから手をつけたらいいんでしょうか？
+
+例にもれず、今回も具体的な例で考えて見ましょう。
+1,2,3 という３つの値を順にキューに入れて、それを取り出すことにしましょう。
+でも、内部のデータはスタックです。
+今、3つの値がすべてひとつ目のスタックにあるとしましょう。
+
+Stack1 : 1,2,3
+Stack2 : (empty)
+
+キュー(先入れ先出し)を実装せよとのことなので、取り出したい順番は、1,2,3 で
+すね。しかし当然ながらStack1からは、3,2,1の順でしか値を取り出せません。
+つまり1を取り出すには、２と３をもう片方のStack2に入れる必要があります。
+
+Stack1 : 1
+Stack2 : 3,2
+
+この状態になれば、1を取り出し、続いて、2,3と取り出すことができます。
+
+では、1を取り出した後に、4をキューに入れるにはどうするかを考えます。
+この場合は、4を Stack2に入れてしまうと、次にDequeueする2を取り出せなくなる
+ので、Stack1に入れたほうが良さそうです。
+
+Stack1 : 4
+Stack2 : 3,2
+
+次、5,6,7をキューに入れるときも、Stack1に入れることになりますね。ということ
+は、Enqueueするときは、常にStack1に対して、Pushすれば良さそうです。
+
+Stack1 : 4,5,6,7
+Stack2 : 3,2
+
+ここで、Dequeueが2回呼び出されたら、2,3をStack2から順に取り出せば良いですね。
+
+Stack1 : 4,5,6,7
+Stack2 : (empty)
+
+この状態で、さらにDequeueが呼ばれると、最初に示した状態と同じですから、
+Stack1の内容を、Stack2に移します。繰り返しますが、StackのPop, Pushを使うの
+で、値の順番が逆転します。
+
+Stack1 : 4
+Stack2 : 7,6,5
+
+これで、4,5,6,7の順でDequeueできますね。
+
+ここで、Dequeuの処理について再度考えて見ましょう。
+
+Stack1 : 1,2,3
+Stack2 : (empty)
+
+の状態で、Dequeueが呼ばれたとき、
+
+Stack1 : 1
+Stack2 : 3,2
+
+Stack1から 1を取り出すわけですが、この1が、Stack1の最後の値だってのは、Pop,
+PushしかないStackだとすると判断できませんよね。
+
+なので、最後までStack2に移してしまい、Stack1が空になったら、Stack2から値を
+Popするほうが良さそうです。
+
+Stack1 : (empty)
+Stack2 : 3,2,1
+
+ここまできたら、STack2から値を取り出すということですね。
+そうすれば、Dequeueで返す値は、常にStack2 から取得した値ということになりま
+す。
+
+
+■□───────────────────────────────────
+■□ 実装する
+
+長々と書いてきましたが、この考えをコードにしたのが以下に示すコードです。
+
+前述の考え方をそのまま実装しているので、特に説明することはありませんね。
+ちなみに、Stack1は、inStack, stack2は、outStackに名前を変えています。
+
+ public class MyQueue<T> {
+     private Stack<T> inStack = new Stack<T>();
+     private Stack<T> outStack = new Stack<T>();
+
+     public void Enqueue(T obj) {
+         inStack.Push(obj);
+     }
+
+     public T Dequeue() {
+         if (IsEmpty())
+             throw new InvalidOperationException();
+         if (outStack.Count == 0) {
+             while (inStack.Count > 0) {
+                 T val = inStack.Pop();
+                 outStack.Push(val);
+             }
+         }
+         return outStack.Pop();
+     }
+
+     public bool IsEmpty() {
+         return inStack.Count == 0 && outStack.Count == 0;
+     }
+ }
+
+
+
+■□───────────────────────────────────
+■□ 確認するコードを書く
+
+では、このMyQueue<T>の動きを確認するコードも書いてみましょう。
+
+ class Program {
+     static void Main(string[] args) {
+         MyQueue<int> q = new MyQueue<int>();
+         q.Enqueue(1);
+         q.Enqueue(2);
+         q.Enqueue(3);
+         q.Enqueue(4);
+         Console.WriteLine(q.Dequeue());   // 1を取り出す
+         Console.WriteLine(q.Dequeue());   // 2を取り出す
+         q.Enqueue(5);
+         q.Enqueue(6);
+         Console.WriteLine(q.Dequeue());   // 3を取り出す
+         q.Enqueue(7);
+         q.Enqueue(8);
+         q.Enqueue(9);
+         while (!q.IsEmpty()) {
+             Console.WriteLine(q.Dequeue());   // 残りを取り出す
+         }
+         Console.ReadLine();
+     }
+ }
+
+結果は、
+
+1
+2
+3
+4
+5
+6
+7
+8
+9
+
+と表示されますので、先入れ先出しになっているようです。
+
+-----------
+
+次回は、マージ処理の問題についてみていく予定です。
+
+
+─────────────────────────────────────
+『C#プログラミングレッスン』  (ほぼ週刊）
+☆皆さまからの感想をお待ちしています。http://gushwell.ifdef.jp/mail.html
+─────────────────────────────────────
+Published by Gushwell.
+Copyright (C) 2014 Gushwell All rights reserved.
+Microsoft MVP for Visual C#(Apr 2005 - Mar 2015)
+
+■Gushwell's Page
+facebook Page                     : http://www.facebook.com/CSharpLesson
+Gushwell's C# Dev Notes           : http://gushwell.ldblog.jp/
+Gushwell's C# Programming Page    : http://gushwell.ifdef.jp/
+気ままな読書ノート                : http://gwbooks.hatenablog.com/
+Twitterアカウント                 : @gushwell
+─────────────────────────────────────

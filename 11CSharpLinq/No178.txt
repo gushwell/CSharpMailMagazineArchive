@@ -1,0 +1,123 @@
+┏━┳━━━━━━━━━━━━━━━━━━━━━━━━━┳━┳━┳━┓
+┃☆┃ C#プログラミングレッスン                         ┃＿┃□┃×┃
+┣━┻━━━━━━━━━━━━━━━━━━━━━━━━━┻━┻━┻━┫
+┃ C#3.0-LINQ 変換演算子                                      No.178┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+■──────────────────────────────────
+■ToArry, ToList
+
+ToArray, ToListは、LINQの遅延評価のときにも出てきましたが、再度例をし
+めしたいと思います。
+
+
+ToArray 演算子は、シーケンスから配列を作成します。
+
+ string[] array = categories
+                   .Select(c => c.CategoryName)
+                   .ToArray();
+ foreach (var name in array)
+     Console.WriteLine(name);
+
+
+ToList 演算子は、シーケンスから List<TSource> を作成します。
+次の例では、売り上げ高が、10000以上の注文を List<Order>が作成されます。
+
+ var orders = NorthwindObjects.GetOrders();
+ List<Order> bigOrders = orders
+     .Where(o => o.Total >= 10000)
+     .Tos();
+
+
+■──────────────────────────────────
+■ToDictionary
+
+ToDictionary 演算子は、シーケンスから Dictionary<TKey,TElement> を作成
+します。
+次の例では、カテゴリIDをキーに持つ、Dictionary<int,Category> が作成さ
+れます。
+こうしておけば、カテゴリIDで頻繁に、カテゴリを参照したい場合に便利です。
+
+ var categories = NorthwindObjects.GetCategorys();
+ Dictionary<int,Category> dict = categories
+     .OrderBy(c => c.CategoryName)
+     .ToDictionary(c => c.CategoryID);
+ foreach (var d in dict)
+     Console.WriteLine(d.Key + " " + d.Value.CategoryName);
+
+
+
+■──────────────────────────────────
+■ToLookup
+
+ToLookup 演算子は、シーケンスから Lookup<TKey, TElement> を作成します。
+次の例は、単価50以上の製品をカテゴリID別にまとめ、ILookup<int, 
+Product> を作成しています。
+
+ var products = NorthwindObjects.GetProducts();
+ ILookup<int, Product> lookup = products
+     .Where(p => p.UnitPrice > 50)
+     .ToLookup(p => p.CategoryID);
+ int categoryID = 6;
+ var elements = lookup[categoryID];
+ foreach (var d in elements)
+     Console.WriteLine(d.ProductName);
+
+■──────────────────────────────────
+■OfType
+
+OfType 演算子は、シーケンスの要素を型に基づいてフィルタ選択します。
+次の例では、objes配列から、int型のものだけを抜き出し、IEnumerable<int>
+のシーケンスを作ります。
+
+ object[] objs = new object[] { 1, 2, "abc", 4, "xyz" };
+ var nums = objs.OfType<int>();
+ foreach (var n in nums)
+     Console.WriteLine(n);
+
+
+■──────────────────────────────────
+■Cast
+
+Cast 演算子は、シーケンスの要素を指定した型にキャストします。
+これを利用することはあまりないと思いますが、ArrayListなど、
+IEnumerable<T> を実装していないクラスに対し、Cast演算子を使うことで、
+標準演算子を利用できるようにします。
+
+ ArrayList list = new ArrayList() {
+     new DateTime(2008,2,1),
+     new DateTime(2008,11,5),
+     new DateTime(2008,7,5),
+     new DateTime(2008,3,5),
+     new DateTime(2008,6,14),};
+ var dates = list.Cast<DateTime>()
+     .Where(d => d.Month > 6);
+ foreach (var dt in dates)
+     Console.WriteLine(dt);
+
+なお、クエリ式では、明示的に型指定することで、Cast呼び出しを行うことが
+できます。
+
+ var dates = from DateTime dt in list
+             where dt.Month > 6
+             select dt;
+
+fromの次に DateTimeという型を明示しています。これがCast<DateTime>()呼
+び出しに相当します。
+
+┌─┬─────────────────────────┬─┬─┬─┐
+│☆│ C#プログラミングレッスン  (ぼぼ週刊）            │＿│□│×│
+├─┴─────────────────────────┴─┴─┴─┤
+│ Published by Gushwell.                                           │
+│ Copyright (C) 2004-2007 Gushwell All rights reserved.            │
+│ Microsoft MVP Visual Developer - Visual C#(Apr 2005 - Mar 2009)  │
+│-------------------- Gushwell's Page ---------------------------- │
+│ 窓際プログラマーの独り言  ：http://blog.livedoor.jp/gushwell/    │
+│ 窓際プログラマーの読書三昧：http://gushwell.jugem.jp/            │
+│ Gushwell's C# Programing Page：http://gushwell.ifdef.jp/         │
+│ C#デザインパターン :                                             │
+│  『増補改訂版Java言語で学ぶデザインパターン入門 / 結城 浩(著)』  │
+│   のサンプルコードをC#に移植したものを掲載しています。           │
+│   移植後のコードの公開は、結城氏の了解を得ています。             │
+│   http://gushwell.ifdef.jp/dp/csdpindex.html                     │
+└─────────────────────────────────┘

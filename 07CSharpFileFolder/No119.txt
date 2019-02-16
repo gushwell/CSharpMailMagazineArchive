@@ -1,0 +1,124 @@
+┏━┳━━━━━━━━━━━━━━━━━━━━━━━━━┳━┳━┳━┓
+┃☆┃ C#プログラミングレッスン                         ┃＿┃□┃×┃
+┣━┻━━━━━━━━━━━━━━━━━━━━━━━━━┻━┻━┻━┫
+┃ファイルの圧縮  GZipStream                                  No.119┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+GZipStreamクラスは、.NET Framework2.0で新たに追加されたクラスです。
+今回は、このクラスの使い方を説明します。
+GZipStream には、ストリームの圧縮および圧縮解除を行う機能が提供されてい
+ます。ストリームに対する操作を行うものなので、アーカイブ形式の ZIP ファ
+イルを作成してくれるわけではありません。
+
+■──────────────────────────────────
+■ 圧縮を行う
+
+圧縮を行う基本的なコードは以下の通りです。
+
+　using System.IO.Compression;
+  ...
+
+　GZipStream  zipStream = new GZipStream(outputStream, 
+　　　　　　　　                CompressionMode.Compress, false);
+  zipStream.Write(buffer, 0, buffer.Length);
+  zipStream.Close();
+
+まずは、コンストラクタ　GZipStreamのインスタンスを作成します。
+
+　　第1引数　 圧縮後のストリームを指定します。ファイルの場合には、
+　　　　　　  事前にファイルストリームをオープンしておきます。
+
+    第2引数　 圧縮する場合は、CompressionMode.Compressを指定します。
+
+　　第3引数 　ストリームを開いたままにしておく場合は true。それ以外の
+              場合は falseです。ファイルに出力する場合は、falseで良い
+              でしょう。
+
+次に、Write メソッドで buffer （byte 配列のデータ）の内容を、圧縮ストリー
+ムに書き出します。
+最後に、Closeして終了。
+
+では、ファイルを圧縮するコードを示します。
+
+using System.IO.Compression;
+...
+
+static void CompressFile(string file) {
+    FileStream inputFile = new FileStream(file, FileMode.Open,
+                               FileAccess.Read, FileShare.Read);
+    byte[] buffer = new byte[inputFile.Length];
+    int count = inputFile.Read(buffer, 0, buffer.Length);
+    inputFile.Close();
+
+    Stream outputStream = new FileStream(file + ".gz", 
+　　　　　　　　　　　　　　　　FileMode.Create);
+
+    GZipStream  zipStream = new GZipStream(outputStream, 
+　　　　　　　　　　　　　　　　CompressionMode.Compress, false);
+    zipStream.Write(buffer, 0, buffer.Length);
+    zipStream.Close();
+}
+
+このメソッドは、引数で与えられたファイルを　.gz という拡張子のファイル
+に圧縮します。
+ここで作成された圧縮ファイルは、.gz 形式に対応したファイル解凍ソフトな
+らば、もとのファイルに戻すことが可能です。
+
+
+■──────────────────────────────────
+■ 圧縮復元を行う
+
+引き続き、圧縮復元のコードも見てみましょう。基本形を示します。
+
+  　using System.IO.Compression;
+    ...
+
+    GZipStream zipStream = new GZipStream(inputStream,
+                                 CompressionMode.Decompress,false);
+    byte[] buffer = new byte[1024];
+    while ( true ) {
+        int bytesRead = zipStream.Read(buffer, 0, 1024);
+        if ( bytesRead == 0 )
+            break;
+        ...
+    }
+    zipStream.Close();
+
+GZipStreamのインスタンスを生成する際に、圧縮されたストリームと
+CompressionMode.Decompress を指定します。
+Readメソッドで読み込むと、圧縮が解除された元のデータが取得できます。
+
+では、圧縮されたファイル (.gz) を読み込んで、圧縮解除し、オリジナルのフ
+ァイルを復元するコードを示します。
+
+ using System.IO.Compression;
+ ...
+
+ static void DecompressFile(string file) {
+     FileStream inputFile = new FileStream(file,
+                            FileMode.Open, FileAccess.Read,
+                            FileShare.Read);
+     string outfilename = Path.Combine(
+                            Path.GetDirectoryName(file), 
+　　　　　                  Path.GetFileNameWithoutExtension(file));
+     FileStream outStream = new FileStream(outfilename, 
+　　　　　　　　　　　　　　FileMode.Create);
+     GZipStream zipStream = new GZipStream(inputFile,
+　　　　　　　　　　　　　　CompressionMode.Decompress,false);
+     byte[] buffer = new byte[1024];
+     while ( true ) {
+         int bytesRead = zipStream.Read(buffer, 0, 1024);
+         if ( bytesRead == 0 ) 
+             break;
+         outStream.Write(buffer,0,bytesRead); 
+     }
+     zipStream.Close();
+     outStream.Close();
+ }
+
+
+※　拡張子(.gz) を取り除いたファイル名をPathクラスを使って求めています。
+
+なお、GZipStream クラスは、サイズが 4 GB を超えるファイルの圧縮には使用
+できません。
+

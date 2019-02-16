@@ -1,0 +1,130 @@
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━━━ No.356 ━□
+
+「暗号化編」-- 公開キー暗号方式 (非対称暗号化方式)
+                                                            by Gushwell  
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+２週間ほど空いてしまいましたが、暗号化編を続けます。
+
+■□───────────────────────────────────
+■□ 公開キー暗号方式 (非対称暗号化方式)とは
+
+RSACryptoServiceProviderを使った公開キー暗号方式の暗号化について説明しま
+す。
+公開キー暗号方式は、秘密キーと公開キーが使われます（そのため、非対称暗号
+化方式とも呼ばれます）。秘密キーは、第三者には知られてはいけないキーで、
+公開キーは誰に公開してもかまわないキーです。この公開キーと秘密キーは必ず
+対で正確にリンクされている必要があります。
+暗号化する際は、公開キーが使われ、復号化する際は、対応する秘密キーでしか
+復号することができません。
+
+■□───────────────────────────────────
+■□ RSACryptoServiceProvider を使った暗号化と復号化コード
+
+では、公開キー暗号方式の一つである RSACryptoServiceProvider を使ったコー
+ドを示します。
+ここでは、RSACryptoServiceProvider をラップした RsaCrypto クラスを示します。
+
+    class RsaCripto {
+        private RSACryptoServiceProvider _rsa = new RSACryptoServiceProvider();
+
+        public string CreatePrivateKey() {
+            return _rsa.ToXmlString(true);
+        }
+
+        public string CreatePublicKey() {
+            return _rsa.ToXmlString(false);
+        }
+
+        public string Encrypt(string s, string publicKey) {
+            var bytes = Encoding.UTF8.GetBytes(s);
+            _rsa.FromXmlString(publicKey);
+            var output = _rsa.Encrypt(bytes, false);
+            return Convert.ToBase64String(output);
+        }
+
+        public string Decrypt(string s, string privateKey) {
+            var bytes = Convert.FromBase64String(s);
+            _rsa.FromXmlString(privateKey);
+            var output = _rsa.Decrypt(bytes, false);
+            return Encoding.UTF8.GetString(output);
+        }
+    }
+
+上記RsaCryptoクラスを説明します。
+RSACryptoServiceProviderは、IDisposableインターフェースを実装していますの
+で、RSACryptoServiceProviderオブジェクトのDisposeメソッドを確実に呼ぶため
+に、本当ならば、RsaCryptoクラスもIDisposableインターフェースを実装する必
+要がありますが、暗号という本質とは離れますので、ここでは省いています。
+
+RsaCriptoクラスは４つのメソッドを公開しています。
+
+CreatePrivateKey
+  秘密キーを生成します。
+  キーはstring型で、中身はXML形式となっています。
+
+CreatePublicKey
+  対応する公開キーを生成します。
+
+Encrypt
+  公開キーを使い、文字列を暗号化します。
+  文字列をbyte配列に変換した後、FromXmlStringメソッドで、公開キーを格納し
+  ている XML 文字列を使い、 RSA オブジェクトを初期化します。
+  RSA オブジェクトを初期化したら、Encryptメソッドで暗号化します。
+  暗号化したデータは、Base64形式で文字列化し返しています。
+
+Decrypt
+  秘密キーを使い、Encryptメソッドで暗号化されたデータを復号化します。
+  Base64形式の文字列をbyte配列に変換し、非公開キーでRSAオブジェクトを初期
+  化後、Decryptメソッドで復号化します。
+  復号化したデータはbyte配列形式なので、これを文字列に戻しています。
+
+■□───────────────────────────────────
+■□ RsaCryptoクラスの使い方
+
+前述のRsaCryptoクラスの使い方を示します。
+
+  var rsa = new RsaCripto();
+  var privatekey = rsa.CreatePrivateKey();
+  var publicKey = rsa.CreatePublicKey();
+
+  // 暗号化
+  string message = "この文字列をRSAアルゴリズムで暗号化します";
+  var crypted = rsa.Encrypt(message, publicKey);
+  Console.WriteLine(crypted);
+  Console.WriteLine();
+
+  // 復号化
+  var decrypted = rsa.Decrypt(crypted, privatekey);
+  Console.WriteLine(decrypted);
+
+以下、実行結果です。
+
+--------------------------
+ EMtS0Vn9sZha+igiYedemx/nJUfMvvNfc0XEZ9OrZk3kSCqpV14wMPTLRTcyP80E9U5+ubU9co
+ OOKEY7ZDZxhhE7jTry21outNtuS0BBJ7fNg5EzQMheZ/ylu+y0CJPquJnvvbVfr0//zVSAtwcf
+ FQ6ZSF7D4IcUjqSypz5lwlc=
+
+ この文字列をRSAアルゴリズムで暗号化します
+--------------------------
+
+上記コードでは、RSACryptoServiceProviderの使い方を示しましたが、これだけ
+では、正しくRSACryptoServiceProviderの使い方を説明できていません。
+次回は、メッセージをやり取りする２者の間でどういったやり取りされるかを
+見ていきたいと思います。
+
+─────────────────────────────────────
+『C#プログラミングレッスン』  (ほぼ週刊）                                 
+☆皆さまからの感想をお待ちしています。http://gushwell.ifdef.jp/mail.html  
+─────────────────────────────────────
+Published by Gushwell.                                                    
+Copyright (C) 2013 Gushwell All rights reserved.                          
+Microsoft MVP for Visual C#(Apr 2005 - Mar 2013)                          
+                                                                          
+■Gushwell's Page                                                         
+facebook Page                     : http://www.facebook.com/CSharpLesson  
+Gushwell's C# Dev Notes           : http://gushwell.ldblog.jp/            
+Gushwell's C# Programming Page    : http://gushwell.ifdef.jp/             
+Gushwellの読書ノート              : http://gushwell.jugem.jp/             
+Twitterアカウント                 : @gushwell                             
+─────────────────────────────────────

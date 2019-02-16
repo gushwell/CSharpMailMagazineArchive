@@ -1,0 +1,181 @@
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━━━ No.406 ━□
+
+「続・アルゴリズム編」-- 木構造(3)
+                                                          by Gushwell
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+前回の続きです。
+
+■□───────────────────────────────────
+■□ 前回のおさらい
+
+実装した IsBalance メソッドの効率が悪いので改良しましょう、というところで、
+前回は終わったのでしたよね。
+
+前回示したIsBalance メソッドを再度掲載します。
+
+ public bool IsBalance() {
+     // 左右の深さをそれぞれ求める。
+     int ldepth = this.Left.GetDepth();
+     int rdepth = this.Right.GetDepth();
+     //  差が1より大きければバランスが取れていない。
+     if (Math.Abs(ldepth - rdepth) > 1)
+         return false;
+     // 左側と右側のサブTreeのバランスを調べて、
+     // ともにバランスが取れていれば、OK
+     // ただし何回も何回もTreeを操作することになるので効率がわるい。
+     return Left.IsBalance() && Right.IsBalance();
+ }
+
+ public int GetDepth() {
+     int depth1 = this.Left.GetDepth();
+     int depth2 = this.Right.GetDepth();
+     return Math.Max(depth1, depth2) + 1;
+ }
+
+
+このコードが非効率なのは、ルートノードで IsBalance が呼び出されると、直ぐに
+GetDepth を呼び出すので、GetDepthの中ですべてのノードを辿ってしまいます。
+GetDepthの戻り値が 1以上で、return false; となれば御の字ですが、そうじゃな
+いと、左右の部分木に対して IsBalance が呼ばれるので、再び GetDepthが呼ばれ
+て、部分木のすべてのノードを辿るということになってしまいます。
+これでは効率が悪すぎますね。
+
+
+■□───────────────────────────────────
+■□ コードを改良する
+
+何が悪いかといえば、GetDepthでも、IsBalanceでもTreeを辿るという二度手間が発
+生している点です。
+これをGetDepthの中で、平衡かどうかも判断するようにすれば、二度手間が省ける
+はずです。GetDepth で、平衡でないと分かったら、-1を返すようにして、
+GetDepthの戻り値が -1だったら、それ以上Treeを辿ることはせずに、そのまま -1
+を返すようにすれば、不要なTree走査が抑えらます。
+IsBalanceでは、ルートの GetDepth を調べるだけで、その戻り値が -1 以外ならば、
+平衡であることが分かります。
+
+これをコードにしたのが以下のコードです。
+
+ // Treeの深さを求める
+ public int GetDepth() {
+     int depth1 = this.Left.GetDepth();
+     if (depth1 < 0)
+         // 平衡でないのが明らかなので、 -1 を返す
+         return -1;
+     int depth2 = this.Right.GetDepth();
+     if (depth2 < 0)
+         // 平衡でないのが明らかなので、 -1 を返す
+         return -1;
+     // 左右の深さを比較する
+     if (Math.Abs(depth1 - depth2) > 1)
+         // 差が１より大きければ、平衡でないので -1 を返す
+         return -1;
+     // ここまでくれば平衡なので、その深さを返す。
+     return Math.Max(depth1, depth2) + 1;
+ }
+
+ // 平衡か？
+ public bool IsBalance() {
+     return GetDepth() >= 0;
+ }
+
+
+■□───────────────────────────────────
+■□ 動作を確認する
+
+本当に、前バージョンのIsBalanceと今回改良したIsBalanceは同じ結果を返すので
+しょうか？
+やはり、ここはテストコードを書いて確認しておきたいですね。
+
+そこで、前者の IsBalanceとGetDepthをIsBalace2, GetDepth2 と名前を変えて、
+２つのIsBalanceの結果を比較できるようにします。
+
+ITreeNode<T> インターフェースは、
+
+ public interface ITreeNode<T> {
+     ITreeNode<T> Left { get; set; }
+     ITreeNode<T> Right { get; set; }
+     T Value { get; set; }
+     int GetDepth();
+     int GetDepth2();
+     bool IsBalance();
+     bool IsBalance2();
+ }
+
+として、NullNode<T>クラスとTreeNode<T>クラスもこれに合せます。
+テストデータを、前述のようにマニュアルで書いてゆくのは面倒なので、
+ランダムでTreeを作るメソッドを一つ作ります。
+
+ static Random rnd = new Random();
+ static int maxDepth = 6;
+
+ static public ITreeNode<int> MakeTree(int depth) {
+     if (depth >= maxDepth)
+         return new NullNode<int>();
+     var root = new TreeNode<int>();
+     root.Value = depth + rnd.Next(0, 7);
+     int num = rnd.Next(0, 10);
+     if (depth < 1 || 0 <= num && num <= 8) {
+         root.Left = MakeTree(depth + 1);
+         root.Right = MakeTree(depth + 1);
+     } else {
+         if (rnd.Next(0, 2) == 1) {
+             root.Left = MakeTree(depth + 1);
+             root.Right = new NullNode<int>();
+         } else {
+             root.Right = MakeTree(depth + 1);
+             root.Left = new NullNode<int>();
+         }
+     }
+     return root;            
+ }
+
+Treeの最大の深さは、maxDepth で制御できるようにしてあります。
+
+これを使ったテストコードを以下に示します。
+
+ for (int i = 0; i < 100000; i++) {
+     maxDepth = rnd.Next(2, 7);
+     var root = MakeTree(0) as TreeNode<int>;
+     bool b1 = root.IsBalance();
+     bool b2 = root.IsBalance2();
+     if (b1 != b2)
+         Console.WriteLine("Error {0} {1}", b1, b2);
+ }
+
+ひとつでも、Error が表示されれば、どちらかのメソッドが間違っていることにな
+ります。
+実際に実行してみたところ、Error は表示されませんでした。
+
+
+■□───────────────────────────────────
+■□ 皆さんへの宿題
+
+実際にどれだけ効率化したのかを調べるコードは皆さんへの課題とします。
+メソッドが呼ばれた回数をカウントすれば、どれくらい効率がアップしたのかが分
+かります。そのため、どこかにカウンター用の変数を用意することになりますが、
+TreeNode<T> のインスタンス変数として宣言すると、「あれ？」という結果になり
+ますので、注意してくださいね。これは実際に僕がやった失敗です(笑)
+
+まあ、そんなことやらずに、Visual Studio のPro 以上をお持ちの型は、パフォー
+マンスの測定の機能を使っても良いですね。
+
+
+------------------------
+次回は、有効グラフの問題を解こうと思います。お楽しみに！
+
+─────────────────────────────────────
+『C#プログラミングレッスン』  (ほぼ週刊）
+☆皆さまからの感想をお待ちしています。http://gushwell.ifdef.jp/mail.html
+─────────────────────────────────────
+Published by Gushwell.
+Copyright (C) 2014 Gushwell All rights reserved.
+Microsoft MVP for Visual C#(Apr 2005 - Mar 2015)
+
+■Gushwell's Page
+facebook Page                     : http://www.facebook.com/CSharpLesson
+Gushwell's C# Dev Notes           : http://gushwell.ldblog.jp/
+Gushwell's C# Programming Page    : http://gushwell.ifdef.jp/
+気ままな読書ノート                : http://gwbooks.hatenablog.com/
+Twitterアカウント                 : @gushwell
+─────────────────────────────────────

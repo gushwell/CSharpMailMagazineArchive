@@ -1,0 +1,108 @@
+┏━┳━━━━━━━━━━━━━━━━━━━━━━━━━┳━┳━┳━┓
+┃☆┃ C#プログラミングレッスン                         ┃＿┃□┃×┃
+┣━┻━━━━━━━━━━━━━━━━━━━━━━━━━┻━┻━┻━┫
+┃ C#3.0-LINQ拡張メソッド (1)                                 No.165┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+今回は、LINQが提供している拡張メソッドの仕組みについて見てみましょう。
+
+■──────────────────────────────────
+■独自の拡張メソッドを作る
+
+WhereやSelectは拡張メソッドであることは既に説明しました。拡張メソッド
+であるということは、同様のメソッドを自分たちでも作成することができると
+いうことですね。
+
+MyWhere, MySelectという拡張メソッドを書いてみます。
+
+static class MyEnumerable {
+    public static IEnumerable<TSource> MyWhere<TSource>(
+                     this IEnumerable<TSource> source,
+                     Func<TSource, bool> predicate) {
+        Console.WriteLine("MyWhere Start");
+        foreach (var x in source) {
+            Console.WriteLine("MyWhere {0}", x);
+            if (predicate(x))
+                yield return x;
+        }
+        Console.WriteLine("MyWhere end");
+    }
+    public static IEnumerable<TResult> MySelect<TSource, TResult>(
+                     this IEnumerable<TSource> source,
+                     Func<TSource, TResult> selector) {
+        Console.WriteLine("MySelect Start");
+        foreach (var x in source) {
+            Console.WriteLine("MySelect {0}", x);
+            yield return selector(x);
+        }
+        Console.WriteLine("MySelect end");
+    }
+}
+
+ ※ 動作が確認できるように、デバッグ行を埋め込んでいます。
+
+MyWhereメソッド、MySelectともに、ソースを読んでいただければ、何をやっ
+ているかおわかりになるとおもいますが、
+
+ 1. Funcデリゲートを受け取っている点。
+　　　→これでラムダ式を受け取れます
+ 2. 戻り値が、IEnumerable<T>型である点。
+　　　→メソッドの連鎖を行なえるようになります。
+ 3. yield returnで列挙している点。
+　　　→データを配列やListなどに格納しているわけではありません。　
+の３点に注目してください。
+
+
+■──────────────────────────────────
+■独自の拡張メソッドの利用例
+
+このメソッドの利用例を示します。
+
+ var nums = Enumerable.Range(1, 10);   // 1,2,3,..10 の数列を生成
+ var q = nums.MyWhere(n => n % 3 == 0) // 3で割切れるものを取得し
+             .MySelect(n => n * 2);    // 2倍する。15:32 2008/04/18
+ foreach (var n in q)
+     Console.WriteLine(n);
+
+結果は、
+
+6
+12
+18
+
+となります。
+もちろん、これをクエリ式にすることはできませんが、拡張メソッドの動きを
+確かめることができます。
+
+是非、実際に実行してみてください。あなたの予想とは違った動きになって驚
+かれることと思います。
+
+さらに、クエリ部分を
+
+   var q = nums.MyWhere(n => n % 3 == 0)
+               .MySelect(n => n * 2)
+               .Take(2);
+ 
+ ※ Takeは、先頭から指定した数だけ要素を取り出します
+
+とし、実行してみてください。どうなるでしょうか？
+さらなる驚きが待っていると思います。
+結果はここではあえて載せません。ぜひ実際に試し、拡張メソッドがどのよう
+に呼び出されるのかを確認してみてください。
+
+┌─┬─────────────────────────┬─┬─┬─┐
+│☆│ C#プログラミングレッスン  (ぼぼ週刊）            │＿│□│×│
+├─┴─────────────────────────┴─┴─┴─┤
+│ Published by Gushwell.                                           │
+│ Copyright (C) 2004-2007 Gushwell All rights reserved.            │
+│ Microsoft MVP Visual Developer - Visual C#(Apr 2005 - Mar 2009)  │
+│-------------------- Gushwell's Page ---------------------------- │
+│ 窓際プログラマーの独り言  ：http://blog.livedoor.jp/gushwell/    │
+│ 窓際プログラマーの読書三昧：http://gushwell.jugem.jp/            │
+│ Gushwell's C# Programing Page：http://gushwell.ifdef.jp/         │
+│ C#デザインパターン :                                             │
+│  『増補改訂版Java言語で学ぶデザインパターン入門 / 結城 浩(著)』  │
+│   のサンプルコードをC#に移植したものを掲載しています。           │
+│   移植後のコードの公開は、結城氏の了解を得ています。             │
+│   http://blog.livedoor.jp/gushwell/archives/50333227.html        │
+└─────────────────────────────────┘

@@ -1,0 +1,148 @@
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━ No.202 ━□
+  
+   「LINQ to XML編」 -- XmlDocumentを組み立てる
+                                                         by Gushwell  
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+
+■□─────────────────────────────────
+■□DOMを使ったプログラム
+ 
+前回、配列デ―タから、XMLファイルを作成するコ―ドをお見せしましたが、
+今度は、手動でXMLの各要素を組み立ててゆくコ―ドをお見せします。
+
+LINQ to XMLのコードの前に、DOMを使ったコ―ドをお見せします。
+
+ XmlDocument doc = new XmlDocument();
+ XmlElement title = doc.CreateElement("title");
+ title.InnerText = "XML Hacks";
+ XmlElement publisher = doc.CreateElement("publisher");
+ publisher.InnerText = "Oreilly";
+ XmlElement auther = doc.CreateElement("auther");
+ auther.InnerText = "Michael Fitzgerald";
+ XmlElement authers = doc.CreateElement("authers");
+ authers.AppendChild(auther);
+ XmlElement price = doc.CreateElement("price");
+ price.InnerText = "2400";
+ XmlElement book = doc.CreateElement("book");
+ book.AppendChild(title);
+ book.AppendChild(publisher);
+ book.AppendChild(authers);
+ book.AppendChild(price);
+ XmlElement books = doc.CreateElement("books");
+ books.AppendChild(book);
+ doc.AppendChild(books);
+ doc.Save("Sample.xml");
+ 
+CrealeElemetメソッドで、XmlElementを作成し、AppendChildで親要素への追
+加を繰り返しています。
+めちゃくちゃ読みにくいですね。
+
+■□─────────────────────────────────
+■□LINQ to XMLを使ったコード
+
+これと同様のコ―ドを LINQ to XMLでも書くことができます。
+そのコ―ドを以下に示します。
+
+★あまり良くない例
+ XDocument doc = new XDocument();
+ XElement title = new XElement("title");
+ title.Value = "XML Hacks";
+ XElement publisher = new XElement("publisher");
+ publisher.Value = "Oreilly";
+ XElement auther = new XElement("auther");
+ auther.Value = "Michael Fitzgerald";
+ XElement authers = new XElement("authers");
+ authers.Add(auther);
+ XElement price = new XElement("price");
+ price.Value = "2400";
+ XElement book = new XElement("book");
+ book.Add(title);
+ book.Add(publisher);
+ book.Add(authers);
+ book.Add(price);
+ XElement books = new XElement("books");
+ books.Add(book);
+ doc.Add(books);
+ doc.Save("Sample2.xml");
+            
+DOMでのコードとほぼ１対１で対応していますので、見比べてください。しか
+し、このコードは、LINQ to XMLの良さを全然引き出していません。LINQ to 
+XMLでは、もっとシンプルで、もっとわかりやすいコ―ドを書くことができま
+す。
+
+★お勧めの方法
+ XElement books = new XElement("books",
+     new XElement("book",
+         new XElement("title","XML Hacks"),
+         new XElement("publisher", "Oreilly"),
+         new XElement("authers",
+             new XElement("auther", "Michael Fitzgerald")),
+         new XElement("price", 2500)
+     )
+ );
+ XDocument doc = new XDocument(books);
+ doc.Save("Sample3.xml");
+
+どうです、実際のXMLの構造と合っていますので、とても理解しやすいコ―ド
+になっていますね。
+
+属性も追加してみましょう。
+
+ XElement books = new XElement("books",
+     new XElement("book",
+         new XAttribute("isbn","978-4873112213"),
+         new XElement("title", "XML Hacks"),
+         new XElement("publisher", "Oreilly"),
+         new XElement("authers",
+             new XElement("auther", "Michael Fitzgerald")),
+         new XElement("price", 2500)
+     )
+ );
+ XDocument doc = new XDocument(books);
+ doc.Save("Sample4.xml");
+
+単に、
+  new XAttribute("isbn","978-4873112213"),
+
+を引数に追加しているだけです。
+
+■□─────────────────────────────────
+■□エンコーディングの指定
+
+実際に実行し、XMLファイルを開いてみればわかりますが、このXMLファイルの
+先頭行には、xml宣言が付加されています。
+
+<?xml version="1.0" encoding="utf-8"?>
+
+これから、utf-8でエンコーディングされていることがわかります。もし、
+encodhingを shift-jisにしたい場合には、XDocumentオブジェクトを生成する
+部分を以下のように書き換えることで実現できます。
+
+   XDocument doc = new XDocument(
+                         new XDeclaration("1.0", "shift_jis", "yes"));
+   
+以下のようなXML宣言が付加され、実際のエンコ―ディングもShift-JISでファ
+イルに出力されます。
+保存する時に指定するのではなく、XDocumentのオブジェクトを生成する時に
+指定する点に注意してください。
+
+ <?xml version="1.0" encoding="shift_jis" standalone="yes"?>   
+
+───────────────────────────────────
+『C#プログラミングレッスン』  (ぼぼ週刊）                             
+───────────────────────────────────
+ Published by Gushwell.                                               
+   Copyright (C) 2004-2009 Gushwell All rights reserved.              
+   Microsoft MVP - Visual C#(Apr 2005 - Mar 2010)                     
+
+ <<■ Gushwell's Page ■>>
+ 窓際プログラマ―の独り言  ：http://blog.livedoor.jp/gushwell/        
+ 窓際プログラマ―の読書三昧：http://gushwell.jugem.jp/                
+ Gushwell's C# Programming Page：http://gushwell.ifdef.jp/            
+ C#デザインパタ―ン :                                                 
+  『増補改訂版Java言語で学ぶデザインパタ―ン入門 / 結城 浩(著)』      
+   のサンプルコ―ドをC#に移植したものを掲載しています。               
+   移植後のコ―ドの公開は、結城氏の了解を得ています。                 
+   http://gushwell.ifdef.jp/dp/csdpindex.html                         
+───────────────────────────────────

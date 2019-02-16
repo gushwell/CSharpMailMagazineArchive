@@ -1,0 +1,187 @@
+┏━┳━━━━━━━━━━━━━━━━━━━━━━━━━┳━┳━┳━┓
+┃☆┃ C#プログラミングレッスン                         ┃＿┃□┃×┃
+┣━┻━━━━━━━━━━━━━━━━━━━━━━━━━┻━┻━┻━┫
+┃ C#3.0-LINQ DefaultIfEmpty                                  No.181┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+■──────────────────────────────────
+■Join演算子再考
+
+リレーショナル データベースの用語で言えば、Join 演算子は内部等値結合を
+実装するのでしたね。
+例を見てみましょう。
+
+ class Person {
+     public string Name { get; set; }
+     public int SectionCode { get; set; }
+ }
+
+ class Section {
+     public int Code { get; set; }
+     public string SectionName { get; set; }
+ }
+
+ var persons = new List<Person> {
+                 new Person { Name = "坂本竜馬", SectionCode = 1 },
+                 new Person { Name = "吉田松陰", SectionCode = 2 },
+                 new Person { Name = "井伊直弼", SectionCode = 3 },
+                 new Person { Name = "桂小五郎", SectionCode = 1 },
+                 new Person { Name = "徳川慶喜", SectionCode = 2 },
+                 new Person { Name = "大久保利通", SectionCode = 4 },
+ };
+ var sections = new List<Section> {
+                 new Section { Code = 1, SectionName = "営業部" },
+                 new Section { Code = 2, SectionName = "総務部" },
+                 new Section { Code = 3, SectionName = "製造部" },
+ };
+
+
+という２つのデータに対する結合処理を考えてみます。
+Person.SectionCodeとSection.Codeを結合する例です。
+
+ var query = from p in persons
+             join s in sections on p.SectionCode equals s.Code
+             select new { p.Name, Section = s.SectionName };
+ foreach (var p in query)
+     Console.WriteLine("{0} : {1}",p.Name, p.Section);
+ Console.WriteLine();
+
+結果は、
+ 坂本竜馬 : 営業部
+ 吉田松陰 : 総務部
+ 井伊直弼 : 製造部
+ 桂小五郎 : 営業部
+ 徳川慶喜 : 総務部
+
+となります。あれっ、大久保利通さんが表示されませんね。これは、該当する
+Sectionが存在しないためです。
+
+これを、大久保利通さんを表示させるには、GroupJoin 演算子を使う必要があ
+ります。クエリ式ならば、intoキーワードを使います。
+
+ var query = from p in persons
+             join s in sections on p.SectionCode equals s.Code into ps
+             select new { 
+                 p.Name, 
+                 Section = ps.First().SectionName
+             };
+
+と書いてみました。一人に対する所属先は一つであるという前提で、First()
+演算子を使っています。
+
+しかし、これを実行すると、大久保利通さんに該当する Sectionがないため、
+First()演算子で例外が発生してしまいます。まあ、当たり前といえば当たり
+前ですね。
+
+■──────────────────────────────────
+■DefaultIfEmpty
+
+そこで修正したのが、以下のコード。
+
+ var query = from p in persons
+             join s in sections on p.SectionCode equals s.Code into ps
+             select new { 
+                 p.Name, 
+                 Section = ps.Count() == 0 
+                               ? "(none)" 
+                               : ps.First().SectionName
+             };
+
+これでも目的は達成できたのですが、DefaultIfEmpty 演算子を使う別の方法
+も用意されています。
+
+ var defSec = new Section() { Code = -1, SectionName = "(none)" };
+ var query = from p in persons
+             join s in sections on p.SectionCode equals s.Code into ps
+             from s in ps.DefaultIfEmpty(defSec)
+             select new { p.Name, Section = s.SectionName };
+
+と書くことができます。
+psは、グループ化されたシーケンスですが、これを新たなソースとしてfrom
+句を使い、Joinしています。この時に、ソースが空(Empty)だったら、あらか
+じめ用意してある、規定値（ここではdefSec）に割り当てています。
+
+これで、
+
+ 坂本竜馬 : 営業部
+ 吉田松陰 : 総務部
+ 井伊直弼 : 製造部
+ 桂小五郎 : 営業部
+ 徳川慶喜 : 総務部
+ 大久保利通 : (none)
+
+とすることができます。
+ちなみに、このクエリ式を拡張メソッドで書くと、
+
+ var query = persons
+     .GroupJoin(sections,  p => p.SectionCode, s => s.Code,
+                (Person p, IEnumerable<Section> ps) => new { p, ps })
+     .SelectMany(x => x.ps.DefaultIfEmpty(defSec),
+                 (x,s) => 
+                     new { Name = x.p.Name, Section = s.SectionName }
+                );
+となります。from句が２つあるので、SelectManyを使うことになります。
+
+では、今度は、
+
+ 営業部 : 坂本竜馬
+ 営業部 : 桂小五郎
+ 総務部 : 吉田松陰
+ 総務部 : 徳川慶喜
+ 製造部 : 井伊直弼
+ 企画部 : (none)
+
+と表示させてみましょう。
+
+  var defPerson = new Person() { Name = "(none)", SectionCode = -1 };
+
+  var persons = new List<Person> {
+                  new Person { Name = "坂本竜馬", SectionCode = 1 },
+                  new Person { Name = "吉田松陰", SectionCode = 2 },
+                  new Person { Name = "井伊直弼", SectionCode = 3 },
+                  new Person { Name = "桂小五郎", SectionCode = 1 },
+                  new Person { Name = "徳川慶喜", SectionCode = 2 },
+                  new Person { Name = "大久保利通", SectionCode = 4 },
+  };
+  var sections = new List<Section> {
+                  new Section { Code = 1, SectionName = "営業部" },
+                  new Section { Code = 2, SectionName = "総務部" },
+                  new Section { Code = 3, SectionName = "製造部" },
+                  new Section { Code = 0, SectionName = "企画部" },
+  };
+  var query = from s in sections
+              join p in persons on s.Code equals p.SectionCode into sp
+              from p in sp.DefaultIfEmpty(defPerson)
+              select new { SectionName = s.SectionName, 
+                           PersonName = p.Name };
+  foreach (var p in query) {
+      Console.WriteLine("{0} : {1}", p.SectionName, p.PersonName);
+  }
+  Console.WriteLine();
+
+やっていることは、先ほどと同じですね。
+リレーショナルデータベースの用語でいえば、「左外部結合」ということにな
+ります。
+
+今更ながら、
+キーワードが色付きで表示される環境に慣れてしまうと、
+モノクロで、クエリ式を読むのは、意外と読みにくいですね。
+クエリ式が出てくる前は、そんなことを感じることはほとんど無かったのです
+が...
+
+┌─┬─────────────────────────┬─┬─┬─┐
+│☆│ C#プログラミングレッスン  (ぼぼ週刊）            │＿│□│×│
+├─┴─────────────────────────┴─┴─┴─┤
+│ Published by Gushwell.                                           │
+│ Copyright (C) 2004-2007 Gushwell All rights reserved.            │
+│ Microsoft MVP Visual Developer - Visual C#(Apr 2005 - Mar 2009)  │
+│-------------------- Gushwell's Page ---------------------------- │
+│ 窓際プログラマーの独り言  ：http://blog.livedoor.jp/gushwell/    │
+│ 窓際プログラマーの読書三昧：http://gushwell.jugem.jp/            │
+│ Gushwell's C# Programing Page：http://gushwell.ifdef.jp/         │
+│ C#デザインパターン :                                             │
+│  『増補改訂版Java言語で学ぶデザインパターン入門 / 結城 浩(著)』  │
+│   のサンプルコードをC#に移植したものを掲載しています。           │
+│   移植後のコードの公開は、結城氏の了解を得ています。             │
+│   http://gushwell.ifdef.jp/dp/csdpindex.html                     │
+└─────────────────────────────────┘

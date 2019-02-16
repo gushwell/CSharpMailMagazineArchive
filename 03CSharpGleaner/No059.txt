@@ -1,0 +1,151 @@
+┏━┳━━━━━━━━━━━━━━━━━━━━━━━━━┳━┳━┳━┓
+┃☆┃ C#プログラミングレッスン                         ┃＿┃□┃×┃
+┣━┻━━━━━━━━━━━━━━━━━━━━━━━━━┻━┻━┻━┫
+┃ビットフラグ                                               No.059 ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+前回に引き続いて、属性のお話しです。今回は、.NET Frameworkに用意され
+ている Flags属性（列挙体をビット フィールド、つまりフラグのセットとし
+て扱える属性）について説明します。
+
+
+■──────────────────────────────────
+■ FontStyle属性
+
+文字フォントのスタイルには、ボールド、イタリック、アンダーラインといっ
+たスタイルがあり、これらのスタイルを、組み合わせることが可能です。
+それぞれを別々の bool 型の変数に割り当てて管理することも可能ですが、
+ビットフラグを使うと、より簡潔に表現することができます。
+.NET Framework においても、 このフォントスタイルを表現する FontStyle列
+ 挙体は、以下のように定義されています。
+
+[Flags]
+public enum FontStyle {
+    Regular   = 0,
+    Bold      = 1,
+    Italic    = 2,
+    Underline = 4
+    Strikeout = 8,
+}
+
+ ※ FontStyle は、System.Drawing 名前空間に定義されています。
+
+列挙体に、 [Flags]属性を付加することで、ビットフラグとして利用すること
+が可能になります。
+
+
+■──────────────────────────────────
+■ ビットフラグはどのように使うのか。
+
+以下のコードを見てください。
+
+  01: FontStyle fs;
+  02: fs = FontStyle.Bold | FontStyle.Italic;
+  03: fs |= FontStyle.Underline;
+  04: fs &= ~FontStyle.Bold;
+  05: if ( (fs & FontStyle.Italic) != 0 )
+  06:     MessageBox.Show("イタリック体です");
+  07: if ( (fs & FontStyle.Bold) != 0 )
+  08:     MessageBox.Show("ボールド体です");
+
+  ※ 説明の便宜上、先頭に番号を振っています。
+
+1行目で、fs という変数を宣言しています。変数 fsは、FontStyle列挙体の変
+数であり、フォントのスタイルを1つの変数で管理します。
+
+2行目では、fs は、[ボールド体]でかつ[イタリック体]であることを表現して
+います。
+
+3行目は、さらに、[アンダーライン]を追加しています。
+
+4行目では、ボールド体をfs から取り除いていますので、この時点では、[イ
+タリック]でかつ[アンダーライン]のフォントということになります。
+
+ ※ ~FontStyle.Bold は、Boldを示すビット以外を０に、それ以外を全て１
+    にしています。この値に、fsとの and を取ることで、Boldに対応する
+    ビットをオフにしています。
+
+5行目と7行目では、& 演算子を使い、指定したスタイルが含まれているかどう
+かを調べています。
+
+もし、FontStyle に、[Flags] 属性がない、普通の列挙体だとすると、fs変数
+は、Regular、Bold、Italic、Underline、Strikeoutもいずれかの値しか保持
+できません。
+一方、[Flags]属性を付けると、fs 変数は、列挙体で定義したそれぞれの値の
+組み合わせを保持できることになります。
+
+
+■──────────────────────────────────
+■ 再度、列挙体の定義
+
+列挙体を定義する際に割り当てる定数は、２の累乗である必要はありません。
+例えば、
+
+[Flags]
+enum Directions {  // 異動可能な方向を表す
+   Right =  1,
+   Left  =  2,
+   Fore  =  4,
+   Back  =  8,
+   All   = 15,
+   None  =  0,
+}
+
+のように、Allという識別子を定義することもできます。このようにすれば、
+全ての方向に移動できることを簡単に表すことができます。
+
+なお、15 という定数をいちいち、計算して求めるのは面倒です。以下のよ
+うに書くほうが良いでしょう。
+
+[Flags]
+enum Directions {  // 異動可能な方向を表す
+   Right = 1,
+   Left  = 2,
+   Fore  = 4,
+   Back  = 8,
+   All   = Right | Left | Fore | Back;
+   None  = 0,
+}
+
+
+■──────────────────────────────────
+■ ToString メソッド
+
+[Flags]属性を付けると、ToStringの動作が変化します。
+
+  Directions ds = Directions.All;
+  Console.WriteLine(ds.ToString());
+
+の結果は、Directions に、[Flags]属性が付いているかどうかで、動作が変わ
+ってきます。
+[Flags]があれば、
+
+  Right, Left, Fore, Back
+
+なければ、
+  15
+
+と表示されます。
+
+.NET Frameworkでは
+
+.NET Framework では、この[Flags]属性を付加した、列挙体が数多く定義され
+ ています。一例を以下に示します。
+
+ System.Windows.Forms.AnchorStyles
+ System.Windows.Forms.ButtonState
+ System.Windows.Forms.MouseButtons
+ System.Globalization.CompareOptions
+ System.IO.FileAttributes
+ System.Threading.ThreadState
+
+┌─┬─────────────────────────┬─┬─┬─┐
+│☆│ C#プログラミングレッスン  (ぼぼ週刊）            │＿│□│×│
+├─┴─────────────────────────┴─┴─┴─┤
+│ Published by Gushwell  (Microsoft MVP for Visual C#)             │
+│ Copyright (C) 2004-2005 Gushwell All rights reserved.            │
+│-------------------- Gushwell's Page ---------------------------- │
+│ 窓際プログラマーの独り言  ：http://blog.livedoor.jp/gushwell/    │
+│ 窓際プログラマーの読書三昧：http://gushwell.jugem.jp/            │
+│             よろしかったらアクセスしてみてください！             │
+└─────────────────────────────────┘

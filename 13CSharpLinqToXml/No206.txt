@@ -1,0 +1,148 @@
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━ No.206 ━□
+  
+   「LINQ to XML編」 -- 名前空間の扱い
+                                                         by Gushwell  
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+
+■□─────────────────────────────────
+■□名前空間を持つドキュメントを作成する 
+
+名前空間をもつXMLドキュメントを作成するサンプルを以下に示します。
+
+  XNamespace gw = "http://schema.gushwell.ifdef.jp";
+  XElement people = new XElement(gw + "People",
+      new XElement(gw + "Person", "夏目漱石"),
+      new XElement(gw + "Person", "太宰治")
+  );
+  people.Save("sample.xml");
+
+XElementオブジェクトを生成するコンストラクタの引数で、XNamespaceオブジ
+ェクトと タグ名を +演算子でつなげてあげることで、名前空間の指定になり
+ます。
+この + 演算子ですが、XNamespaceクラスでoverrideされています。
+これにより、直観的なコードが書けるようになっています。
+XNamespaceオブジェクトとstringを結合した結果は、XNameオブジェクトとな
+ります。
+
+今まで特に説明はしませんでしたが、XElementのコンストラクタの引数の型は
+文字列ではなく、XNameとなっています。XNameには、文字列を XName オブジ
+ェクトに暗黙的に変換するimplicit演算子が定義されています。
+
+話がそれてしまいましたが、下位要素のPersonについても同様に、XNamespace
+オブジェクトと結合させています。
+結果を以下に示します。
+
+ <People xmlns="http://schema.gushwell.ifdef.jp">
+   <Person>夏目漱石</Person>
+   <Person>太宰治</Person>
+ </People>
+
+■□─────────────────────────────────
+■□名前空間を持つドキュメントを読む 
+
+では、このXMLを読み込む場合は、どのようなコ―ドになるのでしょうか？
+
+ var q = from e in people.Elements()
+         where e.Name == "Person"
+         select e;
+ q.ToList().ForEach(Console.WriteLine);
+            
+では、Person要素を取得することができません。
+以下のように、Person要素が、  "http://schema.gushwell.ifdef.jp" という
+名前空間に属していることを示してあげる必要があります。
+
+  XNamespace gw = "http://schema.gushwell.ifdef.jp";
+  var q2 = from e in people.Elements()
+          where e.Name == gw + "Person"
+          select e;
+  q2.ToList().ForEach(Console.WriteLine);          
+            
+ここでも、 + 演算子を使っています。
+
+
+
+■□─────────────────────────────────
+■□プレフィックス付きの名前空間を宣言する
+
+ <gw:People xmlns:gw="http://gushwell.ifdef.jp">
+
+のようなプレフィックス付きの名前空間を宣言する属性を作成するには、以下
+のようなコードを書きます。
+xmlns:gw="http://gushwell.ifdef.jp" の部分は、属性なわけですから、
+XAttributeオブジェクトを作成すれば、良いわけですね。
+
+
+ XNamespace gw = "http://gushwell.ifdef.jp";
+ XElement People = new XElement(gw + "People",
+     new XAttribute(XNamespace.Xmlns + "gw",
+                    "http://gushwell.ifdef.jp"),
+     new XElement(gw + "Person", "夏目漱石")
+ );
+ people.Save("sample.xml");
+
+結果は、
+
+ <gw:People xmlns:gw="http://gushwell.ifdef.jp">
+   <gw:Person>夏目漱石</gw:Person>
+ </gw:People>
+
+となります。
+            
+■□─────────────────────────────────
+■□応用：2つのプレフィックス付き名前空間を含むドキュメントを作成する
+            
+今度は、２つのプレフィックス付き名前空間を含むドキュメントを作成するコ
+―ドです。
+            
+  XNamespace gw = "http://gushwell.ifdef.jp";
+  XNamespace ts = "http://gushwell.ifdef.jp/test";
+  XElement People = new XElement(gw + "People",
+      new XAttribute(XNamespace.Xmlns + "gw", gw.NamespaceName),
+      new XAttribute(XNamespace.Xmlns + "ts", ts.NamespaceName),
+      new XElement(gw + "Person", "夏目漱石"),
+      new XElement(ts + "Test", "test content")
+  );
+  People.Save("sample.xml",SaveOptions.None);
+
+結果は、
+     
+ <gw:People xmlns:gw="http://gushwell.ifdef.jp" 
+            xmlns:ts="http://gushwell.ifdef.jp/test">
+     <gw:Person>夏目漱石</gw:Person>
+     <ts:Test>test content</ts:Test>
+ </gw:People>
+
+となります。
+
+
+───────────────────────────────────
+■コミュニティtechbank.jpについて
+───────────────────────────────────
+「マイクロソフト系テクノロジー＆製品に特化したコミュニティです。
+Webサイトでは、VB、C#、VC++、SQL Server, BizTalk Serverなどの技術情報
+を公開しています。
+techbank.jp のWebサイト：http://techbank.jp/
+
+また、オフラインでは、東京や仙台でセミナーを開催しています。その他、各
+種出版社と提携し、技術書籍の執筆なども行っています。
+現在、techbank.jp では、コミュニティ参加者（メンバー登録）、Blog を書
+いて頂ける方を大募集！
+マイクロソフト系製品・テクノロジーの話題であれば、Blogネタは何でもOKで
+す！
+詳しくは、http://techbank.jp/community/　をご覧下さい」
+
+───────────────────────────────────
+『C#プログラミングレッスン』  (ぼぼ週刊）                             
+───────────────────────────────────
+ Published by Gushwell.                                               
+   Copyright (C) 2004-2009 Gushwell All rights reserved.              
+   Microsoft MVP - Visual C#(Apr 2005 - Mar 2010)                     
+
+ <<■ Gushwell's Page ■>>
+ 窓際プログラマ―の独り言  ：http://blog.livedoor.jp/gushwell/        
+ 窓際プログラマ―の読書三昧：http://gushwell.jugem.jp/                
+ Gushwell's F# Programming Diary : http://techbank.jp/gushwell/ 
+ Gushwell's C# Programming Page  ：http://gushwell.ifdef.jp/  
+   C#デザインパタ―ン : http://gushwell.ifdef.jp/dp/csdpindex.html
+───────────────────────────────────

@@ -1,0 +1,94 @@
+■━ [C#プログラミングレッスン] ━━━━━━━━━━━━━ No.223 ━□
+  
+ 「FxCopに学ぶ編」 -- CA1052: Static holder types should be sealed
+                                                         by Gushwell  
+□━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━■
+
+■□─────────────────────────────────
+■□ CA1052: Static holder types should be sealed
+
+以下のクラスを見てください。
+
+ public class AllStaticMember {
+     public static void Foo() { }
+     public static string Bar(int n) { return n.ToString(); }
+     public static int Baz(string s) { return int.Parse(s);  }
+ }
+
+このクラスは、メンバーがすべてstaticなメンバーです。
+このようなクラスの場合、インスタンスを生成しても呼び出すメソッドがあり
+ません。つまり、インスタンスを生成する意味のないクラスです。
+
+このようなクラスでは、誤ってインスタンスを生成しないよいうにしておいた
+方が安全です。C#1.1のときには、
+
+ public sealed class AllStaticMember {
+     private AllStaticMember() { }
+     public static void Foo() { }
+     public static string Bar(int n) { return n.ToString(); }
+     public static int Baz(string s) { return int.Parse(s);  }
+ }
+
+のように、コンストラクタを非公開にして、インスタンスを生成できないよう
+にすると共に、sealedクラスを指定し、継承もできないようにする必要があり
+ました。
+
+FxCopには、「CA1052: 静的なメンバのみの型はシールします」というルールが
+登録されています。
+詳しくは、
+http://msdn.microsoft.com/ja-jp/library/ms182168.aspx
+を参照してください。
+
+しかし、C#2.0以降の場合は、このFxCopが出すメッセージをそのまま真に受け
+て、sealedクラスにしないほうが良いと思います。
+
+C#2.0からは、
+
+ public static class AllStaticMember {
+     public static void Foo() { }
+     public static string Bar(int n) { return n.ToString(); }
+     public static int Baz(string s) { return int.Parse(s);  }
+ }
+
+と classキーワードの前にstaticを指定することで、この要求を満たせます。
+こうすることで、インスタンスを生成できないクラスにすることができます。
+またシールしなくても継承できないクラスにすることができます。
+余分な、コンストラクタを定義するよりも、こちらのほうがコードがすっき
+りしますね。
+
+■ 参照MSDNページ
+
+CA1052: 静的なメンバのみの型はシールします
+http://msdn.microsoft.com/ja-jp/library/ms182168.aspx
+
+なお、FxCopには、以下のようなルールも存在します。
+
+CA1053: 静的なメンバのみの型にはコンストラクタを含めないでください
+http://msdn.microsoft.com/ja-jp/library/ms182169.aspx
+
+
+───────────────────────────────────
+『C#プログラミングレッスン』  (ぼぼ週刊）
+───────────────────────────────────
+ Published by Gushwell.
+  Copyright (C) 2004-2009 Gushwell All rights reserved.
+  Microsoft MVP - Visual C#(Apr 2005 - Mar 2010)
+
+ <<■ Gushwell's Page ■>>
+ 窓際プログラマ─の独り言  ：http://gushwell.ldblog.jp/
+ 窓際プログラマ─の読書三昧：http://gushwell.jugem.jp/
+ Gushwell's F# Programming Diary : http://techbank.jp/gushwell/
+ Gushwell's C# Programming Page  ：http://gushwell.ifdef.jp/
+  C#デザインパタ─ン : http://gushwell.ifdef.jp/dp/csdpindex.html
+
+ ☆メールマガジンの感想お待ちしています☆
+  http://gushwell.ifdef.jp/mail.html
+
+ <<■ コミュニティtechbank.jp (http://techbank.jp/Community/) ■>>
+ Gushwellが参加している技術系コミュニティです。
+ マイクロソフト系テクノロジー＆製品に特化したコミュニティで、Webサイト
+ では、VB、C#、VC++、SQL Server, BizTalk Server などの技術情報を公開し
+ ています。皆さんの参加をお待ちしています。
+ ブロガーさんも募集中です。
+───────────────────────────────────
+
